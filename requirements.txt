@@ -9,6 +9,7 @@ Flask-Login
 Flask-Migrate
 Flask-SQLAlchemy
 Flask-WTF
+Flask-Limiter
 greenlet
 itsdangerous
 Jinja2

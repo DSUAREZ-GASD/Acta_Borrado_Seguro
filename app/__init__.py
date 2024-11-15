@@ -1,4 +1,4 @@
-from flask import Flask, render_template,redirect
+from flask import Flask,redirect
 from flask_sqlalchemy import SQLAlchemy
 from flask_migrate import Migrate
 from .config import Config

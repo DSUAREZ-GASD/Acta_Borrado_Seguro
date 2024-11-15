@@ -3,11 +3,7 @@ from . import auth
 from flask import render_template, redirect, flash
 from .forms import LoginForm
 import app
-#se llama al modelo
-
-#dependecias de autenticacion
-from flask_login import current_user,login_user,logout_user 
-#para comprobar al usuario actual
+from flask_login import login_user, logout_user
 
 #ruta de login
 @auth.route('/login', methods = ['GET','POST'])
@@ -42,3 +38,13 @@ def logout():
     logout_user()
     flash("sesión cerrada")
     return redirect('/auth/login')
+
+
+# def create_token():
+#     ssh_key
+#     nombre_decode_base_64 -> create token (secret.llave.date)
+
+# def get_token():
+#     ssh_key
+#     de
+#     0Auth
