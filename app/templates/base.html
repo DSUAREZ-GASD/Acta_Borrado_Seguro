@@ -1,0 +1,17 @@
+{% extends 'bootstrap/base.html' %}
+
+{% block head %}
+    {{ super() }}
+{% endblock %}  
+
+{% block body %}
+       
+       <!--Espacio para poner la vista-->
+       {% block content %}
+
+       {% endblock %}       
+
+       {% block scripts %}
+       {{ super() }}
+       {% endblock %}
+{% endblock %}

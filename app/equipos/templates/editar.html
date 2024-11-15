@@ -1,0 +1,80 @@
+{% extends "base.html" %}
+{% block content %}
+<h1>Editar Equipo</h1>
+<form method="POST" enctype="multipart/form-data">
+    {{ form.hidden_tag() }}
+    
+    <div class="form-group mb-3">
+        <label for="{{ form.nombre.asd_id }}" class="form-label">{{ form.nombre.label }}</label>
+        {{ form.nombre(class="form-control", size=32) }}
+    </div>
+    <div class="form-group mb-3">
+        <label for="{{ form.comision.asd_id }}" class="form-label">{{ form.comision.label }}</label>
+        {{ form.comision(class="form-control") }}
+    </div>
+    <div class="form-group mb-3">
+        <label for="{{ form.municipio.asd_id }}" class="form-label">{{ form.municipio.label }}</label>
+        {{ form.municipio(class="form-control") }}
+    </div>
+    <div class="form-group mb-3">
+        <label for="{{ form.departamento.asd_id }}" class="form-label">{{ form.departamento.label }}</label>
+        {{ form.departamento(class="form-control") }}
+    </div>
+    <div class="form-group mb-3">
+        <label for="{{ form.equipo_marca.asd_id }}" class="form-label">{{ form.equipo_marca.label }}</label>
+        {{ form.equipo_marca(class="form-control") }}
+    </div>
+    <div class="form-group mb-3">
+        <label for="{{ form.equipo_modelo.asd_id }}" class="form-label">{{ form.equipo_modelo.label }}</label>
+        {{ form.equipo_modelo(class="form-control") }}
+    </div>
+    <div class="form-group mb-3">
+        <label for="{{ form.equipo_serial.asd_id }}" class="form-label">{{ form.equipo_serial.label }}</label>
+        {{ form.equipo_serial(class="form-control") }}
+    </div>
+    <div class="form-group mb-3">
+        <label for="{{ form.dd_marca.asd_id }}" class="form-label">{{ form.dd_marca.label }}</label>
+        {{ form.dd_marca(class="form-control") }}
+    </div>
+    <div class="form-group mb-3">
+        <label for="{{ form.dd_modelo.asd_id }}" class="form-label">{{ form.dd_modelo.label }}</label>
+        {{ form.dd_modelo(class="form-control") }}
+    </div>
+    <div class="form-group mb-3">
+        <label for="{{ form.dd_serial.asd_id }}" class="form-label">{{ form.dd_serial.label }}</label>
+        {{ form.dd_serial(class="form-control") }}
+    </div>
+    <div class="form-group mb-3">
+        <label for="{{ form.sha_1.asd_id }}" class="form-label">{{ form.sha_1.label }}</label>
+        {{ form.sha_1(class="form-control", rows=3) }}
+    </div>
+    <div class="form-group mb-3">
+        <label for="{{ form.md_5.asd_id }}" class="form-label">{{ form.md_5.label }}</label>
+        {{ form.md_5(class="form-control", rows=3) }}
+    </div>
+    <div class="form-group mb-3">
+        <label for="{{ form.observacion.asd_id }}" class="form-label">{{ form.observacion.label }}</label>
+        {{ form.observacion(class="form-control", rows=3) }}
+    </div>
+    <h3 class="mt-4">Imágenes del Equipo</h3>
+    <div class="mb-3">
+        <div class="d-flex flex-wrap gap-3">
+            {% for i in range(8) %}
+                <div class="text-center">
+                    {% if equipo.imagenes and i < equipo.imagenes|length %}
+                        <p>Imagen actual {{ i+1 }}:</p>
+                        <img src="{{ url_for('static', filename='imagenes/' + equipo.imagenes[i]) }}" alt="Imagen actual" class="img-fluid" width="150" height="100">
+                    {% else %}
+                        <p>Imagen nueva {{ i+1 }}:</p>
+                    {% endif %}
+                    <p>{{ form.imagenes[i].label }} (reemplazar):</p>
+                    {{ form.imagenes[i ](class="form-control-file") }}
+                </div>
+            {% endfor %}
+        </div>
+    </div>
+    <div class="mb-3">
+        {{ form.submit(class="btn btn-primary") }}
+    </div>
+</form>
+{% endblock %}

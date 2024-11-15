@@ -1,0 +1,39 @@
+{% extends "base.html" %} {% block content %} {% for mensaje in
+get_flashed_messages() %}
+<div class="alert alert-success alert-dismissable">
+  <button type="button" data-dismiss="alert" class="close">X</button>
+  {{ mensaje }}
+</div>
+{% endfor %}
+<div class="d-grid gap-2 col-6 mx-auto">
+  <a href="/usuarios/lista_usuario" class="btn btn-info">Volver</a>
+  <a href="/representantes/insertar" class="btn btn-success">Insertar Representante</a>
+</div>
+<h1>😆Lista de representantes😆</h1>
+<table class="table table-hover">
+  <thead>
+    <tr>
+      <th>Nombre</th>
+      <th>Rol</th>
+      <th>Firma</th>
+      <th>Actualizar</th>
+      <th>Eliminar</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for representante in representantes %}
+    <tr>
+      <td>{{ representante.nombre }}</td>
+      <td>{{ representante.rol.value }}</td>
+      <td><img src="{{url_for('static', filename='firmas/' + representante.firma)}}" width="100px" height="75px"/></td>
+      <td>
+        <a href="/representantes/editar/{{ representante.id }}" class="btn btn-primary">Actualizar</a>
+      </td>
+      <td>
+        <a href="/representantes/eliminar/{{ representante.id }}" class="btn btn-danger">Eliminar</a>
+      </td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% endblock%}

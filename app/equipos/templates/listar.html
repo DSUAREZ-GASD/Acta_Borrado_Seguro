@@ -1,0 +1,73 @@
+{% extends "base.html" %} {% block content %}
+<nav class="nav nav-inverse">
+  <div class="container">
+    <ul class="nav navbar-nav">
+      <li><a href="/equipos/listar">Equipos</a></li>
+      <li><a href="/usuarios/lista_usuario">Usuarios</a></li>
+      {% if current_user.is_authenticated %}
+      <li>
+        <a href="/auth/logout">Cerrar sesión</a>
+      </li>
+      {% else %}
+      <li>
+        <a href="/auth/logout">Cerrar sesión</a>
+      </li>
+      {% endif %}
+    </ul>
+  </div>
+</nav>
+{% for mensaje in get_flashed_messages() %}
+<div class="alert alert-success alert-dismissable">
+  <button type="button" data-dismiss="alert" class="close">X</button>
+  {{ mensaje }}
+</div>
+{% endfor %}
+<h1>😆Lista de equipos😆</h1>
+<table class="table table-hover">
+  <thead>
+    <tr>
+      <th>Nombre</th>
+      <th>Estado</th>
+      <th>Departamento</th>
+      <th>Actualizar</th>
+      <th>Eliminar</th>
+      <th>Imprimir</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for equipo in equipos %}
+    <tr>
+      <td>{{equipo.nombre}}</td>
+      <td>{{equipo.estado.value}}</td>
+      <td>{{equipo.departamento}}</td>
+      <td>
+        <a href="/equipos/editar/{{equipo.asd_id}}" class="btn btn-primary"
+          >Actualizar</a
+        >
+      </td>
+      <td>
+        <a href="/equipos/eleminar/{{equipo.asd_id}}" class="btn btn-danger"
+          >Eliminar</a
+        >
+      </td>
+      <td>
+        <a
+          href="{{ url_for('pdf.crear_pdf', equipo_id=equipo.asd_id) }}"
+          class="btn btn-success"
+          >Generar PDF</a
+        >
+      </td>
+    </tr>
+    {% endfor%}
+  </tbody>
+</table>
+<div class="d-grid gap-2 col-6 mx-auto">
+  <a href="/equipos/crear" class="btn btn-primary">Agregar producto</a>
+  <form action="{{ url_for('pdf.generar_todos_pdfs') }}" method="POST">
+    <button type="submit" class="btn btn-success">
+      Generar Todas la actas
+    </button>
+  </form>
+</div>
+
+{% endblock%}

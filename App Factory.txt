@@ -1,0 +1,35 @@
+App Factory
+Se hacen modulos para la crud apartir del archivo principal:
+
+creamos la carpeta app en la cual esta el templates, el _init_.py, el config.py,los modelos, el blueprint_1 y el blueprint_2.
+
+cuando se invoca un modulo se trae el init.py
+
+ruta ejemplo
+#Definir el formulario de registro de productos
+
+class NuevoProducto(FlaskForm):
+    name = StringField("Nombre del producto")
+    precio = StringField("Precio del producto")
+    submit = SubmitField("Registrar Producto")
+
+@app.route("/", methods=["GET","POST"])
+def registrar():
+    form = NuevoProducto()
+    p=Producto()#llenar el objeto del producto
+    if  form.validate_on_submit():
+        #Registrar el producto en bd
+        form.populate_obj(p)
+        db.session.add(p)
+        db.session.commit()
+        return "Producto registrado"
+    return render_template("registrar.html", form = form)
+
+blueprint= son archivos que se declaran el codigo para el flask y que se puede citar en el main 
+
+
+#getcwd():Identifica la ruta absoluta
+       #del proyecto
+       #return os.getcwd()
+       
+       #return 'producto registrado' 

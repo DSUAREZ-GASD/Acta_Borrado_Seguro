@@ -1,0 +1,9 @@
+{% extends 'base.html' %}
+{% import 'bootstrap/wtf.html' as wtf %}
+   
+{% block content %}
+     <h1>🤨Nuevos Responsables🤨</h1>  
+     <form action="" method="POST" novalidate enctype="multipart/form-data">
+        {{ wtf.quick_form(form) }}
+     </form>
+{% endblock %}   
