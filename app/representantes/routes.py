@@ -4,10 +4,12 @@ from .forms import Nuevo_Representante, EditRespresentanteForm
 import app #se llama al modelo
 import os
 from werkzeug.utils import secure_filename
+from app.auth.routes import acceso_requerido
 
 
 # Registro de firma
 @representantes.route('/insertar', methods=['GET', 'POST'])
+@acceso_requerido(roles=["Administrador"])
 def registro_representante():
     r = app.models.Representante()
     form = Nuevo_Representante()
@@ -29,12 +31,14 @@ def registro_representante():
 
 
 @representantes.route('/lista_representantes')
+@acceso_requerido(roles=["Administrador"])
 def lista_representantes():
     representantes = app.models.Representante.query.all()
     return render_template('lista_representante.html', representantes=representantes)
 
 
 @representantes.route('/editar/<representante_id>', methods=['GET','POST'])
+@acceso_requerido(roles=["Administrador"])
 def editar(representante_id):
     # Seleccionar el firma con el Id
     r = app.models.Representante.query.get(representante_id) 
@@ -73,6 +77,7 @@ def editar(representante_id):
    
    
 @representantes.route('/eliminar/<representante_id>', methods=['GET','POST'])
+@acceso_requerido(roles=["Administrador"])
 def eliminar(representante_id):
     r = app.models.Representante.query.get(representante_id)
     

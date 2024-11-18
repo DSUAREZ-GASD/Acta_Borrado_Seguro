@@ -4,6 +4,7 @@ from flask_migrate import Migrate
 from .config import Config
 from flask_bootstrap import Bootstrap #estilo de bootstrap
 from flask_login import LoginManager;
+# from flask_jwt_extended import JWTManager
 
 #blueprint
 from app.pdfs import pdf
@@ -18,7 +19,6 @@ app = Flask(__name__)
 app.config.from_object(Config)
 b = Bootstrap(app)
 login = LoginManager(app) 
-
 
 #configurar y registrar blueprint
 app.register_blueprint(pdf)

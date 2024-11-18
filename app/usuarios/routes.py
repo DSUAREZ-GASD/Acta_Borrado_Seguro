@@ -2,8 +2,10 @@ from . import usuarios
 from flask import render_template,redirect,flash
 from .forms import NuevoUsuario, EditUsuarioForm
 import app
+from app.auth.routes import acceso_requerido
 
 @usuarios.route('/crear_usuario', methods=['GET','POST'])
+@acceso_requerido(roles=["Administrador"])
 def crear_cliente():
     u = app.models.Usuario()
     form = NuevoUsuario()
@@ -19,6 +21,7 @@ def crear_cliente():
 
 
 @usuarios.route('/lista_usuario')
+@acceso_requerido(roles=["Administrador"])
 def listar():
     usuarios = app.Usuario.query.all()
 
@@ -28,6 +31,7 @@ def listar():
       
 @usuarios.route('/editar_usuario/<usuario_id>',
                 methods=['GET','POST'])
+@acceso_requerido(roles=["Administrador"])
 def editar(usuario_id):
     u = app.models.Usuario.query.get(usuario_id) 
     form_edit=EditUsuarioForm(obj = u)
@@ -43,6 +47,7 @@ def editar(usuario_id):
     
 @usuarios.route('/eliminar_usuario/<usuario_id>',
                 methods=['GET','POST'])
+@acceso_requerido(roles=["Administrador"])
 def eliminar(usuario_id):
      u = app.models.Usuario.query.get(usuario_id)
      app.db.session.delete(u)

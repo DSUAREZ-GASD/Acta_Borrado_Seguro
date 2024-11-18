@@ -6,9 +6,9 @@ from app import db
 from sqlalchemy.ext.mutable import MutableList
 from sqlalchemy.dialects.mysql import JSON
 from enum import Enum 
+# from flask_jwt_extended import create_access_token, decode_token
 
 # Modelos
-
 # Columnas de atributos enumerados
 class Rol(Enum):
     ADMINISTRADOR = "Administrador"

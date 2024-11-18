@@ -1,3 +1,4 @@
+from app.auth.routes import acceso_requerido
 from . import equipos
 #el . es para que nos importe todo el modulo
 from flask import render_template, redirect, flash
@@ -5,8 +6,10 @@ from .forms import NuevoEquipo,EditEquipoForm
 import app#se llama al modelo
 import os 
 from werkzeug.utils import secure_filename
+from flask_login import current_user
 
 @equipos.route('/crear', methods=["GET","POST"])
+@acceso_requerido(roles=["Administrador","Agente"])
 def crear_Equipo():
     e = app.models.Equipo()
     form = NuevoEquipo()
@@ -28,13 +31,20 @@ def crear_Equipo():
         # Agregar el producto a la base de datos
         app.db.session.add(e)
         app.db.session.commit()
-        flash("Registro de equipo exitoso")
-        return redirect('/equipos/listar')
+        if current_user.rol.value == "Administrador":
+            flash("Registro de equipo exitoso")
+            return redirect('/equipos/listar')
+        elif current_user.rol.value == "Agente":
+            flash("Registro de equipo exitoso")
+            return redirect('/equipos/lista_agente')
+        else:
+            flash("Error al registrar equipo")
     
     return render_template('registro.html', form=form)
 
 
 @equipos.route('/listar')
+@acceso_requerido(roles=["Administrador"])
 def listar():
    #Traeremos los equipos  de la base de datos
    equipos = app.Equipo.query.all()
@@ -43,8 +53,17 @@ def listar():
    return render_template('listar.html',
                           equipos=equipos)
    
+@equipos.route('/lista_agente')
+@acceso_requerido(roles=["Agente"])
+def lista_agente():
+    #Traeremos los equipos  de la base de datos
+    equipos = app.models.Equipo.query.all()
+    #mostrar la vista de listar
+    return render_template('listar_agente.html',
+                            equipos=equipos)
    
 @equipos.route('/editar/<equipo_id>', methods=['GET', 'POST'])
+@acceso_requerido(roles=["Administrador","Agente"])
 def editar(equipo_id):
     e = app.models.Equipo.query.get(equipo_id)
     form_edit = EditEquipoForm(obj=e)
@@ -80,8 +99,14 @@ def editar(equipo_id):
         # Actualizar el estado y la fecha de finalización
         e.actualizar_estado()
         app.db.session.commit()
-        flash("Equipo actualizado")
-        return redirect('/equipos/listar')
+        if current_user.rol.value == "Administrador":
+            flash("Registro de equipo exitoso")
+            return redirect('/equipos/listar')
+        elif current_user.rol.value == "Agente":
+            flash("Registro de equipo exitoso")
+            return redirect('/equipos/lista_agente')
+        else:
+            flash("Error al registrar equipo")
     else:
         if form_edit.errors:
             print("Formulario no validado")
@@ -92,6 +117,7 @@ def editar(equipo_id):
   
     
 @equipos.route('/eleminar/<equipo_id>', methods=['GET','POST'])
+@acceso_requerido(roles=["Administrador"])
 def eliminar(equipo_id):
    # Seleccionar producto con el Id
    e = app.models.Equipo.query.get(equipo_id)
