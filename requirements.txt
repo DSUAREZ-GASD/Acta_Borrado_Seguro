@@ -10,6 +10,8 @@ Flask-Migrate
 Flask-SQLAlchemy
 Flask-WTF
 Flask-Limiter
+flask_security
+Flask-JWT-Extended
 greenlet
 itsdangerous
 Jinja2
@@ -27,4 +29,3 @@ pip
 pillow
 python-dotenv
 Flask-Security
-Flask-JWT-Extended

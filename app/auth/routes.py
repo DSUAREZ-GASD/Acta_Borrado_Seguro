@@ -3,8 +3,13 @@ from . import auth
 from flask import render_template, redirect, flash
 from .forms import LoginForm
 import app
-from flask_login import login_user, logout_user, current_user
+from flask_login import login_user, logout_user, current_user,login_required
 from functools import wraps
+from flask_jwt_extended import create_access_token, jwt_required, get_jwt_identity, get_jwt, JWTManager
+
+
+jwt = JWTManager()
+
 
 def acceso_requerido(roles=[]):
     def decorador(f):
@@ -39,6 +44,8 @@ def login():
                 return redirect('/auth/login')
             
             login_user(u,True)
+            access_token = create_access_token(identity={'userName': u.userName, 'rol': u.rol.value})
+            print(f"Token generado: {access_token}")
             
             if u.rol.value == "Administrador":
                 print(f"Acesso al programa por {u.rol.value}")
@@ -62,18 +69,16 @@ def login():
 
 #ruta de logout
 @auth.route('/logout')
+@login_required
 def logout():
     logout_user()
     flash("sesión cerrada")
     return redirect('/auth/login')
 
 
-
-# def create_token():
-#     ssh_key
-#     nombre_decode_base_64 -> create token (secret.llave.date)
-
-# def get_token():
-#     ssh_key
-#     de
-#     0Auth
+#Ruta protegida
+@auth.route('/protegida')
+@jwt_required()
+def protegida():
+    current_user = get_jwt_identity()
+    return f"¡Hola, {current_user}!", 200

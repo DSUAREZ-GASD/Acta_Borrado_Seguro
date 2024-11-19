@@ -5,11 +5,12 @@ import app #se llama al modelo
 import os
 from werkzeug.utils import secure_filename
 from app.auth.routes import acceso_requerido
-
+from flask_login import login_required
 
 # Registro de firma
 @representantes.route('/insertar', methods=['GET', 'POST'])
 @acceso_requerido(roles=["Administrador"])
+@login_required
 def registro_representante():
     r = app.models.Representante()
     form = Nuevo_Representante()
@@ -32,6 +33,7 @@ def registro_representante():
 
 @representantes.route('/lista_representantes')
 @acceso_requerido(roles=["Administrador"])
+@login_required
 def lista_representantes():
     representantes = app.models.Representante.query.all()
     return render_template('lista_representante.html', representantes=representantes)
@@ -39,6 +41,7 @@ def lista_representantes():
 
 @representantes.route('/editar/<representante_id>', methods=['GET','POST'])
 @acceso_requerido(roles=["Administrador"])
+@login_required
 def editar(representante_id):
     # Seleccionar el firma con el Id
     r = app.models.Representante.query.get(representante_id) 
@@ -78,6 +81,7 @@ def editar(representante_id):
    
 @representantes.route('/eliminar/<representante_id>', methods=['GET','POST'])
 @acceso_requerido(roles=["Administrador"])
+@login_required
 def eliminar(representante_id):
     r = app.models.Representante.query.get(representante_id)
     

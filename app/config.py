@@ -8,5 +8,8 @@ class Config:
     SECRET_KEY = os.getenv('SECRET_KEY')
     SECURITY_PASSWORD_SALT = os.getenv('SECURITY_PASSWORD_SALT')
     JWT_SECRET_KEY = os.getenv('JWT_SECRET_KEY')
+    JWT_ACCESS_TOKEN_EXPIRES = 3600
+    SESSION_COOKIE_SAMESITE = 'Lax' # Configurar SameSite para las cookies de sesión
+    SESSION_COOKIE_SECURE = True # Configurar Secure para las cookies de sesión
     
     

@@ -1,3 +1,4 @@
+
 from app.auth.routes import acceso_requerido
 from . import equipos
 #el . es para que nos importe todo el modulo
@@ -6,10 +7,11 @@ from .forms import NuevoEquipo,EditEquipoForm
 import app#se llama al modelo
 import os 
 from werkzeug.utils import secure_filename
-from flask_login import current_user
+from flask_login import current_user, login_required
 
 @equipos.route('/crear', methods=["GET","POST"])
 @acceso_requerido(roles=["Administrador","Agente"])
+@login_required
 def crear_Equipo():
     e = app.models.Equipo()
     form = NuevoEquipo()
@@ -45,6 +47,7 @@ def crear_Equipo():
 
 @equipos.route('/listar')
 @acceso_requerido(roles=["Administrador"])
+@login_required
 def listar():
    #Traeremos los equipos  de la base de datos
    equipos = app.Equipo.query.all()
@@ -55,6 +58,7 @@ def listar():
    
 @equipos.route('/lista_agente')
 @acceso_requerido(roles=["Agente"])
+@login_required
 def lista_agente():
     #Traeremos los equipos  de la base de datos
     equipos = app.models.Equipo.query.all()
@@ -64,6 +68,7 @@ def lista_agente():
    
 @equipos.route('/editar/<equipo_id>', methods=['GET', 'POST'])
 @acceso_requerido(roles=["Administrador","Agente"])
+@login_required
 def editar(equipo_id):
     e = app.models.Equipo.query.get(equipo_id)
     form_edit = EditEquipoForm(obj=e)
@@ -118,6 +123,7 @@ def editar(equipo_id):
     
 @equipos.route('/eleminar/<equipo_id>', methods=['GET','POST'])
 @acceso_requerido(roles=["Administrador"])
+@login_required
 def eliminar(equipo_id):
    # Seleccionar producto con el Id
    e = app.models.Equipo.query.get(equipo_id)
