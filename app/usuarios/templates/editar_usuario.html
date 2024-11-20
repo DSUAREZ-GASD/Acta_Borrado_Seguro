@@ -28,6 +28,9 @@
         <div class="form-group mb-3">
             <label for="{{ form.password.id }}" class="form-label">{{ form.password.label }}</label>
             {{ form.password(class="form-control", size=32) }}
+            <small class="form-text text-muted">
+                Si no ingresas una nueva contraseña, se usará la contraseña por defecto.
+            </small>
         </div>
 
         <div class="mb-3">

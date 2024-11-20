@@ -6,8 +6,6 @@ from app import db
 from sqlalchemy.ext.mutable import MutableList
 from sqlalchemy.dialects.mysql import JSON
 from enum import Enum 
-from flask_security import UserMixin, RoleMixin
-import uuid
 
 # Modelos
 # Columnas de atributos enumerados
@@ -26,15 +24,6 @@ class EstadoEnum(Enum):
     EN_PROCESO = "En proceso"
     FINALIZADO = "Finalizado"
     
-roles_usuarios = db.Table('roles_usuarios',
-    db.Column('usuario_id', db.Integer, db.ForeignKey('usuario.id')),
-    db.Column('rol_id', db.Integer, db.ForeignKey('role.id'))
-)
-
-class Role(db.Model, RoleMixin):
-    id = db.Column(db.Integer, primary_key=True)
-    name = db.Column(db.String(80), unique=True)
-    description = db.Column(db.String(255))
     
 # Modelo de usuario  
 class Usuario(UserMixin, db.Model):
@@ -44,11 +33,8 @@ class Usuario(UserMixin, db.Model):
     email = db.Column(db.String(120), unique=True, nullable=False)
     rol = db.Column(db.Enum(Rol), default=Rol.AGENTE)
     password = db.Column(db.String(128), nullable=False)
-    fs_uniquifier = db.Column(db.String(255), unique=True, nullable=False, default=lambda: str(uuid.uuid4()))
-    active = db.Column(db.Boolean(), default=True) 
     created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
-    roles = db.relationship('Role', secondary=roles_usuarios, backref=db.backref('users', lazy='dynamic'))
 
     def set_password(self, password):
         self.password = generate_password_hash(password)
@@ -87,6 +73,9 @@ class Equipo(db.Model):
     imagenes = db.Column(MutableList.as_mutable(JSON))
     created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
+    usuario_id = db.Column(db.Integer, db.ForeignKey('usuario.id', name='fk_usuario_id'), nullable=False)
+    
+    usuario = db.relationship('Usuario', backref=db.backref('equipo', lazy=True))
     
     # Método para actualizar el estado automáticamente
     def actualizar_estado(self):

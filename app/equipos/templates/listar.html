@@ -29,6 +29,7 @@
       <th>Nombre</th>
       <th>Estado</th>
       <th>Departamento</th>
+      <th>Registrado por</th>
       <th>Actualizar</th>
       <th>Eliminar</th>
       <th>Imprimir</th>
@@ -40,6 +41,7 @@
       <td>{{equipo.nombre}}</td>
       <td>{{equipo.estado.value}}</td>
       <td>{{equipo.departamento}}</td>
+      <td>{{equipo.usuario.userName}}</td>
       <td>
         <a href="/equipos/editar/{{equipo.asd_id}}" class="btn btn-primary"
           >Actualizar</a

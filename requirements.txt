@@ -10,8 +10,6 @@ Flask-Migrate
 Flask-SQLAlchemy
 Flask-WTF
 Flask-Limiter
-flask_security
-Flask-JWT-Extended
 greenlet
 itsdangerous
 Jinja2
@@ -19,6 +17,7 @@ Mako
 MarkupSafe
 mysqlclient
 SQLAlchemy
+setuptools
 typing_extensions
 visitor
 Werkzeug
@@ -28,4 +27,4 @@ reportlab
 pip 
 pillow
 python-dotenv
-Flask-Security
+

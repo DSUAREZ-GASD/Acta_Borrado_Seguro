@@ -20,7 +20,8 @@ def crear_Equipo():
         # Poblar el objeto Producto
         form.populate_obj(e)
         e.imagenes = []
-
+        e.usuario_id = current_user.id
+        
         # Guardar cada imagen
         for imagen_field in form.imagenes:
             if imagen_field.data:
@@ -61,7 +62,7 @@ def listar():
 @login_required
 def lista_agente():
     #Traeremos los equipos  de la base de datos
-    equipos = app.models.Equipo.query.all()
+    equipos = app.models.Equipo.query.filter_by(usuario_id=current_user.id).all()
     #mostrar la vista de listar
     return render_template('listar_agente.html',
                             equipos=equipos)
@@ -103,6 +104,7 @@ def editar(equipo_id):
         e.imagenes = nuevas_imagenes
         # Actualizar el estado y la fecha de finalización
         e.actualizar_estado()
+        e.usuario_id = current_user.id
         app.db.session.commit()
         if current_user.rol.value == "Administrador":
             flash("Registro de equipo exitoso")

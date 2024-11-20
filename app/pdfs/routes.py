@@ -1,10 +1,15 @@
 from flask import flash, send_file, current_app,redirect
+from flask_login import login_required
+from app.auth.routes import acceso_requerido
 from . import pdf
 from .generator import  generar_pdf
 import zipfile
 import os
 
+
 @pdf.route('/generar_pdf/<int:equipo_id>')
+@acceso_requerido(roles=["Administrador","Agente"])
+@login_required
 def crear_pdf(equipo_id):
     try:
         # Importar equipo aquí en lugar de al inicio
@@ -31,6 +36,8 @@ def crear_pdf(equipo_id):
          
 
 @pdf.route('/generar_todos_pdfs', methods=['POST'])
+@acceso_requerido(roles=["Administrador","Agente"])
+@login_required
 def generar_todos_pdfs():
     try:
         # Importar equipo y firma

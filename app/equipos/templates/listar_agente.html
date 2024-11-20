@@ -3,6 +3,7 @@
   <div class="container">
     <ul class="nav navbar-nav">
       <li><a href="/equipos/lista_agente">Equipos</a></li>
+      <li><a href="/usuarios/perfil/{{current_user.id}}">Perfil</a></li>
       {% if current_user.is_authenticated %}
       <li>
         <a href="/auth/logout">Cerrar sesión</a>
@@ -21,7 +22,7 @@
   {{ mensaje }}
 </div>
 {% endfor %}
-<h1>😆Lista de equipos😆</h1>
+<h1>😆Lista de equipos de {{current_user.userName}}</h1>
 <table class="table table-hover">
   <thead>
     <tr>

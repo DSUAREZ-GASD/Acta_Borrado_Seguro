@@ -5,12 +5,8 @@ from .forms import LoginForm
 import app
 from flask_login import login_user, logout_user, current_user,login_required
 from functools import wraps
-from flask_jwt_extended import create_access_token, jwt_required, get_jwt_identity, get_jwt, JWTManager
 
-
-jwt = JWTManager()
-
-
+# Decorador para proteger rutas
 def acceso_requerido(roles=[]):
     def decorador(f):
         @wraps(f)
@@ -44,8 +40,6 @@ def login():
                 return redirect('/auth/login')
             
             login_user(u,True)
-            access_token = create_access_token(identity={'userName': u.userName, 'rol': u.rol.value})
-            print(f"Token generado: {access_token}")
             
             if u.rol.value == "Administrador":
                 print(f"Acesso al programa por {u.rol.value}")
@@ -78,7 +72,6 @@ def logout():
 
 #Ruta protegida
 @auth.route('/protegida')
-@jwt_required()
+@login_required
 def protegida():
-    current_user = get_jwt_identity()
-    return f"¡Hola, {current_user}!", 200
+    return f"¡Hola, {current_user.userName}!", 200

@@ -4,8 +4,6 @@ from flask_migrate import Migrate
 from .config import Config
 from flask_bootstrap import Bootstrap
 from flask_login import LoginManager
-from flask_jwt_extended import JWTManager
-from flask_security import Security, SQLAlchemyUserDatastore
 
 #blueprint
 from app.pdfs import pdf
@@ -19,20 +17,14 @@ app = Flask(__name__)
 app.config.from_object(Config)
 b = Bootstrap(app)
 login = LoginManager(app)
-
-# Configurar JWT
-jwt = JWTManager(app)
+login.login_view = 'auth.login' # Redirigir a la página de login si no está autenticado
 
 #Crear los objetos de SQLAlchemy y Migrate
 db = SQLAlchemy(app)
 migrate = Migrate(app, db)
 
 #traemos los modelos 
-from .models import Equipo, Usuario, Representante, Role
-
-# Configurar Flask-Security
-user_datastore = SQLAlchemyUserDatastore(db, Usuario, Role)
-security = Security(app, user_datastore)
+from .models import Equipo, Usuario, Representante
 
 #configurar y registrar blueprint
 app.register_blueprint(pdf)
