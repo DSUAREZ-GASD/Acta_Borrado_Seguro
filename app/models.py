@@ -23,7 +23,10 @@ class EstadoEnum(Enum):
     REGISTRADO = "Registrado"
     EN_PROCESO = "En proceso"
     FINALIZADO = "Finalizado"
-    
+
+class Estado_usuario(Enum):
+    ACTIVO = "Activo"
+    INACTIVO = "Inactivo"
     
 # Modelo de usuario  
 class Usuario(UserMixin, db.Model):
@@ -33,6 +36,7 @@ class Usuario(UserMixin, db.Model):
     email = db.Column(db.String(120), unique=True, nullable=False)
     rol = db.Column(db.Enum(Rol), default=Rol.AGENTE)
     password = db.Column(db.String(128), nullable=False)
+    estado = db.Column(db.Enum(Estado_usuario), default=Estado_usuario.ACTIVO)
     created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
 

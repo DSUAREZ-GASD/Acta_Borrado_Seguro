@@ -1,10 +1,11 @@
 from . import usuarios
 from flask import render_template,redirect,flash
-from .forms import NuevoUsuario, EditUsuarioForm, PerfilUsuarioForm
+from .forms import NuevoUsuario, EditUsuarioForm, PerfilUsuarioForm, CambiarPasswordForm
 import app
 from app.auth.routes import acceso_requerido
-from flask_login import login_required
+from flask_login import current_user, login_required
 
+intentos_fallidos = {}
 @usuarios.route('/crear_usuario', methods=['GET','POST'])
 @acceso_requerido(roles=["Administrador"])
 @login_required
@@ -14,17 +15,8 @@ def crear_cliente():
     default_password = "GrupoASD123*"
     if form.validate_on_submit():
         form.populate_obj(u)
-        # Contraseña por defecto no puede ser igual al nombre de usuario
-        if u.userName.lower() == default_password.lower():
-            flash("La contraseña no puede ser igual al nombre de usuario")
-            return redirect('/usuarios/lista_usuario')
-        
         # Establecer la contraseña por defecto si no se proporciona una
-        if not form.password.data:
-            u.set_password(default_password)
-        else:
-            u.set_password(form.password.data)
-            
+        u.set_password(default_password)
         app.db.session.add(u)
         app.db.session.commit()
         flash("Registro de usuario exitoso")
@@ -55,20 +47,15 @@ def editar(usuario_id):
     default_password = "GrupoASD123*"
     if form_edit.validate_on_submit():
         form_edit.populate_obj(u)
-        # Contraseña por defecto no puede ser igual al nombre de usuario
-        if u.userName.lower() == default_password.lower():
-            flash("La contraseña no puede ser igual al nombre de usuario")
-            return redirect('/usuarios/lista_usuario')
-        
-        # Establecer la contraseña por defecto si no se proporciona una
-        if not form_edit.password.data:
-            u.set_password(default_password)
-        else:
-            u.set_password(form_edit.password.data)
-            
+        if u.estado == app.models.Estado_usuario.INACTIVO:
+            # Reiniciar contador de intentos fallidos
+            intentos_fallidos[u.userName] = {'intentos': 0, 'ultimo_intento': None}
+        u.set_password(default_password)  
         app.db.session.commit()
         flash("Actualizacion de usuario exitosa")
         return redirect('/usuarios/lista_usuario')
+    
+    form_edit.password.data = default_password
     
     return render_template('editar_usuario.html',
                            form=form_edit, usuario=u)
@@ -91,14 +78,65 @@ def eliminar(usuario_id):
 @acceso_requerido(roles=["Agente"])
 @login_required
 def editar_perfil(usuario_id):
+    
     u = app.models.Usuario.query.get(usuario_id) 
-    form_edit=PerfilUsuarioForm(obj = u)
-    if form_edit.validate_on_submit():
-        form_edit.populate_obj(u)
-        u.set_password(form_edit.password.data)
+    form_modificar=PerfilUsuarioForm(obj = u)
+    
+    # Verificar si el usuario logueado es el mismo que el usuario a editar
+    if current_user.id != int(usuario_id):
+        flash("No tienes permiso para editar este perfil")
+        return redirect('/equipos/lista_agente')
+    
+    if form_modificar.validate_on_submit():
+        # Verificar que la contraseña actual sea correcta
+        if not u.check_password(form_modificar.current_password.data):
+            flash("La contraseña actual no es correcta")
+            return redirect (f'/usuarios/perfil/{usuario_id}')
+        elif form_modificar.password.data != form_modificar.confirm_password.data:
+            flash("Las contraseñas no coinciden")
+            return redirect (f'/usuarios/perfil/{usuario_id}')
+        else:
+            if form_modificar.password.data:
+                u.set_password(form_modificar.password.data)           
+        form_modificar.populate_obj(u)
+        u.set_password(form_modificar.password.data)
         app.db.session.commit()
         flash("Actualizacion de usuario exitosa")
         return redirect('/equipos/lista_agente')
     
     return render_template('perfil_usuario.html',
-                           form=form_edit, usuario=u)
+                           form=form_modificar, usuario=u)
+    
+# Ruta para cambiar la contraseña de un usuario logueado
+@usuarios.route('/cambiar_contraseña/<usuario_id>', methods=['GET','POST'])
+@acceso_requerido(roles=["Administrador","Agente"])
+@login_required
+def cambiar_contraseña(usuario_id):
+    u = app.models.Usuario.query.get(usuario_id)
+    form_cambio = CambiarPasswordForm()
+    
+    # Verificar si el usuario logueado es el mismo que el usuario a editar
+    if current_user.id != int(usuario_id):
+        flash("No tienes permiso para editar este perfil")
+        return redirect('/auth/login')
+    
+    if form_cambio.validate_on_submit():
+        if not u.check_password(form_cambio.current_password.data):
+            flash("La contraseña actual no es correcta")
+            return redirect (f'/usuarios/cambiar_contraseña/{usuario_id}')
+        elif form_cambio.password.data != form_cambio.confirm_password.data:
+            flash("Las contraseñas no coinciden")
+            return redirect (f'/usuarios/cambiar_contraseña/{usuario_id}')
+        else:
+            u.set_password(form_cambio.password.data)
+            app.db.session.commit()
+            if current_user.rol.value == "Administrador":
+                flash("Registro de equipo exitoso")
+                return redirect('/equipos/listar')
+            elif current_user.rol.value == "Agente":
+                flash("Registro de equipo exitoso")
+                return redirect('/equipos/lista_agente')
+            else:
+                flash("Error al registrar equipo")
+    
+    return render_template('cambiar_clave.html', form=form_cambio)

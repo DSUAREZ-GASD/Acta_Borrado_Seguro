@@ -1,10 +1,10 @@
 from . import auth
-#el . es para que nos importe todo el modulo
 from flask import render_template, redirect, flash
 from .forms import LoginForm
 import app
 from flask_login import login_user, logout_user, current_user,login_required
 from functools import wraps
+from datetime import timedelta, datetime
 
 # Decorador para proteger rutas
 def acceso_requerido(roles=[]):
@@ -22,10 +22,15 @@ def acceso_requerido(roles=[]):
     return decorador
 
 
+MAX_INTENTOS = 5
+BLOQUEO_TIEMPO = timedelta(minutes=15)
+
+intentos_fallidos = {}
 #ruta de login
 @auth.route('/login', methods = ['GET','POST'])
 def login():
     f = LoginForm()
+    default_password = "GrupoASD123*"
     try:
         if f.validate_on_submit():
             u = app.models.Usuario.query.filter_by(userName=f.userName.data).first()
@@ -34,12 +39,44 @@ def login():
                 print("Usuario no existe")
                 flash("No exite el usuario")
                 return redirect('/auth/login')
-            if u.check_password(f.password.data) is False:
-                print("la contraseña es erronea")
-                flash("clave errónea")
+                 
+            if u.estado.value == "Inactivo":
+                flash("Tu cuenta ha sido bloqueada, contacta con el administrador")
                 return redirect('/auth/login')
             
+            intentos = intentos_fallidos.get(u.userName, {'intentos': 0, 'ultimo_intento': None})
+            
+            if intentos['intentos'] >= MAX_INTENTOS:
+                tiempo_bloqueo = datetime.utcnow() - intentos['ultimo_intento']
+                if tiempo_bloqueo < BLOQUEO_TIEMPO:
+                    flash("Tu cuenta ha sido bloqueada. Intenta más tarde")
+                    return redirect('/auth/login')
+                else:
+                    # Reiniciar intentos
+                    intentos_fallidos[u.userName] = {'intentos': 0, 'ultimo_intento': None}
+            
+            if u.check_password(f.password.data) is False:
+                print("la contraseña es erronea")
+                intentos['intentos'] += 1
+                intentos['ultimo_intento'] = datetime.utcnow()
+                intentos_fallidos[u.userName] = intentos
+                
+                if intentos['intentos'] >= MAX_INTENTOS:
+                    u.estado = app.models.Estado_usuario.INACTIVO
+                    app.db.session.commit()
+                    flash("Tu cuenta ha sido bloqueada. Intenta más tarde")
+                    return redirect('/auth/login')
+                else:
+                    flash("Contraseña incorrecta")
+                return redirect('/auth/login')
+            
+            intentos_fallidos[u.userName] = {'intentos': 0, 'ultimo_intento': None}
+            
             login_user(u,True)
+            
+            if f.password.data == default_password:
+                flash("Debes cambiar tu contraseña")
+                return redirect(f'/usuarios/cambiar_contraseña/{u.id}')
             
             if u.rol.value == "Administrador":
                 print(f"Acesso al programa por {u.rol.value}")

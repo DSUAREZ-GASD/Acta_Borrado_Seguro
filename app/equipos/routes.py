@@ -1,4 +1,3 @@
-
 from app.auth.routes import acceso_requerido
 from . import equipos
 #el . es para que nos importe todo el modulo
@@ -62,7 +61,7 @@ def listar():
 @login_required
 def lista_agente():
     #Traeremos los equipos  de la base de datos
-    equipos = app.models.Equipo.query.filter_by(usuario_id=current_user.id).all()
+    equipos = app.models.Equipo.query.all()
     #mostrar la vista de listar
     return render_template('listar_agente.html',
                             equipos=equipos)

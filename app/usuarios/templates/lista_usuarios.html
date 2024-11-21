@@ -30,6 +30,7 @@
       <th>Nombre de Usuario</th>
       <th>Correo</th>
       <th>Rol</th>
+      <th>Estado</th>
       <th>Actualizar</th>
       <th>Eliminar</th>
     </tr>
@@ -40,6 +41,7 @@
       <td>{{usuario.userName}}</td>
       <td>{{usuario.email}}</td>
       <td>{{usuario.rol.value}}</td>
+      <td>{{usuario.estado.value}}</td>
       <td>
         <a href="/usuarios/editar_usuario/{{usuario.id}}" class="btn btn-primary">Modificar</a>
       </td>
