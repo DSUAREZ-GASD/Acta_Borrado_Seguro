@@ -1,0 +1,37 @@
+{% extends 'base.html' %}
+{% import 'bootstrap/wtf.html' as wtf %}
+   
+{% block content %}
+     <h1>🤨Nuevo Equipo🤨</h1>  
+     <form action="" method="POST" novalidate enctype="multipart/form-data">
+      {{ form.hidden_tag() }}
+      {{ wtf.form_errors(form) }}
+      {{ wtf.form_field(form.nombre) }}
+      {{ wtf.form_field(form.comision) }}
+      {{ wtf.form_field(form.municipio) }}
+      {{ wtf.form_field(form.departamento) }}
+      {{ wtf.form_field(form.equipo_marca) }}
+      {{ wtf.form_field(form.equipo_modelo) }}
+      {{ wtf.form_field(form.equipo_serial) }}
+      {{ wtf.form_field(form.dd_marca) }}
+      {{ wtf.form_field(form.dd_modelo) }}
+      {{ wtf.form_field(form.dd_serial) }}
+      {{ wtf.form_field(form.sha_1) }}
+      {{ wtf.form_field(form.md_5) }}
+      {{ wtf.form_field(form.observacion) }}
+
+      {% for i in range(8) %}
+        <div class="form-group">
+            <label for="{{ form.imagenes[i].id }}">{{ labels[i] }}</label>
+            {{ form.imagenes[i](class="form-control") }}
+            {% for error in form.imagenes[i].errors %}
+                <div class="text-danger">{{ error }}</div>
+            {% endfor %}
+        </div>
+        {% endfor %}
+
+      <div class="mb-3">
+         {{ form.submit(class="btn btn-primary") }}
+     </div>
+     </form>
+{% endblock %}   

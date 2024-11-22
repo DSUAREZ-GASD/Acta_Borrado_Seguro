@@ -2,8 +2,8 @@
 <nav class="nav nav-inverse">
   <div class="container">
     <ul class="nav navbar-nav">
-      <li><a href="/equipos/listar">Equipos</a></li>
-      <li><a href="/usuarios/lista_usuario">Usuarios</a></li>
+      <li><a href="/equipos/lista-equipos">Equipos</a></li>
+      <li><a href="/usuarios/lista-usuarios">Usuarios</a></li>
       {% if current_user.is_authenticated %}
       <li>
         <a href="/auth/logout">Cerrar sesión</a>
@@ -43,17 +43,17 @@
       <td>{{usuario.rol.value}}</td>
       <td>{{usuario.estado.value}}</td>
       <td>
-        <a href="/usuarios/editar_usuario/{{usuario.id}}" class="btn btn-primary">Modificar</a>
+        <a href="/usuarios/restablecer-usuario/{{usuario.id}}" class="btn btn-primary">Modificar</a>
       </td>
       <td>
-        <a href="/usuarios/eliminar_usuario/{{usuario.id}}" class="btn btn-danger">Eliminar</a>
+        <a href="/usuarios/eliminar-usuario/{{usuario.id}}" class="btn btn-danger">Eliminar</a>
       </td>
     </tr>
     {% endfor %}
   </tbody>
 </table>
 <div class="d-grid gap-2 col-6 mx-auto">
-  <a href="/usuarios/crear_usuario" class="btn btn-primary">Agregar Usuario</a>
+  <a href="/usuarios/crear-usuario" class="btn btn-primary">Agregar Usuario</a>
   <a href="/representantes/lista_representantes" class="btn btn-info">Representantes</a>
 </div>
 

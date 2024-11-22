@@ -67,8 +67,11 @@
                     {% else %}
                         <p>Imagen nueva {{ i+1 }}:</p>
                     {% endif %}
-                    <p>{{ form.imagenes[i].label }} (reemplazar):</p>
+                    <label for="{{ form.imagenes[i].id }}">{{ labels[i] }}</label>
                     {{ form.imagenes[i ](class="form-control-file") }}
+                    {% for error in form.imagenes[i].errors %}
+                        <div class="text-danger">{{ error }}</div>
+                    {% endfor %}
                 </div>
             {% endfor %}
         </div>

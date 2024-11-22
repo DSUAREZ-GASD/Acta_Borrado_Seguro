@@ -13,7 +13,7 @@ import os
 def crear_pdf(equipo_id):
     try:
         # Importar equipo aquí en lugar de al inicio
-        from app.models import Equipo, Registro_firma
+        from app.models import Equipo, Representante
         equipo = Equipo.query.get_or_404(equipo_id)
        
         # Verificar que el estado del equipo sea finalizado 
@@ -21,11 +21,11 @@ def crear_pdf(equipo_id):
             flash("El estado del equipo tiene que ser finalizado para que se generar el pdf")
             return redirect('/equipos/listar')
         
-        firma = Registro_firma.query.first()
+        representante = Representante.query.first()
         nombre_archivo = f"{equipo.nombre}_prueba.pdf"  
                 
         # Generar el PDF
-        ruta_pdf = generar_pdf(nombre_archivo, firma, equipo)
+        ruta_pdf = generar_pdf(nombre_archivo, representante, equipo)
         
         return send_file(ruta_pdf, as_attachment=True, mimetype='application/pdf')
         
@@ -40,13 +40,13 @@ def crear_pdf(equipo_id):
 @login_required
 def generar_todos_pdfs():
     try:
-        # Importar equipo y firma
-        from app.models import Equipo, Registro_firma
+        # Importar equipo y representante
+        from app.models import Equipo, Representante
         equipos = Equipo.query.all()
-        firma = Registro_firma.query.first()
+        representante = Representante.query.first()
         
-        if not firma:
-            flash("No hay firma registrada")
+        if not representante:
+            flash("No hay representante registrada")
             return redirect('/equipos/listar')
 
         #Generar PDF para cada equipo
@@ -61,10 +61,9 @@ def generar_todos_pdfs():
             #Llamamos a la función generar_pdf
             try:
                 nombre_archivo = f"{equipo.nombre}_prueba.pdf"
-                ruta_pdf = generar_pdf(nombre_archivo, firma, equipo)
+                ruta_pdf = generar_pdf(nombre_archivo, representante, equipo)
                 rutas_pdf.append(ruta_pdf)
             except Exception as e:
-                print(f"Error generando PDF para {equipo.nombre}: {e}")
                 flash(f"Error generando PDF para {equipo.nombre}.")
     
         if rutas_pdf:

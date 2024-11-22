@@ -1,10 +1,14 @@
-from . import representantes
 from flask import render_template, redirect, flash
-from .forms import Nuevo_Representante, EditRespresentanteForm
-import app #se llama al modelo
-import os
-from werkzeug.utils import secure_filename
 from app.auth.routes import acceso_requerido
+from .forms import Nuevo_Representante, EditRespresentanteForm
+from werkzeug.utils import secure_filename
+import os
+from . import representantes
+from app import db
+from app.models import Representante
+
+
+
 from flask_login import login_required
 
 # Registro de firma
@@ -12,15 +16,15 @@ from flask_login import login_required
 @acceso_requerido(roles=["Administrador"])
 @login_required
 def registro_representante():
-    r = app.models.Representante()
+    r = Representante()
     form = Nuevo_Representante()
     
     if form.validate_on_submit():
         # Poblar el objeto Firma
         form.populate_obj(r)
         r.firma = form.firma.data.filename
-        app.db.session.add(r)
-        app.db.session.commit()
+        db.session.add(r)
+        db.session.commit()
         
         # Guardar cada imagen
         file = form.firma.data
@@ -35,7 +39,7 @@ def registro_representante():
 @acceso_requerido(roles=["Administrador"])
 @login_required
 def lista_representantes():
-    representantes = app.models.Representante.query.all()
+    representantes = Representante.query.all()
     return render_template('lista_representante.html', representantes=representantes)
 
 
@@ -44,7 +48,7 @@ def lista_representantes():
 @login_required
 def editar(representante_id):
     # Seleccionar el firma con el Id
-    r = app.models.Representante.query.get(representante_id) 
+    r = Representante.query.get(representante_id) 
     if r is None:
         flash('El representante no existe')
         return redirect('/representantes/lista_representantes')
@@ -65,7 +69,7 @@ def editar(representante_id):
         else:
             r.firma = current_firma
                                
-        app.db.session.commit()
+        db.session.commit()
         flash("Representante actualizado con éxito")
         return redirect('/representantes/lista_representantes')
     else:
@@ -83,11 +87,11 @@ def editar(representante_id):
 @acceso_requerido(roles=["Administrador"])
 @login_required
 def eliminar(representante_id):
-    r = app.models.Representante.query.get(representante_id)
+    r = Representante.query.get(representante_id)
     
     if r:
-        app.db.session.delete(r)
-        app.db.session.commit()
+        db.session.delete(r)
+        db.session.commit()
         
         print("Firma eliminada")
         flash("Firma eliminada con éxito")
@@ -103,7 +107,7 @@ def limpiar_firmas():
     ruta_firma = 'app/static/firmas'
     
      # Obtener todas las firmas asociadas a los registros en la base de datos
-    firmas_en_bd = app.models.Representante.query.with_entities(app.models.Representante.firma).all()
+    firmas_en_bd = Representante.query.with_entities(Representante.firma).all()
     
      # Crear un conjunto de todas las firmas en la base de datos
     firmas_en_bd_set = set()

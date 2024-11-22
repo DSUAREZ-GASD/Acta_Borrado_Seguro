@@ -1,13 +1,28 @@
-from . import auth
-from flask import render_template, redirect, flash
-from .forms import LoginForm
-import app
-from flask_login import login_user, logout_user, current_user,login_required
+from datetime import datetime,timedelta
 from functools import wraps
-from datetime import timedelta, datetime
+
+from flask import flash, render_template, redirect, url_for
+from flask_login import login_user, logout_user, current_user,login_required
+
+from app import db
+from app.models import Usuario, Estado_usuario
+from . import auth
+from .forms import LoginForm
 
 # Decorador para proteger rutas
-def acceso_requerido(roles=[]):
+def acceso_requerido(roles=None):
+    """
+    Decorador para proteger rutas y verificar roles de usuario.
+
+    Args:
+        roles (list): Lista de roles permitidos para acceder a la ruta.
+
+    Returns:
+        function: Función decorada que verifica autenticación y roles.
+    """
+    if roles is None:
+        roles = []
+        
     def decorador(f):
         @wraps(f)
         def decorated_function(*args, **kwargs):
@@ -26,6 +41,73 @@ MAX_INTENTOS = 5
 BLOQUEO_TIEMPO = timedelta(minutes=15)
 
 intentos_fallidos = {}
+
+# Mensajes de error
+MSG_USUARIO_NO_EXISTE = "No existe el usuario"
+MSG_CUENTA_BLOQUEADA = "Tu cuenta ha sido bloqueada, contacta con el administrador"
+MSG_CUENTA_BLOQUEADA_TEMP = "Tu cuenta ha sido bloqueada. Intenta más tarde"
+MSG_CONTRASEÑA_INCORRECTA = "Contraseña incorrecta"
+MSG_CAMBIAR_CONTRASEÑA = "Debes cambiar tu contraseña"
+MSG_BIENVENIDO_EQUIPOS = "Bienvenido a Equipos"
+MSG_USUARIO_SIN_ROL = "Tu usuario no tiene rol asignado"
+MSG_ERROR = "Ocurrió un error: {}"
+SESION_CERRADA = "Sesión cerrada"
+MSG_ERROR_SESION = "Ocurrió al cerrar sesión: {}"
+
+def verificar_intentos(u):
+    intentos = intentos_fallidos.get(u.userName, {'intentos': 0, 'ultimo_intento': None})
+    if intentos['intentos'] >= MAX_INTENTOS:
+        tiempo_bloqueo = datetime.utcnow() - intentos['ultimo_intento']
+        if tiempo_bloqueo < BLOQUEO_TIEMPO:
+            flash(MSG_CUENTA_BLOQUEADA_TEMP)
+            return False
+        else:
+            intentos_fallidos[u.userName] = {'intentos': 0, 'ultimo_intento': None}
+    return True
+
+def manejar_intento_fallido(u):
+    intentos = intentos_fallidos.get(u.userName, {'intentos': 0, 'ultimo_intento': None})
+    intentos['intentos'] += 1
+    intentos['ultimo_intento'] = datetime.utcnow()
+    intentos_fallidos[u.userName] = intentos
+
+    if intentos['intentos'] >= MAX_INTENTOS:
+        u.estado = Estado_usuario.INACTIVO
+        db.session.commit()
+        flash(MSG_CUENTA_BLOQUEADA_TEMP)
+        return False
+    else:
+        flash(MSG_CONTRASEÑA_INCORRECTA)
+        return True
+    
+def validar_usuario(u, password):
+    if u is None:
+        flash(MSG_USUARIO_NO_EXISTE)
+        return False
+
+    if u.estado.value == "Inactivo":
+        flash(MSG_CUENTA_BLOQUEADA)
+        return False
+
+    if not verificar_intentos(u):
+        return False
+
+    if not u.check_password(password):
+        if not manejar_intento_fallido(u):
+            return False
+        return False
+
+    return True
+
+def redirigir_por_rol(u):
+    if u.rol.value == "Administrador":
+        return redirect(url_for('equipos.lista_equipos'))
+    elif u.rol.value == "Agente":
+        return redirect(url_for('equipos.lista_equipos_agente'))
+    else:
+        flash(MSG_USUARIO_SIN_ROL)
+        return redirect(url_for('auth.login'))
+
 #ruta de login
 @auth.route('/login', methods = ['GET','POST'])
 def login():
@@ -33,67 +115,24 @@ def login():
     default_password = "GrupoASD123*"
     try:
         if f.validate_on_submit():
-            u = app.models.Usuario.query.filter_by(userName=f.userName.data).first()
+            u = Usuario.query.filter_by(userName=f.userName.data).first()
             
-            if u is None:
-                print("Usuario no existe")
-                flash("No exite el usuario")
-                return redirect('/auth/login')
+            if not validar_usuario(u, f.password.data):
+                return redirect(url_for('auth.login'))
                  
-            if u.estado.value == "Inactivo":
-                flash("Tu cuenta ha sido bloqueada, contacta con el administrador")
-                return redirect('/auth/login')
-            
-            intentos = intentos_fallidos.get(u.userName, {'intentos': 0, 'ultimo_intento': None})
-            
-            if intentos['intentos'] >= MAX_INTENTOS:
-                tiempo_bloqueo = datetime.utcnow() - intentos['ultimo_intento']
-                if tiempo_bloqueo < BLOQUEO_TIEMPO:
-                    flash("Tu cuenta ha sido bloqueada. Intenta más tarde")
-                    return redirect('/auth/login')
-                else:
-                    # Reiniciar intentos
-                    intentos_fallidos[u.userName] = {'intentos': 0, 'ultimo_intento': None}
-            
-            if u.check_password(f.password.data) is False:
-                print("la contraseña es erronea")
-                intentos['intentos'] += 1
-                intentos['ultimo_intento'] = datetime.utcnow()
-                intentos_fallidos[u.userName] = intentos
-                
-                if intentos['intentos'] >= MAX_INTENTOS:
-                    u.estado = app.models.Estado_usuario.INACTIVO
-                    app.db.session.commit()
-                    flash("Tu cuenta ha sido bloqueada. Intenta más tarde")
-                    return redirect('/auth/login')
-                else:
-                    flash("Contraseña incorrecta")
-                return redirect('/auth/login')
-            
             intentos_fallidos[u.userName] = {'intentos': 0, 'ultimo_intento': None}
-            
             login_user(u,True)
             
             if f.password.data == default_password:
-                flash("Debes cambiar tu contraseña")
-                return redirect(f'/usuarios/cambiar_contraseña/{u.id}')
+                flash(MSG_CAMBIAR_CONTRASEÑA)
+                return redirect(url_for('usuarios.cambiar_clave', usuario_id=u.id))
             
-            if u.rol.value == "Administrador":
-                print(f"Acesso al programa por {u.rol.value}")
-                flash("Bienvenido a Equipos")
-                return redirect('/equipos/listar')
-            elif u.rol.value == "Agente":
-                print(f"Acesso al programa por {u.rol.value}")
-                flash("Bienvenido a Equipos")
-                return redirect('/equipos/lista_agente')
-            else:
-                flash("Tu usuario no tiene rol asignado")
-                return redirect('/auth/login')
-            
-           
+            flash(MSG_BIENVENIDO_EQUIPOS)
+            return redirigir_por_rol(u)
+                
     except Exception as e:
-        flash(f"Ocurrió un error: {e}")
-        return redirect('/auth/login')
+        flash(MSG_ERROR.format(str(e)))
+        return redirect(url_for('auth.login'))
  
     return render_template("login.html",f=f)
 
@@ -102,13 +141,12 @@ def login():
 @auth.route('/logout')
 @login_required
 def logout():
-    logout_user()
-    flash("sesión cerrada")
-    return redirect('/auth/login')
+    try:
+        logout_user()
+        flash(SESION_CERRADA)
+    except Exception as e:
+        flash(MSG_ERROR_SESION.format(str(e)))
+    return redirect(url_for('auth.login'))
 
 
-#Ruta protegida
-@auth.route('/protegida')
-@login_required
-def protegida():
-    return f"¡Hola, {current_user.userName}!", 200
+

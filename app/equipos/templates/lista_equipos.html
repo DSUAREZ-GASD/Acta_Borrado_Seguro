@@ -2,8 +2,8 @@
 <nav class="nav nav-inverse">
   <div class="container">
     <ul class="nav navbar-nav">
-      <li><a href="/equipos/lista_agente">Equipos</a></li>
-      <li><a href="/usuarios/perfil/{{current_user.id}}">Perfil</a></li>
+      <li><a href="/equipos/lista-equipos">Equipos</a></li>
+      <li><a href="/usuarios/lista-usuarios">Usuarios</a></li>
       {% if current_user.is_authenticated %}
       <li>
         <a href="/auth/logout">Cerrar sesión</a>
@@ -22,27 +22,31 @@
   {{ mensaje }}
 </div>
 {% endfor %}
-<h1>😆Lista de equipos de {{current_user.userName}}</h1>
+<h1>😆Lista de equipos😆</h1>
 <table class="table table-hover">
   <thead>
     <tr>
-      <th>Nombre</th>
+      <th>#</th>
       <th>Estado</th>
-      <th>Departamento</th>
+      <th>Nombre de equipo</th>
+      <th>Registrado por</th>
       <th>Actualizar</th>
+      <th>Eliminar</th>
       <th>Imprimir</th>
     </tr>
   </thead>
   <tbody>
     {% for equipo in equipos %}
     <tr>
-      <td>{{equipo.nombre}}</td>
+      <td>{{equipo.asd_id}}</td>
       <td>{{equipo.estado.value}}</td>
-      <td>{{equipo.departamento}}</td>
+      <td>{{equipo.nombre}}</td>
+      <td>{{equipo.usuario.userName}}</td>
       <td>
-        <a href="/equipos/editar/{{equipo.asd_id}}" class="btn btn-primary"
-          >Actualizar</a
-        >
+        <a href="/equipos/editar-equipo/{{equipo.asd_id}}" class="btn btn-primary">Actualizar</a>
+      </td>
+      <td>
+        <a href="/equipos/eleminar-equipo/{{equipo.asd_id}}" class="btn btn-danger">Eliminar</a>
       </td>
       <td>
         <a
@@ -56,7 +60,7 @@
   </tbody>
 </table>
 <div class="d-grid gap-2 col-6 mx-auto">
-  <a href="/equipos/crear" class="btn btn-primary">Agregar producto</a>
+  <a href="/equipos/crear-equipo" class="btn btn-primary">Agregar producto</a>
   <form action="{{ url_for('pdf.generar_todos_pdfs') }}" method="POST">
     <button type="submit" class="btn btn-success">
       Generar Todas la actas

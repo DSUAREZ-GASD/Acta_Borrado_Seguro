@@ -1,162 +1,167 @@
-from app.auth.routes import acceso_requerido
-from . import equipos
-#el . es para que nos importe todo el modulo
-from flask import render_template, redirect, flash
-from .forms import NuevoEquipo,EditEquipoForm
-import app#se llama al modelo
-import os 
+from flask import render_template, redirect, flash, url_for
+from flask_login import login_required, current_user
 from werkzeug.utils import secure_filename
-from flask_login import current_user, login_required
+from flask_babel import _
+import os
+from . import equipos
+from app import db
+from app.auth.routes import acceso_requerido
+from app.models import Equipo
+from .forms import NuevoEquipo, EditEquipoForm
 
-@equipos.route('/crear', methods=["GET","POST"])
+# Diccionario de labels para imagenes de equipo de los formularios
+labels = {
+    0: "Foto de la caja del equipo",
+    1: "Foto del equipo",
+    2: "Foto serial del equipo",
+    3: "Foto de la Identificación de la comisión",
+    4: "Foto inicio de generación de la imagen",
+    5: "Foto finalización de la generación de la imagen",
+    6: "Foto inicio del borrado",
+    7: "Foto finalización del borrado",
+}
+
+# Ruta para crear un equipo
+@equipos.route('/crear-equipo', methods=["GET","POST"])
 @acceso_requerido(roles=["Administrador","Agente"])
 @login_required
-def crear_Equipo():
-    e = app.models.Equipo()
-    form = NuevoEquipo()
+def crear_equipo():
+    equipo = Equipo()
+    form_registrar = NuevoEquipo()
     
-    if form.validate_on_submit():
-        # Poblar el objeto Producto
-        form.populate_obj(e)
-        e.imagenes = []
-        e.usuario_id = current_user.id
-        
-        # Guardar cada imagen
-        for imagen_field in form.imagenes:
-            if imagen_field.data:
-                filename = imagen_field.data.filename
-                # Guardar la imagen en el sistema de archivos
-                imagen_field.data.save(os.path.join('app/static/imagenes', filename))
-                # Agregar el nombre de la imagen a la lista
-                e.imagenes.append(filename)
-
-        # Agregar el producto a la base de datos
-        app.db.session.add(e)
-        app.db.session.commit()
-        if current_user.rol.value == "Administrador":
+    if form_registrar.validate_on_submit():
+        try:
+            # Poblar el objeto equipo
+            form_registrar.populate_obj(equipo)
+            equipo.imagenes = []
+            equipo.usuario_id = current_user.id
+            
+            # Guardar cada imagen
+            for imagen_field in form_registrar.imagenes:
+                if imagen_field.data:
+                    filename = imagen_field.data.filename
+                    imagen_field.data.save(os.path.join('app/static/imagenes', filename))
+                    equipo.imagenes.append(filename)
+            
+            # Agregar el equipo a la base de datos      
+            db.session.add(equipo)
+            db.session.commit()
             flash("Registro de equipo exitoso")
-            return redirect('/equipos/listar')
-        elif current_user.rol.value == "Agente":
-            flash("Registro de equipo exitoso")
-            return redirect('/equipos/lista_agente')
-        else:
-            flash("Error al registrar equipo")
-    
-    return render_template('registro.html', form=form)
+            if current_user.rol.value == "Administrador":
+                return redirect(url_for('equipos.lista_equipos'))
+            elif current_user.rol.value == "Agente":
+                return redirect(url_for('equipos.lista_equipos_agente'))
+        except Exception as e:
+            db.session.rollback()
+            flash(_("Error al registrar equipo {}").format(e))
+            
+    return render_template('crear_equipo.html', form=form_registrar, labels=labels)
 
-
-@equipos.route('/listar')
+# Ruta para listar los equipos por administrador
+@equipos.route('/lista-equipos')
 @acceso_requerido(roles=["Administrador"])
 @login_required
-def listar():
-   #Traeremos los equipos  de la base de datos
-   equipos = app.Equipo.query.all()
-   #mostrar la vista de listar
-   #envieandole los equipos seleccionados
-   return render_template('listar.html',
-                          equipos=equipos)
-   
-@equipos.route('/lista_agente')
+def lista_equipos():
+    try:
+        equipos = Equipo.query.all()
+        return render_template('lista_equipos.html', equipos=equipos)
+    except Exception as e:
+        flash(_("Error al listar equipos: {}").format(e))
+        return redirect(url_for('equipos.lista_equipos'))
+
+# Ruta para listar los equipos por agente
+@equipos.route('/lista-equipos-agente')
 @acceso_requerido(roles=["Agente"])
 @login_required
-def lista_agente():
-    #Traeremos los equipos  de la base de datos
-    equipos = app.models.Equipo.query.all()
-    #mostrar la vista de listar
-    return render_template('listar_agente.html',
-                            equipos=equipos)
-   
-@equipos.route('/editar/<equipo_id>', methods=['GET', 'POST'])
+def lista_equipos_agente():
+    try:
+        equipos = Equipo.query.all()
+        return render_template('lista_equipos_agente.html', equipos=equipos)
+    except Exception as e:
+        flash(_("Error al listar equipos {}").format(e))
+        return redirect(url_for('equipos.lista_equipos_agente'))
+
+# Ruta para actualizar un equipo
+@equipos.route('/editar-equipo/<equipo_id>', methods=['GET', 'POST'])
 @acceso_requerido(roles=["Administrador","Agente"])
 @login_required
-def editar(equipo_id):
-    e = app.models.Equipo.query.get(equipo_id)
-    form_edit = EditEquipoForm(obj=e)
-
-    # Cargar las imágenes actuales del equipo en el formulario
-    current_images_count = len(e.imagenes)
+def editar_equipo(equipo_id):
+    equipo = Equipo.query.get_or_404(equipo_id)
+    form_edit_equipo = EditEquipoForm(obj=equipo)
     
+    # Cargar las imágenes actuales del equipo en el formulario
+    current_images_count = len(equipo.imagenes)
     # Solo agregar entradas si hay menos de max_entries
-    while len(form_edit.imagenes.entries) < form_edit.imagenes.max_entries:
-        form_edit.imagenes.append_entry()
+    while len(form_edit_equipo.imagenes.entries) < form_edit_equipo.imagenes.max_entries:
+        form_edit_equipo.imagenes.append_entry()
 
-    if form_edit.validate_on_submit():
-        print("Formulario validado correctamente")
-        form_edit.populate_obj(e)
-
-        nuevas_imagenes = []
-
-        # Guardar nuevas imágenes
-        for imagen_field in form_edit.imagenes:
-            if imagen_field.data and hasattr(imagen_field.data, 'filename') and imagen_field.data.filename:
-                filename = secure_filename(imagen_field.data.filename)
-                file_path = os.path.join('app/static/imagenes', filename)
-                imagen_field.data.save(file_path)
-                nuevas_imagenes.append(filename)
-            else:
-                # Si no se ha subido una nueva imagen, mantener la imagen actual
-                index = len(nuevas_imagenes)
-                if index < current_images_count:
-                    nuevas_imagenes.append(e.imagenes[index])
-
-        # Actualizar las imágenes en la base de datos
-        e.imagenes = nuevas_imagenes
-        # Actualizar el estado y la fecha de finalización
-        e.actualizar_estado()
-        e.usuario_id = current_user.id
-        app.db.session.commit()
-        if current_user.rol.value == "Administrador":
-            flash("Registro de equipo exitoso")
-            return redirect('/equipos/listar')
-        elif current_user.rol.value == "Agente":
-            flash("Registro de equipo exitoso")
-            return redirect('/equipos/lista_agente')
-        else:
-            flash("Error al registrar equipo")
-    else:
-        if form_edit.errors:
-            print("Formulario no validado")
-            print(form_edit.errors)
+    if form_edit_equipo.validate_on_submit():
+        try:
+            form_edit_equipo.populate_obj(equipo)
+            nuevas_imagenes = []
             
-
-    return render_template('editar.html', form=form_edit, equipo=e, enumerate=enumerate)
+            # Guardar nuevas imágenes
+            for imagen_field in form_edit_equipo.imagenes:
+                if imagen_field.data and hasattr(imagen_field.data, 'filename') and imagen_field.data.filename:
+                    filename = secure_filename(imagen_field.data.filename)
+                    file_path = os.path.join('app/static/imagenes', filename)
+                    imagen_field.data.save(file_path)
+                    nuevas_imagenes.append(filename)
+                else:
+                    # Si no se ha subido una nueva imagen, mantener la imagen actual
+                    index = len(nuevas_imagenes)
+                    if index < current_images_count:
+                        nuevas_imagenes.append(equipo.imagenes[index])
+            # Actualizar las imágenes en la base de datos
+            equipo.imagenes = nuevas_imagenes
+            # Actualizar el estado y la fecha de finalización
+            equipo.actualizar_estado()
+            equipo.usuario_id = current_user.id
+            db.session.commit()
+            flash(_(f"Equipo modificado exitoso"))
+            if current_user.rol.value == "Administrador":
+                return redirect(url_for('equipos.lista_equipos'))
+            elif current_user.rol.value == "Agente":
+                return redirect(url_for('equipos.lista_equipos_agente'))
+        except Exception as e:
+            db.session.rollback()
+            flash(_("Error al actualizar equipo {}").format(e))
+            return redirect(url_for('equipos.editar_equipo', equipo_id=equipo_id))
+        
+    return render_template('editar_equipo.html', form=form_edit_equipo, equipo=equipo, enumerate=enumerate, labels=labels)
   
     
-@equipos.route('/eleminar/<equipo_id>', methods=['GET','POST'])
+@equipos.route('/eleminar-equipo/<equipo_id>', methods=['GET','POST'])
 @acceso_requerido(roles=["Administrador"])
 @login_required
-def eliminar(equipo_id):
-   # Seleccionar producto con el Id
-   e = app.models.Equipo.query.get(equipo_id)
+def eliminar_equipo(equipo_id):
+   equipo = Equipo.query.get_or_404(equipo_id)
+   try:
+       if equipo:
+           # Eliminar el registro del equipo de la base de datos
+           db.session.delete(equipo)
+           db.session.commit()
+           flash(_("Equipo Eliminado con exito"))
+           limpiar_imagenes_huerfanas()
+       else:
+           flash("Equipo no encontrado")
+   except Exception as e:
+        db.session.rollback()
+        flash(_("Error al eliminar el equipo: {}").format(e))
    
-   # Condición para borrar las imagenes de equipo
-   if e:
-       # Eliminar el registro del equipo de la base de datos
-       app.db.session.delete(e)
-       app.db.session.commit()
-       print("Imagenes eliminadas")
-       flash("Equipo Eliminado con exito")
-       
-       limpiar_imagenes_huerfanas()
-   else:
-       flash("Equipo no encontrado")
-   
-   return redirect('/equipos/listar')
+   return redirect(url_for('equipos.lista_equipos'))
    
 
 # Eliminación de imagenes huerfanas
 def limpiar_imagenes_huerfanas():
     img_d_ruta = 'app/static/imagenes'
-    
      # Obtener todas las imágenes asociadas a los registros en la base de datos
-    imagenes_en_bd = app.models.Equipo.query.with_entities(app.models.Equipo.imagenes).all()
-    
+    imagenes_en_bd = Equipo.query.with_entities(Equipo.imagenes).all()
      # Crear un conjunto de todas las imágenes en la base de datos
     imagenes_en_bd_set = set()
     for imagenes in imagenes_en_bd:
         # Asumiendo que imagenes esta en una lista 
         imagenes_en_bd_set.update(imagenes[0])
-    
     # Listar todas las imágenes en el directorio    
     for img in os.listdir(img_d_ruta):
         if img not in imagenes_en_bd_set:

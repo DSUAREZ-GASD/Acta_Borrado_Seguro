@@ -13,17 +13,27 @@
         <div class="form-group mb-3">
             <label for="{{ form.current_password.id }}" class="form-label">{{ form.current_password.label }}</label>
             {{ form.current_password(class="form-control", size=32) }}
+            {% for error in form.current_password.errors %}
+                <div class="text-danger">{{ error }}</div>
+            {% endfor %}
         </div>
 
         <div class="form-group mb-3">
             <label for="{{ form.password.id }}" class="form-label">{{ form.password.label }}</label>
             {{ form.password(class="form-control", size=32) }}
+            {% for error in form.password.errors %}
+                <div class="text-danger">{{ error }}</div>
+            {% endfor %}
         </div>
 
         <div class="form-group mb-3">
             <label for="{{ form.confirm_password.id }}" class="form-label">{{ form.confirm_password.label }}</label>
             {{ form.confirm_password(class="form-control", size=32) }}
+            {% for error in form.confirm_password.errors %}
+                <div class="text-danger">{{ error }}</div>
+            {% endfor %}
         </div>
+        
         <div class="form-group">
             {{ form.submit(class="btn btn-primary") }}
         </div>

@@ -1,6 +1,7 @@
 from flask_wtf import FlaskForm
 from wtforms import StringField,EmailField,PasswordField,SubmitField, SelectField
-from wtforms.validators import InputRequired, Optional
+from wtforms.validators import InputRequired, Optional, Email, EqualTo, Length, Regexp
+from flask_babel import gettext as _
 from enum import Enum
 
 # Columnas de atributos enumerados
@@ -8,70 +9,90 @@ class Rol(Enum):
     AGENTE = "Agente"
     ADMINISTRADOR = "Administrador"
     
-class Estado_usuario(Enum):
+class EstadoUsuario(Enum):
     ACTIVO = "Activo"
     INACTIVO = "Inactivo"    
 
-#Formulario Maestro de cliente
-class UsuarioForm():
-     userName=StringField("Nombre del Usuario:",
-                       validators= [InputRequired(message="por favor ingresa un nombre de usuario")])
+# Formulario Maestro de usuario
+class FormRegistrarUsuario(FlaskForm):
+     userName=StringField(_("Nombre del Usuario:"),
+                       validators= [InputRequired(message=_("Por favor ingresa un nombre de usuario")),
+            Length(min=5, max=20, message=_("El nombre de usuario debe tener entre 5 y 20 caracteres"))])
      
-     email=EmailField("Correo del Usuario:",
-                       validators= [InputRequired(message="por favor ingresa el correo del usuario")])
+     email = EmailField(_("Correo del Usuario:"),
+                        validators=[InputRequired(message=_("Por favor ingresa el correo del usuario")),
+                                    Email(message=_("Por favor ingresa un correo válido")),
+                                    Regexp(r'^[\w\.-]+@grupoasd\.com$', message=_("El correo debe ser de la compañía '@grupoasd.com'"))])
+    
+     rol = SelectField(_("Rol del Usuario:"),
+        choices=[(rol.name, rol.value) for rol in Rol],
+        validators=[InputRequired(message=_("Por favor ingresa el rol del usuario"))])
+    
+     password = PasswordField(_("Contraseña de usuario:"),
+        validators=[Optional()])
      
-     rol = SelectField("Rol del Usuario:",
-                       choices=[(rol.name, rol.value)for rol in Rol],
-                       validators= [InputRequired(message="por favor ingresa el rol del usuario")])
+     submit = SubmitField("Registrar Usuario")
      
-     password=PasswordField("Contraseña de usuario:",
-                       validators= [Optional()])
+# Formulario de restablecimiento de usuario
+class FormRestablecerUsuario(FlaskForm):
+     userName=StringField(_("Nombre del Usuario:"),
+                       validators= [InputRequired(message=_("Por favor ingresa un nombre de usuario")),
+            Length(min=5, max=20, message=_("El nombre de usuario debe tener entre 5 y 20 caracteres"))])
      
+     email = EmailField(_("Correo del Usuario:"),
+                        validators=[InputRequired(message=_("Por favor ingresa el correo del usuario")),
+                                    Email(message=_("Por favor ingresa un correo válido")),
+                                    Regexp(r'^[\w\.-]+@grupoasd\.com$', message=_("El correo debe ser de la compañía '@grupoasd.com'"))])
+    
+     rol = SelectField(_("Rol del Usuario:"),
+        choices=[(rol.name, rol.value) for rol in Rol],
+        validators=[InputRequired(message=_("Por favor ingresa el rol del usuario"))])
      
-class PerfilForm():
+     estado = SelectField("Estado del Usuario:",
+                         choices=[(estado.name, estado.value) for estado in EstadoUsuario],
+                         validators=[InputRequired(message="Por favor ingresa el estado del usuario")])
     
-    userName=StringField("Nombre del Usuario:",
-                         validators= [InputRequired(message="por favor ingresa un nombre de usuario")])
-    email=EmailField("Correo del Usuario:",
-                     validators= [InputRequired(message="por favor ingresa el correo del usuario")])
+     password = PasswordField(_("Contraseña de usuario:"),
+        validators=[Optional()])
+     
+     submit = SubmitField("Restablecer Usuario")
+     
+# Formulario de perfil de usuario     
+class FormPerfil(FlaskForm):
+    userName=StringField(_("Nombre del Usuario:"),
+                       validators= [InputRequired(message=_("Por favor ingresa un nombre de usuario")),
+            Length(min=5, max=20, message=_("El nombre de usuario debe tener entre 5 y 20 caracteres"))])
+     
+    email = EmailField(_("Correo del Usuario:"),
+                        validators=[InputRequired(message=_("Por favor ingresa el correo del usuario")),
+                                    Email(message=_("Por favor ingresa un correo válido")),
+                                    Regexp(r'^[\w\.-]+@grupoasd\.com$', message=_("El correo debe ser de la compañía '@grupoasd.com'"))])
     
-    current_password = PasswordField("Contraseña Actual:",
-                                     validators=[InputRequired(message="Por favor ingresa tu contraseña actual.")])
+    current_password = PasswordField(_("Contraseña Actual:"),
+                                     validators=[InputRequired(message=_("Por favor ingresa tu contraseña actual."))])
     
-    password=PasswordField("Contraseña de usuario:",
-                           validators= [Optional()])
+    password=PasswordField(_("Nueva Contraseña:"),validators=[Optional(), Length(min=8, message=_("La contraseña debe tener al menos 8 caracteres")),
+            Regexp(r'^(?=.*[A-Z])(?=.*[a-z])(?=.*\d)(?=.*[*#@.$£]).+$', message=_("La contraseña debe contener al menos una letra mayúscula, una letra minúscula, un número y un carácter especial (*,#,@,.,$,£)"))])
     
-    confirm_password=PasswordField("Confirma la contraseña:",
-                                  validators= [Optional()])
+    confirm_password=PasswordField(_("Confirma la Contraseña:"),
+                                   validators=[Optional(), EqualTo('password', message=_("Las contraseñas no coinciden"))])
     
+    submit = SubmitField("Guardar Cambios")
     
-class cambio_password():
+# Formulario de cambio de contraseña
+class FormNuevaClave(FlaskForm):
     current_password = PasswordField("Contraseña Actual:",
                                         validators=[InputRequired(message="Por favor ingresa tu contraseña actual.")])
     
-    password=PasswordField("Nueva contraseña:",
-                            validators= [InputRequired(message="Por favor ingresa tu contraseña actual.")])
+    password = PasswordField(_("Nueva Contraseña:"),
+        validators=[InputRequired(message=_("Por favor ingresa tu nueva contraseña.")),
+            Length(min=8, message=_("La contraseña debe tener al menos 8 caracteres")),
+            Regexp(r'^(?=.*[A-Z])(?=.*[a-z])(?=.*\d)(?=.*[*#@.$£]).+$', 
+            message=_("La contraseña debe contener al menos una letra mayúscula, una letra minúscula, un número y un carácter especial (*,#,@,.,$,£)"))
+        ]
+    )
     
     confirm_password=PasswordField("Confirma la contraseña:",
                                    validators= [InputRequired(message="Por favor ingresa tu contraseña actual.")])
     
-class NuevoUsuario(FlaskForm,UsuarioForm):
-    
-    submit = SubmitField("Registrar Usuario")
-    
-class EditUsuarioForm(FlaskForm,UsuarioForm):
-    
-    estado = SelectField("Estado del Usuario:",
-                         choices=[(estado.name, estado.value) for estado in Estado_usuario],
-                         validators=[InputRequired(message="Por favor ingresa el estado del usuario")])
-
-    submit = SubmitField("Actualizar Datos")    
-    
-class PerfilUsuarioForm(FlaskForm,PerfilForm):  
-    submit = SubmitField("Guardar Cambios")    
-
-
-class CambiarPasswordForm(FlaskForm,cambio_password):
-    submit = SubmitField("Cambiar Contraseña")
-    
-    
+    submit = SubmitField("Cambiar Contraseña")     
