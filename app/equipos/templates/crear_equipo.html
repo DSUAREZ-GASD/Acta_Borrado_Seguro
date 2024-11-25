@@ -1,24 +1,107 @@
 {% extends 'base.html' %}
 {% import 'bootstrap/wtf.html' as wtf %}
-   
 {% block content %}
+{% for mensaje in get_flashed_messages() %}
+<div class="alert alert-success alert-dismissable">
+  <button type="button" data-dismiss="alert" class="close">X</button>
+  {{ mensaje }}
+</div>
+{% endfor %}
      <h1>🤨Nuevo Equipo🤨</h1>  
      <form action="" method="POST" novalidate enctype="multipart/form-data">
       {{ form.hidden_tag() }}
-      {{ wtf.form_errors(form) }}
-      {{ wtf.form_field(form.nombre) }}
-      {{ wtf.form_field(form.comision) }}
-      {{ wtf.form_field(form.municipio) }}
-      {{ wtf.form_field(form.departamento) }}
-      {{ wtf.form_field(form.equipo_marca) }}
-      {{ wtf.form_field(form.equipo_modelo) }}
-      {{ wtf.form_field(form.equipo_serial) }}
-      {{ wtf.form_field(form.dd_marca) }}
-      {{ wtf.form_field(form.dd_modelo) }}
-      {{ wtf.form_field(form.dd_serial) }}
-      {{ wtf.form_field(form.sha_1) }}
-      {{ wtf.form_field(form.md_5) }}
-      {{ wtf.form_field(form.observacion) }}
+      
+      <div class="form-group mb-3">
+        <label for="{{ form.nombre.id }}" class="form-label">{{ form.nombre.label }}</label>
+        {{ form.nombre(class="form-control", size=32) }}
+        {% for error in form.nombre.errors %}
+                <div class="text-danger">{{ error }}</div>
+        {% endfor %}
+      </div>
+      <div class="form-group mb-3">
+        <label for="{{ form.comision.id }}" class="form-label">{{ form.comision.label }}</label>
+        {{ form.comision(class="form-control") }}
+        {% for error in form.comision.errors %}
+                <div class="text-danger">{{ error }}</div>
+        {% endfor %}
+      </div>
+      <div class="form-group mb-3">
+        <label for="{{ form.municipio.id }}" class="form-label">{{ form.municipio.label }}</label>
+        {{ form.municipio(class="form-control") }}
+        {% for error in form.municipio.errors %}
+                <div class="text-danger">{{ error }}</div>
+        {% endfor %}
+      </div>
+      <div class="form-group mb-3">
+            <label for="{{ form.departamento.id }}" class="form-label">{{ form.departamento.label }}</label>
+            {{ form.departamento(class="form-control") }}
+            {% for error in form.departamento.errors %}
+                <div class="text-danger">{{ error }}</div>
+            {% endfor %}
+       </div>
+       <div class="form-group mb-3">
+            <label for="{{ form.equipo_marca.id }}" class="form-label">{{ form.equipo_marca.label }}</label>
+            {{ form.equipo_marca(class="form-control") }}
+            {% for error in form.equipo_marca.errors %}
+                <div class="text-danger">{{ error }}</div>
+            {% endfor %}
+       </div>
+       <div class="form-group mb-3">
+            <label for="{{ form.equipo_modelo.id }}" class="form-label">{{ form.equipo_modelo.label }}</label>
+            {{ form.equipo_modelo(class="form-control") }}
+            {% for error in form.equipo_modelo.errors %}
+                <div class="text-danger">{{ error }}</div>
+            {% endfor %}
+       </div>
+       <div class="form-group mb-3">
+           <label for="{{ form.equipo_serial.id }}" class="form-label">{{ form.equipo_serial.label }}</label>
+           {{ form.equipo_serial(class="form-control") }}
+           {% for error in form.dd_marca.errors %}
+                <div class="text-danger">{{ error }}</div>
+           {% endfor %}
+       </div>
+       <div class="form-group mb-3">
+           <label for="{{ form.dd_marca.id }}" class="form-label">{{ form.dd_marca.label }}</label>
+           {{ form.dd_marca(class="form-control") }}
+           {% for error in form.dd_marca.errors %}
+                <div class="text-danger">{{ error }}</div>
+           {% endfor %}
+       </div>
+       <div class="form-group mb-3">
+           <label for="{{ form.dd_modelo.id }}" class="form-label">{{ form.dd_modelo.label }}</label>
+           {{ form.dd_modelo(class="form-control") }}
+           {% for error in form.dd_modelo.errors %}
+                <div class="text-danger">{{ error }}</div>
+           {% endfor %}
+       </div>
+       <div class="form-group mb-3">
+           <label for="{{ form.dd_serial.id }}" class="form-label">{{ form.dd_serial.label }}</label>
+           {{ form.dd_serial(class="form-control") }}
+           {% for error in form.dd_serial.errors %}
+                <div class="text-danger">{{ error }}</div>
+           {% endfor %}
+       </div>
+       <div class="form-group mb-3">
+           <label for="{{ form.sha_1.id }}" class="form-label">{{ form.sha_1.label }}</label>
+           {{ form.sha_1(class="form-control", rows=3) }}
+           {% for error in form.sha_1.errors %}
+                <div class="text-danger">{{ error }}</div>
+           {% endfor %}
+       </div>
+       <div class="form-group mb-3">
+           <label for="{{ form.md_5.id }}" class="form-label">{{ form.md_5.label }}</label>
+           {{ form.md_5(class="form-control", rows=3) }}
+           {% for error in form.md_5.errors %}
+                <div class="text-danger">{{ error }}</div>
+           {% endfor %}
+       </div>
+       <div class="form-group mb-3">
+           <label for="{{ form.observacion.id }}" class="form-label">{{ form.observacion.label }}</label>
+           {{ form.observacion(class="form-control", rows=3) }}
+           {% for error in form.observacion.errors %}
+                <div class="text-danger">{{ error }}</div>
+           {% endfor %}
+       </div>
 
       {% for i in range(8) %}
         <div class="form-group">

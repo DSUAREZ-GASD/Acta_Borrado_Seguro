@@ -43,7 +43,7 @@
       <td>{{usuario.rol.value}}</td>
       <td>{{usuario.estado.value}}</td>
       <td>
-        <a href="/usuarios/restablecer-usuario/{{usuario.id}}" class="btn btn-primary">Modificar</a>
+        <a href="/usuarios/restablecer-usuario/{{usuario.id}}" class="btn btn-primary">Restablecer</a>
       </td>
       <td>
         <a href="/usuarios/eliminar-usuario/{{usuario.id}}" class="btn btn-danger">Eliminar</a>
@@ -54,7 +54,7 @@
 </table>
 <div class="d-grid gap-2 col-6 mx-auto">
   <a href="/usuarios/crear-usuario" class="btn btn-primary">Agregar Usuario</a>
-  <a href="/representantes/lista_representantes" class="btn btn-info">Representantes</a>
+  <a href="/representantes/lista-representantes" class="btn btn-info">Representantes</a>
 </div>
 
 {% endblock%}

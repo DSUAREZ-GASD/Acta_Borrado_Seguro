@@ -36,16 +36,32 @@ def crear_equipo():
             equipo.imagenes = []
             equipo.usuario_id = current_user.id
             
+            # Guardar el equipo inicialmente para obtener el asd_id
+            db.session.add(equipo)
+            db.session.commit()
+            
+            # Formatear el nombre del equipo con el asd_id
+            nombre_final = f"{equipo.nombre} (ASD{equipo.asd_id}_{equipo.comision}_{equipo.municipio}_{equipo.departamento})"
+            
+            # Verificar si el nombre del equipo ya existe
+            if Equipo.query.filter_by(nombre=nombre_final).first():
+                flash("El nombre del equipo ya existe. Por favor, elige otro nombre.")
+                db.session.delete(equipo)  # Eliminar el equipo creado previamente
+                db.session.commit()
+                return redirect(url_for('equipos.crear_equipo'))
+            
+            # Asignar el nombre final al equipo
+            equipo.nombre = nombre_final
+            
             # Guardar cada imagen
             for imagen_field in form_registrar.imagenes:
                 if imagen_field.data:
                     filename = imagen_field.data.filename
-                    imagen_field.data.save(os.path.join('app/static/imagenes', filename))
+                    imagen_field.data.save(os.path.join('app/static/img', filename))
                     equipo.imagenes.append(filename)
             
             # Agregar el equipo a la base de datos      
-            db.session.add(equipo)
-            db.session.commit()
+            db.session.commit()            
             flash("Registro de equipo exitoso")
             if current_user.rol.value == "Administrador":
                 return redirect(url_for('equipos.lista_equipos'))
@@ -104,7 +120,7 @@ def editar_equipo(equipo_id):
             for imagen_field in form_edit_equipo.imagenes:
                 if imagen_field.data and hasattr(imagen_field.data, 'filename') and imagen_field.data.filename:
                     filename = secure_filename(imagen_field.data.filename)
-                    file_path = os.path.join('app/static/imagenes', filename)
+                    file_path = os.path.join('app/static/img', filename)
                     imagen_field.data.save(file_path)
                     nuevas_imagenes.append(filename)
                 else:
@@ -118,7 +134,7 @@ def editar_equipo(equipo_id):
             equipo.actualizar_estado()
             equipo.usuario_id = current_user.id
             db.session.commit()
-            flash(_(f"Equipo modificado exitoso"))
+            flash(_(f"Equipo actualizado exitosamente"))
             if current_user.rol.value == "Administrador":
                 return redirect(url_for('equipos.lista_equipos'))
             elif current_user.rol.value == "Agente":
@@ -154,7 +170,7 @@ def eliminar_equipo(equipo_id):
 
 # Eliminación de imagenes huerfanas
 def limpiar_imagenes_huerfanas():
-    img_d_ruta = 'app/static/imagenes'
+    img_d_ruta = 'app/static/img'
      # Obtener todas las imágenes asociadas a los registros en la base de datos
     imagenes_en_bd = Equipo.query.with_entities(Equipo.imagenes).all()
      # Crear un conjunto de todas las imágenes en la base de datos

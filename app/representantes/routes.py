@@ -1,125 +1,115 @@
-from flask import render_template, redirect, flash
-from app.auth.routes import acceso_requerido
-from .forms import Nuevo_Representante, EditRespresentanteForm
+from flask import render_template, redirect, flash, url_for
 from werkzeug.utils import secure_filename
 import os
 from . import representantes
 from app import db
+from app.auth.routes import acceso_requerido
 from app.models import Representante
-
+from .forms import Nuevo_Representante, EditRespresentanteForm
 
 
 from flask_login import login_required
 
-# Registro de firma
-@representantes.route('/insertar', methods=['GET', 'POST'])
+# Registro de representantes
+@representantes.route('/registro-representante', methods=['GET', 'POST'])
 @acceso_requerido(roles=["Administrador"])
 @login_required
 def registro_representante():
-    r = Representante()
+    representante = Representante()
     form = Nuevo_Representante()
     
     if form.validate_on_submit():
-        # Poblar el objeto Firma
-        form.populate_obj(r)
-        r.firma = form.firma.data.filename
-        db.session.add(r)
-        db.session.commit()
+        try:
+            form.populate_obj(representante)
+            representante.firma = secure_filename(form.firma.data.filename)
+            db.session.add(representante)
+            db.session.commit()
+            
+            file = form.firma.data
+            file.save(os.path.join('app','static','firmas', representante.firma))
+            flash("Registro de representante exitoso")
+            return redirect(url_for('representantes.lista_representantes'))
+        except Exception as e:
+            db.session.rollback()
+            flash("Error al registrar la firma: "+str(e))
         
-        # Guardar cada imagen
-        file = form.firma.data
-        file.save(os.path.abspath(os.getcwd()+'/app/static/firmas/'+r.firma))
-        flash("Registro de firmas exitoso")
-        return redirect('/representantes/lista_representantes')
-        
-    return render_template('ingreso_representante.html', form=form)
+    return render_template('registro_representante.html', form=form)
 
-
-@representantes.route('/lista_representantes')
+# Listado de representantes
+@representantes.route('/lista-representantes')
 @acceso_requerido(roles=["Administrador"])
 @login_required
 def lista_representantes():
-    representantes = Representante.query.all()
-    return render_template('lista_representante.html', representantes=representantes)
+    try:
+        representantes = Representante.query.all()
+        return render_template('lista_representantes.html', representantes=representantes)
+    except Exception as e:
+        flash("Error al cargar la lista de representantes: "+str(e))
+        return redirect(url_for('representantes.lista_representantes'))
 
-
-@representantes.route('/editar/<representante_id>', methods=['GET','POST'])
+# Edición de representantes
+@representantes.route('/editar-representante/<representante_id>', methods=['GET','POST'])
 @acceso_requerido(roles=["Administrador"])
 @login_required
-def editar(representante_id):
-    # Seleccionar el firma con el Id
-    r = Representante.query.get(representante_id) 
-    if r is None:
+def editar_representante(representante_id):
+    representante = Representante.query.get_or_404(representante_id) 
+    if representante is None:
         flash('El representante no existe')
-        return redirect('/representantes/lista_representantes')
+        return redirect(url_for('representantes.lista_representantes'))
         
-    # Cargo el formulario con los atributos del firma
-    form_edit = EditRespresentanteForm(obj=r)
-    
-    current_firma = r.firma
+    form_edit = EditRespresentanteForm(obj=representante)
+    current_firma = representante.firma
     
     if form_edit.validate_on_submit():
-        form_edit.populate_obj(r)
-        
-        if form_edit.firma.data and hasattr(form_edit.firma.data, 'filename'):
-            filename = secure_filename(form_edit.firma.data.filename)  
-            ruta_path = os.path.join('app/static/firmas', filename)
-            form_edit.firma.data.save(ruta_path)
-            r.firma = filename
-        else:
-            r.firma = current_firma
-                               
-        db.session.commit()
-        flash("Representante actualizado con éxito")
-        return redirect('/representantes/lista_representantes')
-    else:
-        if form_edit.errors:
-            print("Formulario no valido")
-            print(form_edit.errors)
+        try:
+            form_edit.populate_obj(representante)
+            
+            if form_edit.firma.data and hasattr(form_edit.firma.data, 'filename'):
+                filename = secure_filename(form_edit.firma.data.filename)  
+                ruta_path = os.path.join('app','static','firmas', filename)
+                form_edit.firma.data.save(ruta_path)
+                representante.firma = filename
+            else:
+                representante.firma = current_firma
+                                
+            db.session.commit()
+            flash("Representante actualizado con éxito")
+            limpiar_firmas()
+            return redirect(url_for('representantes.lista_representantes'))
+        except Exception as e:
+            db.session.rollback()
+            flash("Error al actualizar el representante: "+str(e))
                   
-    return render_template('editar_representante.html', form=form_edit, representante=r)
-                         
-    
-   # return "EL firma id editar:"+ representante_id
+    return render_template('editar_representante.html', form=form_edit, representante=representante)             
    
-   
-@representantes.route('/eliminar/<representante_id>', methods=['GET','POST'])
+# Eliminación de representantes
+@representantes.route('/eliminar-representante/<representante_id>', methods=['GET','POST'])
 @acceso_requerido(roles=["Administrador"])
 @login_required
-def eliminar(representante_id):
-    r = Representante.query.get(representante_id)
+def eliminar_representante(representante_id):
+    representante = Representante.query.get_or_404(representante_id)
+    try:
+        if representante:
+            db.session.delete(representante)
+            db.session.commit()
+            flash("Firma eliminada con éxito")
+            limpiar_firmas()
+    except Exception as e:
+        db.session.rollback()
+        flash("Error al eliminar el representante: "+str(e))
+        return redirect(url_for('representantes.lista_representantes'))
     
-    if r:
-        db.session.delete(r)
-        db.session.commit()
-        
-        print("Firma eliminada")
-        flash("Firma eliminada con éxito")
-        
-        limpiar_firmas()
-    else:
-        flash('El representante no existe')
-        
-    return redirect('/representantes/lista_representantes')
+    return redirect(url_for('representantes.lista_representantes'))
     
 # Eliminación de firmas huerfanas   
 def limpiar_firmas():
-    ruta_firma = 'app/static/firmas'
-    
-     # Obtener todas las firmas asociadas a los registros en la base de datos
-    firmas_en_bd = Representante.query.with_entities(Representante.firma).all()
-    
-     # Crear un conjunto de todas las firmas en la base de datos
-    firmas_en_bd_set = set()
-    for firma in firmas_en_bd:
-        # Asumiendo que firma esta en una lista 
-        firmas_en_bd_set.update(firma)
-    
-    # Listar todas las firmas en el directorio    
+    ruta_firma = os.path.join('app','static','firmas')
+    firmas_en_bd = {firma for (firma,) in Representante.query.with_entities(Representante.firma).all()}
+     
     for fir in os.listdir(ruta_firma):
-        if fir not in firmas_en_bd_set:
+        if fir not in firmas_en_bd:
             try:
                 os.remove(os.path.join(ruta_firma, fir))
                 print(f"Firma eliminada: {fir}")
             except Exception as e:
-                print(f"Error al eliminar la imagen {fir}:", e)  
+                print(f"Error al eliminar la imagen {fir}:", {e.strerror})  

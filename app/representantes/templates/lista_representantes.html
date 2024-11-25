@@ -6,8 +6,8 @@ get_flashed_messages() %}
 </div>
 {% endfor %}
 <div class="d-grid gap-2 col-6 mx-auto">
-  <a href="/usuarios/lista_usuario" class="btn btn-info">Volver</a>
-  <a href="/representantes/insertar" class="btn btn-success">Insertar Representante</a>
+  <a href="/usuarios/lista-usuarios" class="btn btn-info">Volver</a>
+  <a href="/representantes/registro-representante" class="btn btn-success">Registrar Representante</a>
 </div>
 <h1>😆Lista de representantes😆</h1>
 <table class="table table-hover">
@@ -27,10 +27,10 @@ get_flashed_messages() %}
       <td>{{ representante.rol.value }}</td>
       <td><img src="{{url_for('static', filename='firmas/' + representante.firma)}}" width="100px" height="75px"/></td>
       <td>
-        <a href="/representantes/editar/{{ representante.id }}" class="btn btn-primary">Actualizar</a>
+        <a href="/representantes/editar-representante/{{ representante.id }}" class="btn btn-primary">Actualizar</a>
       </td>
       <td>
-        <a href="/representantes/eliminar/{{ representante.id }}" class="btn btn-danger">Eliminar</a>
+        <a href="/representantes/eliminar-representante/{{ representante.id }}" class="btn btn-danger">Eliminar</a>
       </td>
     </tr>
     {% endfor %}

@@ -90,7 +90,7 @@ class Equipo(db.Model):
             self.estado = EstadoEnum.EN_PROCESO
         else:
             self.estado = EstadoEnum.REGISTRADO
-
+    
 # Modelo de Representante
 class Representante(db.Model):
     __tablename__ = "representante"
