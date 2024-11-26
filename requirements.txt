@@ -4,7 +4,6 @@ click
 colorama
 dominate
 Flask
-Flask-Bootstrap
 Flask-Login
 Flask-Migrate
 Flask-SQLAlchemy

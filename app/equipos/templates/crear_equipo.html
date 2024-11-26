@@ -1,5 +1,7 @@
-{% extends 'base.html' %}
-{% import 'bootstrap/wtf.html' as wtf %}
+{% extends "form_base.html" %}
+{% block title %}
+    Crear Equipo
+{% endblock %}
 {% block content %}
 {% for mensaje in get_flashed_messages() %}
 <div class="alert alert-success alert-dismissable">
@@ -7,10 +9,9 @@
   {{ mensaje }}
 </div>
 {% endfor %}
-     <h1>🤨Nuevo Equipo🤨</h1>  
-     <form action="" method="POST" novalidate enctype="multipart/form-data">
+     <form action="" class="formularios" method="POST" novalidate enctype="multipart/form-data">
       {{ form.hidden_tag() }}
-      
+      <h2 class="text-center my-4 titulo-responsivo">Crear Equipo</h2>
       <div class="form-group mb-3">
         <label for="{{ form.nombre.id }}" class="form-label">{{ form.nombre.label }}</label>
         {{ form.nombre(class="form-control", size=32) }}
@@ -81,6 +82,7 @@
                 <div class="text-danger">{{ error }}</div>
            {% endfor %}
        </div>
+
        <div class="form-group mb-3">
            <label for="{{ form.sha_1.id }}" class="form-label">{{ form.sha_1.label }}</label>
            {{ form.sha_1(class="form-control", rows=3) }}
@@ -95,25 +97,24 @@
                 <div class="text-danger">{{ error }}</div>
            {% endfor %}
        </div>
-       <div class="form-group mb-3">
+       <div class="form-group mb-3 form-observacion">
            <label for="{{ form.observacion.id }}" class="form-label">{{ form.observacion.label }}</label>
            {{ form.observacion(class="form-control", rows=3) }}
            {% for error in form.observacion.errors %}
                 <div class="text-danger">{{ error }}</div>
            {% endfor %}
        </div>
-
       {% for i in range(8) %}
-        <div class="form-group">
+        <div class="form-group form-group-imagen">
             <label for="{{ form.imagenes[i].id }}">{{ labels[i] }}</label>
-            {{ form.imagenes[i](class="form-control") }}
+            {{ form.imagenes[i](class="form-control form-control-sm") }}
             {% for error in form.imagenes[i].errors %}
                 <div class="text-danger">{{ error }}</div>
             {% endfor %}
         </div>
         {% endfor %}
 
-      <div class="mb-3">
+      <div class="form-group-button mb-3">
          {{ form.submit(class="btn btn-primary") }}
      </div>
      </form>

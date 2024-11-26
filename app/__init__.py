@@ -1,7 +1,6 @@
 from flask import Flask, redirect, url_for
 from flask_sqlalchemy import SQLAlchemy
 from flask_migrate import Migrate
-from flask_bootstrap import Bootstrap
 from flask_login import LoginManager
 from flask_babel import Babel
 from .config import Config
@@ -18,7 +17,6 @@ def crear_app():
     # Inicializar extensiones
     db.init_app(app)
     migrate.init_app(app, db)
-    Bootstrap(app)
     login.init_app(app)
     login.login_view = 'auth.login' # Redirigir a la página de login si no está autenticado
     babel = Babel(app)

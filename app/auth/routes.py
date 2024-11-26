@@ -111,19 +111,19 @@ def redirigir_por_rol(u):
 #ruta de login
 @auth.route('/login', methods = ['GET','POST'])
 def login():
-    f = LoginForm()
+    form = LoginForm()
     default_password = "GrupoASD123*"
     try:
-        if f.validate_on_submit():
-            u = Usuario.query.filter_by(userName=f.userName.data).first()
+        if form.validate_on_submit():
+            u = Usuario.query.filter_by(userName=form.userName.data).first()
             
-            if not validar_usuario(u, f.password.data):
+            if not validar_usuario(u, form.password.data):
                 return redirect(url_for('auth.login'))
                  
             intentos_fallidos[u.userName] = {'intentos': 0, 'ultimo_intento': None}
             login_user(u,True)
             
-            if f.password.data == default_password:
+            if form.password.data == default_password:
                 flash(MSG_CAMBIAR_CONTRASEÑA)
                 return redirect(url_for('usuarios.cambiar_clave', usuario_id=u.id))
             
@@ -134,7 +134,7 @@ def login():
         flash(MSG_ERROR.format(str(e)))
         return redirect(url_for('auth.login'))
  
-    return render_template("login.html",f=f)
+    return render_template("login.html",form=form)
 
 
 #ruta de logout

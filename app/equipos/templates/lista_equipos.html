@@ -1,19 +1,39 @@
-{% extends "base.html" %} {% block content %}
-<nav class="nav nav-inverse">
-  <div class="container">
-    <ul class="nav navbar-nav">
-      <li><a href="/equipos/lista-equipos">Equipos</a></li>
-      <li><a href="/usuarios/lista-usuarios">Usuarios</a></li>
-      {% if current_user.is_authenticated %}
-      <li>
-        <a href="/auth/logout">Cerrar sesión</a>
-      </li>
-      {% else %}
-      <li>
-        <a href="/auth/logout">Cerrar sesión</a>
-      </li>
-      {% endif %}
-    </ul>
+{% extends "base.html" %} 
+{% block head %}
+    {{ super() }}
+   <!-- Librerías de DataTables -->
+    <link rel="stylesheet" href="https://cdn.datatables.net/1.11.5/css/jquery.dataTables.min.css">
+    <link rel="stylesheet" href="https://cdn.datatables.net/responsive/2.4.0/css/responsive.dataTables.min.css">
+{% endblock %}
+{% block title %}
+    Lista de equipos
+{% endblock %}
+{% block content %}
+<nav class="navbar navbar-expand-lg navbar-light bg-light">
+  <div class="container-fluid">
+    <a class="navbar-brand" href="#">Actas de borrado seguro</a>
+    <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+      <span class="navbar-toggler-icon"></span>
+    </button>
+    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+      <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+        <li class="nav-item">
+          <a class="nav-link" href="{{ url_for('equipos.lista_equipos') }}">Equipos</a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link" href="{{ url_for('usuarios.lista_usuarios') }}">Usuarios</a>
+        </li>
+        {% if current_user.is_authenticated %}
+        <li class="nav-item">
+          <a class="nav-link" href="{{ url_for('auth.logout') }}">Cerrar sesión</a>
+        </li>
+        {% else %}
+        <li class="nav-item">
+          <a class="nav-link" href="{{ url_for('auth.logout') }}">Cerrar sesión</a>
+        </li>
+        {% endif %}
+      </ul>
+    </div>
   </div>
 </nav>
 {% for mensaje in get_flashed_messages() %}
@@ -22,9 +42,23 @@
   {{ mensaje }}
 </div>
 {% endfor %}
-<h1>😆Lista de equipos😆</h1>
-<table class="table table-hover">
-  <thead>
+<div class="container-fluid">
+  <div class="row">
+    <div class="col">
+<h1>Lista de equipos</h1>
+<div class="btn-toolbar mt-4" role="toolbar" aria-label="Toolbar with button groups">
+  <div class="btn-group me-2 mb-2" role="group" aria-label="First group">
+  <a href="{{ url_for('equipos.crear_equipo') }}" class="btn btn-primary">Crear equipo</a>
+</div>
+<div class="btn-group me-2 mb-2" role="group" aria-label="First group">
+  <form action="{{ url_for('pdf.generar_todos_pdfs') }}" method="POST">
+    <button type="submit" class="btn btn-success">Generar todas las actas</button>
+  </form>
+</div>
+</div>
+<div class="table-responsive mt-4">
+<table id="equiposTable" class="display responsive nowrap table table-striped table-bordered" style="width:100%">
+  <thead class="table-dark">
     <tr>
       <th>#</th>
       <th>Estado</th>
@@ -43,29 +77,29 @@
       <td>{{equipo.nombre}}</td>
       <td>{{equipo.usuario.userName}}</td>
       <td>
-        <a href="/equipos/editar-equipo/{{equipo.asd_id}}" class="btn btn-primary">Actualizar</a>
+        <a href="{{ url_for('equipos.editar_equipo', equipo_id=equipo.asd_id) }}" class="btn btn-primary">Actualizar</a>
       </td>
       <td>
-        <a href="/equipos/eleminar-equipo/{{equipo.asd_id}}" class="btn btn-danger">Eliminar</a>
+        <a href="{{ url_for('equipos.eliminar_equipo', equipo_id=equipo.asd_id) }}" class="btn btn-danger">Eliminar</a>
       </td>
       <td>
-        <a
-          href="{{ url_for('pdf.crear_pdf', equipo_id=equipo.asd_id) }}"
-          class="btn btn-success"
-          >Generar PDF</a
-        >
+        <a href="{{ url_for('pdf.crear_pdf', equipo_id=equipo.asd_id) }}" class="btn btn-success">Generar PDF</a>
       </td>
     </tr>
-    {% endfor%}
+    {% endfor %}
   </tbody>
 </table>
-<div class="d-grid gap-2 col-6 mx-auto">
-  <a href="/equipos/crear-equipo" class="btn btn-primary">Agregar producto</a>
-  <form action="{{ url_for('pdf.generar_todos_pdfs') }}" method="POST">
-    <button type="submit" class="btn btn-success">
-      Generar Todas la actas
-    </button>
-  </form>
 </div>
-
-{% endblock%}
+</div>
+</div>
+</div>
+{% endblock %}
+{% block scripts %}
+<!-- Incluye las librerías de DataTables -->
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
+<script src="https://cdn.datatables.net/1.11.5/js/jquery.dataTables.min.js"></script>
+<script src="https://cdn.datatables.net/responsive/2.4.0/js/dataTables.responsive.min.js"></script>
+<!-- Incluye el archivo datatable.js -->
+<script src="{{ url_for('static', filename='js/datatable.js') }}"></script>
+{% endblock %}

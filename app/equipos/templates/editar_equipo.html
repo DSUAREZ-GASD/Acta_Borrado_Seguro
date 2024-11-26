@@ -1,5 +1,5 @@
-{% extends "base.html" %}
-{% import 'bootstrap/wtf.html' as wtf %}
+{% extends "form_base.html" %}
+{% block title %}Editar Equipo{% endblock %}
 {% block content %}
 {% for mensaje in get_flashed_messages() %}
 <div class="alert alert-success alert-dismissable">
@@ -7,10 +7,9 @@
   {{ mensaje }}
 </div>
 {% endfor %}
-<h1>Editar Equipo</h1>
-<form method="POST" enctype="multipart/form-data">
+<form method="POST" class="formularios" enctype="multipart/form-data">
     {{ form.hidden_tag() }}
-    
+    <h2 class="text-center my-4 titulo-responsivo">Editar Equipo</h2>
     <div class="form-group mb-3">
         <label for="{{ form.nombre.asd_id }}" class="form-label">{{ form.nombre.label }}</label>
         {{ form.nombre(class="form-control", size=32) }}
@@ -95,34 +94,30 @@
                 <div class="text-danger">{{ error }}</div>
         {% endfor %}
     </div>
-    <div class="form-group mb-3">
+    <div class="form-group mb-3 form-observacion">
         <label for="{{ form.observacion.asd_id }}" class="form-label">{{ form.observacion.label }}</label>
         {{ form.observacion(class="form-control", rows=3) }}
         {% for error in form.observacion.errors %}
                 <div class="text-danger">{{ error }}</div>
         {% endfor %}
     </div>
-    <h3 class="mt-4">Imágenes del Equipo</h3>
-    <div class="mb-3">
-        <div class="d-flex flex-wrap gap-3">
+    <h3 class="text-center my-4 titulo-responsivo">Imágenes del Equipo</h3>
             {% for i in range(8) %}
-                <div class="text-center">
+                <div class="form-group form-group-imagen">
                     {% if equipo.imagenes and i < equipo.imagenes|length %}
-                        <p>Imagen actual {{ i+1 }}:</p>
-                        <img src="{{ url_for('static', filename='img/' + equipo.imagenes[i]) }}" alt="Imagen actual" class="img-fluid" width="150" height="100">
+                        <p>Foto actual {{ i+1 }}:</p>
+                        <img src="{{ url_for('static', filename='img/' + equipo.imagenes[i]) }}" alt="Imagen actual" class="img-fluid" width="100" height="100">
                     {% else %}
-                        <p>Imagen nueva {{ i+1 }}:</p>
+                        <p>Foto nueva {{ i+1 }}:</p>
                     {% endif %}
                     <label for="{{ form.imagenes[i].id }}">{{ labels[i] }}</label>
-                    {{ form.imagenes[i ](class="form-control-file") }}
+                    {{ form.imagenes[i ](class="form-control form-control-sm") }}
                     {% for error in form.imagenes[i].errors %}
                         <div class="text-danger">{{ error }}</div>
                     {% endfor %}
                 </div>
             {% endfor %}
-        </div>
-    </div>
-    <div class="mb-3">
+    <div class="form-group-button mb-3">
         {{ form.submit(class="btn btn-primary") }}
     </div>
 </form>

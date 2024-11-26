@@ -1,0 +1,78 @@
+body{
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.login {
+    background-color: #fff;
+    border-radius: 10px;
+    text-align: left;
+    padding: 4.5em 6em;
+    margin: auto;
+    width: 90%;
+    max-width: 500px;
+    box-shadow: 0 5px 10px -5px rgba(0, 0, 0, 0.535);
+}
+
+
+.formularios {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 20px;
+    background-color: #fff;
+    border-radius: 10px;
+    text-align: left;
+    padding: 4.5em 6em;
+    margin: auto;
+    width: 90%;
+    max-width: 1400px;
+    box-shadow: 0 5px 10px -5px rgba(0, 0, 0, 0.535);
+}
+
+
+.form-group {
+    display: flex;
+    flex-direction: column;
+}
+
+.form-observacion {
+    grid-column: span 3; /* Ocupa las tres columnas del grid */
+}
+
+.form-group-imagen {
+    grid-column: span 1;/* Ocupa una columna del grid */
+}
+
+.form-group-button{
+    grid-column: span 3;
+    display: flex;
+    justify-content: left;
+}
+
+.titulo-responsivo {
+    font-size: 2.5rem; /* Tamaño base del titulo */
+    grid-column: span 3; /* Ocupa las tres columnas del grid */
+}
+
+@media (max-width: 768px) {
+    .formularios {
+        display: flex;
+        flex-direction: column;
+    }
+    .form-observacion,
+    .form-group-imagen,
+    .form-group-button{
+        grid-column: span 1;/* Ocupa una columna en pantallas pequeñas */
+    }
+    .titulo-responsivo {
+        font-size: 2rem; /* Tamaño base del titulo */
+    }
+}
+
+@media (max-width: 1600px) {
+    .formularios{
+        max-width: 800px;
+    }
+}

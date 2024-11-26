@@ -5,11 +5,11 @@ from flask_babel import gettext as _
 
 #Formulario de login
 class LoginForm(FlaskForm):
-     userName=StringField(label="Ingresa un nombre",
+     userName=StringField(label="Usuario:",
                        validators= [InputRequired(message="por favor ingresa un nombre  de usuario")])
      
      
-     password = PasswordField(_("Nueva Contraseña:"),
+     password = PasswordField(_("Contraseña:"),
           validators=[InputRequired(message=_("Por favor ingresa tu nueva contraseña.")),
                Length(min=8, message=_("La contraseña debe tener al menos 8 caracteres")),
                Regexp(r'^(?=.*[A-Z])(?=.*[a-z])(?=.*\d)(?=.*[*#@.$£]).+$', 

@@ -1,0 +1,15 @@
+{% extends "base.html" %}
+{% block head %}
+    {{ super() }}
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/formulario.css') }}">
+{% endblock %}
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col">
+            {% block form_content %}
+            {% endblock %}
+        </div>
+    </div>
+</div>
+{% endblock %}

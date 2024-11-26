@@ -1,10 +1,30 @@
-{% extends 'base.html' %}
-{% import 'bootstrap/wtf.html' as wtf %}
+{% extends "form_base.html" %}
+{% block title %}
+    Iniciar Sesión
+{% endblock %}
+{% block content %}        
+    <form action="" class="login" method="POST" novalidate enctype="multipart/form-data">
+        {{ form.hidden_tag() }}
+        <h2 class="text-custom-blue text-left g-col-6">Iniciar sesión</h2>
+        <div class="form-group mb-3">
+            <label for="{{ form.userName.id }}" class="form-label">{{ form.userName.label }}</label>
+            {{ form.userName(class="form-control", size=32) }}
+            {% for error in form.userName.errors %}
+                <div class="text-danger">{{ error }}</div>
+            {% endfor %}
+        </div>
 
-{% block content %}
-    <h1>🤨Iniciar sesión🤨</h1>  
-    <form action="" method="POST" novalidate enctype="multipart/form-data">
-        {{ wtf.quick_form(f) }}
+        <div class="form-group mb-3">
+            <label for="{{ form.password.id }}" class="form-label">{{ form.password.label }}</label>
+            {{ form.password(class="form-control", size=32) }}
+            {% for error in form.password.errors %}
+                <div class="text-danger">{{ error }}</div>
+            {% endfor %}
+        </div>
+
+        <div class="mb-3">
+            {{ form.submit(class="btn btn-primary") }}
+        </div>
     </form>
 {% for mensaje in get_flashed_messages() %}
 <div class="alert alert-danger alert-dismissable">

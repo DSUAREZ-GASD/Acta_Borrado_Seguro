@@ -1,32 +1,28 @@
 from flask_wtf import FlaskForm
 from wtforms import StringField,TextAreaField, SubmitField, FieldList #Tipos de datos d formulario
 from flask_wtf.file import FileField,FileAllowed #Tipos de archivos que se van a cargar
-from wtforms.validators import InputRequired, Optional, Length, Regexp #Validaciones de formulario
+from wtforms.validators import InputRequired, Optional, Length #Validaciones de formulario
 
 class EquipoForm():
     nombre = StringField("Nombre del equipo:",
                          validators=[
                              InputRequired(message="Por favor ingresa un nombre de equipo"),
-                             Length(max=50, message="El nombre del equipo no debe exceder los 50 caracteres"),
-                             Regexp(r'^[A-Z][a-zA-Z\s]*$', message="El nombre debe comenzar con una letra mayúscula")
+                             Length(max=50, message="El nombre del equipo no debe exceder los 50 caracteres")
                          ])
     comision = StringField("Comisión:",
                            validators=[
                                InputRequired(message="Por favor ingresa una comisión"),
-                               Length(max=50, message="La comisión no debe exceder los 50 caracteres"),
-                               Regexp(r'^[A-Z][a-zA-Z\s]*$', message="La comisión debe comenzar con una letra mayúscula")
+                               Length(max=50, message="La comisión no debe exceder los 50 caracteres")
                            ])
     municipio = StringField("Municipio:",
                             validators=[
                                 InputRequired(message="Por favor ingresa un municipio"),
-                                Length(max=50, message="El municipio no debe exceder los 50 caracteres"),
-                                Regexp(r'^[A-Z][a-zA-Z\s]*$', message="El municipio debe comenzar con una letra mayúscula")
+                                Length(max=50, message="El municipio no debe exceder los 50 caracteres")
                             ])
     departamento = StringField("Departamento:",
                                validators=[
                                    InputRequired(message="Por favor ingresa un departamento"),
-                                   Length(max=50, message="El departamento no debe exceder los 50 caracteres"),
-                                   Regexp(r'^[A-Z][a-zA-Z\s]*$', message="El departamento debe comenzar con una letra mayúscula")
+                                   Length(max=50, message="El departamento no debe exceder los 50 caracteres")
                                ])
     equipo_marca = StringField("Marca de equipo:",
                                validators=[
@@ -83,7 +79,7 @@ class NuevoEquipo(FlaskForm, EquipoForm):
 #Formulario de editar equipo    
 class EditEquipoForm(FlaskForm, EquipoForm):
     
-    submit=SubmitField("Actualizar")
+    submit=SubmitField("Actualizar equipo")
     
 
 
