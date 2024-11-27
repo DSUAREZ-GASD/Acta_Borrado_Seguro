@@ -1,5 +1,7 @@
-{% extends 'base.html' %}
-{% import 'bootstrap/wtf.html' as wtf %}
+{% extends "form_base.html" %}
+{% block title %}
+    Cambiar Clave
+{% endblock %}
 {% block content %}
 {% for mensaje in get_flashed_messages() %}
 <div class="alert alert-success alert-dismissable">
@@ -7,9 +9,9 @@
   {{ mensaje }}
 </div>
 {% endfor %}
-    <h1>Cambiar Contraseña</h1>
-    <form action="" method="POST">
+    <form action="" class="login" method="POST" novalidate enctype="multipart/form-data">
         {{ form.hidden_tag() }}
+        <h2 class="text-center my-4 titulo-responsivo">Cambiar Contraseña</h2>
         <div class="form-group mb-3">
             <label for="{{ form.current_password.id }}" class="form-label">{{ form.current_password.label }}</label>
             {{ form.current_password(class="form-control", size=32) }}

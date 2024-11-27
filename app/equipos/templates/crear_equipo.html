@@ -2,7 +2,7 @@
 {% block title %}
     Crear Equipo
 {% endblock %}
-{% block content %}
+{% block form_content %}
 {% for mensaje in get_flashed_messages() %}
 <div class="alert alert-success alert-dismissable">
   <button type="button" data-dismiss="alert" class="close">X</button>
@@ -23,6 +23,13 @@
         <label for="{{ form.comision.id }}" class="form-label">{{ form.comision.label }}</label>
         {{ form.comision(class="form-control") }}
         {% for error in form.comision.errors %}
+                <div class="text-danger">{{ error }}</div>
+        {% endfor %}
+      </div>
+      <div class="form-group mb-3">
+        <label for="{{ form.cod_comision.id }}" class="form-label">{{ form.cod_comision.label }}</label>
+        {{ form.cod_comision(class="form-control") }}
+        {% for error in form.cod_comision.errors %}
                 <div class="text-danger">{{ error }}</div>
         {% endfor %}
       </div>

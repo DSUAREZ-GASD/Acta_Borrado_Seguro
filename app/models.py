@@ -62,6 +62,7 @@ class Equipo(db.Model):
     # Campo ENUM para el estado
     estado = db.Column(db.Enum(EstadoEnum), default=EstadoEnum.REGISTRADO)
     comision = db.Column(db.String(100), nullable=True)
+    cod_comision = db.Column(db.Numeric(10, 0), nullable=True)
     municipio = db.Column(db.String(100), nullable=True)
     departamento = db.Column(db.String(100), nullable=True)
     equipo_marca = db.Column(db.String(100), nullable=True)

@@ -1,14 +1,17 @@
-{% extends 'base.html' %}
-{% import 'bootstrap/wtf.html' as wtf %}
-{% block content %}
+{% extends "form_base.html" %}
+{% block title %}
+    Crear Usuario
+{% endblock %}
+{% block form_content %}
+{% for mensaje in get_flashed_messages() %}
 <div class="alert alert-success alert-dismissable">
-    <button type="button" data-dismiss="alert" class="close">X</button>
-    {{ mensaje }}
-  </div>
-    <h1>🤨Nuevo Usuario🤨</h1>  
-    <form action="" method="POST" novalidate enctype="multipart/form-data">
+  <button type="button" data-dismiss="alert" class="close">X</button>
+  {{ mensaje }}
+</div>
+{% endfor %}
+    <form action="" class="login" method="POST" novalidate enctype="multipart/form-data">
         {{ form.hidden_tag() }}
-
+        <h2 class="text-center my-4 titulo-responsivo">Crear Usuario</h2>  
         <div class="form-group mb-3">
             <label for="{{ form.userName.id }}" class="form-label">{{ form.userName.label }}</label>
             {{ form.userName(class="form-control", size=32) }}
@@ -42,7 +45,6 @@
             <input type="password" class="form-control" size="32" value="{{ form.password.data }}" readonly>
             <small class="form-text text-muted">Se registrara con la clave super generica.</small>
         </div>
-
 
         <div class="mb-3">
             {{ form.submit(class="btn btn-primary") }}

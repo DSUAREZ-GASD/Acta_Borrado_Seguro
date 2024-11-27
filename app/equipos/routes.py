@@ -41,7 +41,7 @@ def crear_equipo():
             db.session.commit()
             
             # Formatear el nombre del equipo con el asd_id
-            nombre_final = f"{equipo.nombre} (ASD{equipo.asd_id}_{equipo.comision}_{equipo.municipio}_{equipo.departamento})"
+            nombre_final = f"{equipo.nombre} (ASD{equipo.asd_id}_{equipo.comision}_{equipo.municipio}_{equipo.departamento}_{equipo.cod_comision})"
             
             # Verificar si el nombre del equipo ya existe
             if Equipo.query.filter_by(nombre=nombre_final).first():
@@ -113,7 +113,20 @@ def editar_equipo(equipo_id):
 
     if form_edit_equipo.validate_on_submit():
         try:
+            # Guardar los datos del equipo
+            nombre_actual = equipo.nombre.split(" (ASD")[0]  # Extraer el nombre base sin el formato
+            comision_actual = equipo.comision
+            municipio_actual = equipo.municipio
+            departamento_actual = equipo.departamento
+            cod_comision_actual = equipo.cod_comision
+            
+            # Poblar el objeto equipo con los nuevos datos 
             form_edit_equipo.populate_obj(equipo)
+            
+            # Verificar si alguno de los datos del nombre ha cambiado (excepto asd_id)
+            if (nombre_actual != equipo.nombre or comision_actual != equipo.comision or municipio_actual != equipo.municipio or departamento_actual != equipo.departamento or cod_comision_actual != equipo.cod_comision):
+                equipo.nombre = f"{equipo.nombre.split(' (ASD')[0]} (ASD{equipo.asd_id}_{equipo.comision}_{equipo.municipio}_{equipo.departamento}_{equipo.cod_comision})"
+                
             nuevas_imagenes = []
             
             # Guardar nuevas imágenes

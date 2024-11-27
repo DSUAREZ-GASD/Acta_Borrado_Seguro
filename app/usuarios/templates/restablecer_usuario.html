@@ -1,11 +1,17 @@
-{% extends 'base.html' %}
-{% import 'bootstrap/wtf.html' as wtf %}
-
-{% block content %}
-    <h1>🤨Editar Usuario🤨</h1>  
-    <form action="" method="POST" novalidate enctype="multipart/form-data">
+{% extends "form_base.html" %}
+{% block title %}
+    Editar Usuario
+{% endblock %}
+{% for mensaje in get_flashed_messages() %}
+<div class="alert alert-success alert-dismissable">
+    <button type="button" data-dismiss="alert" class="close">X</button>
+    {{ mensaje }}
+  </div>
+  {% endfor %}
+{% block form_content %}
+    <form action="" class="login" method="POST" novalidate enctype="multipart/form-data">
         {{ form.hidden_tag() }}
-
+        <h2 class="text-center my-4 titulo-responsivo">Editar Usuario</h2>  
         <div class="form-group mb-3">
             <label for="{{ form.userName.id }}" class="form-label">{{ form.userName.label }}</label>
             {{ form.userName(class="form-control", size=32) }}

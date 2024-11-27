@@ -1,5 +1,5 @@
 from flask_wtf import FlaskForm
-from wtforms import StringField,TextAreaField, SubmitField, FieldList #Tipos de datos d formulario
+from wtforms import IntegerField, StringField,TextAreaField, SubmitField, FieldList #Tipos de datos d formulario
 from flask_wtf.file import FileField,FileAllowed #Tipos de archivos que se van a cargar
 from wtforms.validators import InputRequired, Optional, Length #Validaciones de formulario
 
@@ -14,6 +14,10 @@ class EquipoForm():
                                InputRequired(message="Por favor ingresa una comisión"),
                                Length(max=50, message="La comisión no debe exceder los 50 caracteres")
                            ])
+    cod_comision = IntegerField("Código de comisión:",
+                                validators=[
+                                    InputRequired(message="Por favor ingresa un código de comisión")
+                                ])
     municipio = StringField("Municipio:",
                             validators=[
                                 InputRequired(message="Por favor ingresa un municipio"),

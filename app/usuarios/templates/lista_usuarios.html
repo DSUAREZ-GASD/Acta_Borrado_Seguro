@@ -1,60 +1,75 @@
-{% extends "base.html" %} {% block content %}
-<nav class="nav nav-inverse">
-  <div class="container">
-    <ul class="nav navbar-nav">
-      <li><a href="/equipos/lista-equipos">Equipos</a></li>
-      <li><a href="/usuarios/lista-usuarios">Usuarios</a></li>
-      {% if current_user.is_authenticated %}
-      <li>
-        <a href="/auth/logout">Cerrar sesión</a>
-      </li>
-      {% else %}
-      <li>
-        <a href="/auth/logout">Cerrar sesión</a>
-      </li>
-      {% endif %}
-    </ul>
-  </div>
-</nav>
-{% for mensaje in get_flashed_messages() %}
+{% extends "base_admin.html " %} {% block head %} {{ super() }} {% endblock %}
+{% block title %} Lista de Usuarios {% endblock %} {% block content %} {% block
+menu %} {{ super() }} {% endblock %} {% for mensaje in get_flashed_messages() %}
 <div class="alert alert-success alert-dismissable">
   <button type="button" data-dismiss="alert" class="close">X</button>
   {{ mensaje }}
 </div>
 {% endfor %}
-
-<h1>😆Lista de Usuarios😆</h1>
-<table class="table table-hover">
-  <thead>
-    <tr>
-      <th>Nombre de Usuario</th>
-      <th>Correo</th>
-      <th>Rol</th>
-      <th>Estado</th>
-      <th>Actualizar</th>
-      <th>Eliminar</th>
-    </tr>
-  </thead>
-  <tbody>
-    {% for usuario in usuarios %}
-    <tr>
-      <td>{{usuario.userName}}</td>
-      <td>{{usuario.email}}</td>
-      <td>{{usuario.rol.value}}</td>
-      <td>{{usuario.estado.value}}</td>
-      <td>
-        <a href="/usuarios/restablecer-usuario/{{usuario.id}}" class="btn btn-primary">Restablecer</a>
-      </td>
-      <td>
-        <a href="/usuarios/eliminar-usuario/{{usuario.id}}" class="btn btn-danger">Eliminar</a>
-      </td>
-    </tr>
-    {% endfor %}
-  </tbody>
-</table>
-<div class="d-grid gap-2 col-6 mx-auto">
-  <a href="/usuarios/crear-usuario" class="btn btn-primary">Agregar Usuario</a>
-  <a href="/representantes/lista-representantes" class="btn btn-info">Representantes</a>
+<div class="container-fluid">
+  <div class="row">
+    <div class="col">
+        <h1>Lista de Usuarios</h1>
+        <div "btn-toolbar mt-4" role="toolbar" aria-label="Toolbar with button
+        groups">
+        <div class="btn-group me-2 mb-2" role="group" aria-label="First group">
+          <a
+            href="{{ url_for('usuarios.crear_usuario') }}"
+            class="btn btn-primary"
+            >Crear Usuario</a
+          >
+        </div>
+        <div class="btn-group me-2 mb-2" role="group" aria-label="First group">
+          <a
+            href="{{ url_for('representantes.lista_representantes') }}"
+            class="btn btn-success"
+            >Representantes</a
+          >
+        </div>
+      </div>
+      <div class="table-responsive mt-4">
+        <table
+          id="equiposTable"
+          class="display responsive nowrap table table-striped table-bordered"
+          style="width: 100%"
+        >
+          <thead class="table-dark">
+            <tr>
+              <th>Nombre de Usuario</th>
+              <th>Correo</th>
+              <th>Rol</th>
+              <th>Estado</th>
+              <th>Actualizar</th>
+              <th>Eliminar</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for usuario in usuarios %}
+            <tr>
+              <td>{{usuario.userName}}</td>
+              <td>{{usuario.email}}</td>
+              <td>{{usuario.rol.value}}</td>
+              <td>{{usuario.estado.value}}</td>
+              <td>
+                <a
+                  href="{{ url_for('usuarios.restablecer_usuario', usuario_id=usuario.id) }}"
+                  class="btn btn-primary"
+                  >Restablecer</a
+                >
+              </td>
+              <td>
+                <a
+                  href="{{ url_for('usuarios.eliminar_usuario', usuario_id=usuario.id) }}"
+                  class="btn btn-danger"
+                  >Eliminar</a
+                >
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
 </div>
-
-{% endblock%}
+{% endblock %} {% block scripts %} {{ super() }} {% endblock %}

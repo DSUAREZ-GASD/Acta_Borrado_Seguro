@@ -1,10 +1,17 @@
-{% extends "base.html" %}
-{% import 'bootstrap/wtf.html' as wtf %}
-{% block content %}
-<h1>Editar Firma</h1>
-<form method="POST" enctype="multipart/form-data">
+{% extends "form_base.html" %}
+{% block title %}
+Editar Representante
+{% endblock %}
+{% block form_content %}
+{% for mensaje in get_flashed_messages() %}
+<div class="alert alert-success alert-dismissable">
+  <button type="button" data-dismiss="alert" class="close">X</button>
+  {{ mensaje }}
+</div>
+{% endfor %}
+<form action="" class="login" method="POST" enctype="multipart/form-data">
     {{ form.hidden_tag() }}
-
+    <h2 class="text-center my-4 titulo-responsivo">Editar Representante</h2>
     <div class="form-group mb-3">
         <label for="{{ form.nombre.id }}" class="form-label">{{ form.nombre.label }}</label>
         {{ form.nombre(class="form-control", size=32) }}

@@ -1,68 +1,67 @@
-{% extends "base.html" %} 
+{% extends "base_agente.html" %} 
+{% block head %}
+{{ super() }}
+{% endblock %}
+{% block title %}
+Lista de equipos agente
+{% endblock %}
 {% block content %}
-<nav class="nav nav-inverse">
-  <div class="container">
-    <ul class="nav navbar-nav">
-      <li><a href="/equipos/lista-equipos-agente">Equipos</a></li>
-      <li><a href="/usuarios/perfil/{{current_user.id}}">Perfil</a></li>
-      {% if current_user.is_authenticated %}
-      <li>
-        <a href="/auth/logout">Cerrar sesión</a>
-      </li>
-      {% else %}
-      <li>
-        <a href="/auth/logout">Cerrar sesión</a>
-      </li>
-      {% endif %}
-    </ul>
-  </div>
-</nav>
+{% block menu %}
+{{ super() }}
+{% endblock %}
 {% for mensaje in get_flashed_messages() %}
 <div class="alert alert-success alert-dismissable">
   <button type="button" data-dismiss="alert" class="close">X</button>
   {{ mensaje }}
 </div>
 {% endfor %}
+<div class="container-fluid">
+  <div class="row">
+    <div class="col">
 <h1>😆Lista de equipos de {{current_user.userName}}</h1>
-<table class="table table-hover">
-  <thead>
-    <tr>
-      <th>#</th>
-      <th>Estado</th>
-      <th>Nombre de equipo</th>
-      <th>Actualizar</th>
-      <th>Imprimir</th>
-    </tr>
-  </thead>
-  <tbody>
-    {% for equipo in equipos %}
-    <tr>
-      <td>{{equipo.asd_id}}</td>
-      <td>{{equipo.estado.value}}</td>
-      <td>{{equipo.nombre}}</td>
-      <td>
-        <a href="/equipos/editar-equipo/{{equipo.asd_id}}" class="btn btn-primary"
-          >Actualizar</a
-        >
-      </td>
-      <td>
-        <a
-          href="{{ url_for('pdf.crear_pdf', equipo_id=equipo.asd_id) }}"
-          class="btn btn-success"
-          >Generar PDF</a
-        >
-      </td>
-    </tr>
-    {% endfor%}
-  </tbody>
-</table>
-<div class="d-grid gap-2 col-6 mx-auto">
-  <a href="/equipos/crear-equipo" class="btn btn-primary">Agregar producto</a>
-  <form action="{{ url_for('pdf.generar_todos_pdfs') }}" method="POST">
-    <button type="submit" class="btn btn-success">
-      Generar Todas la actas
-    </button>
-  </form>
+<div class="btn-toolbar mt-4" role="toolbar" aria-label="Toolbar with button groups">
+  <div class="btn-group me-2 mb-2" role="group" aria-label="First group">
+    <a href="{{ url_for('equipos.crear_equipo') }}" class="btn btn-primary">Crear equipo</a>
+  </div>
+  <div class="btn-group me-2 mb-2" role="group" aria-label="First group">
+    <form action="{{ url_for('pdf.generar_todos_pdfs') }}" method="POST">
+      <button type="submit" class="btn btn-success">
+        Generar todas las actas
+      </button>
+    </form>
+  </div>
+</div>
+<div class="table-responsive mt-4">
+  <table id="equiposTable"class="display responsive nowrap table table-striped table-bordered" style="width: 100%">
+    <thead class="table-dark">
+      <tr>
+        <th>#</th>
+        <th>Estado</th>
+        <th>Nombre de equipo</th>
+        <th>Actualizar</th>
+        <th>Imprimir</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for equipo in equipos %}
+      <tr>
+        <td>{{equipo.asd_id}}</td>
+        <td>{{equipo.estado.value}}</td>
+        <td>{{equipo.nombre}}</td>
+        <td>
+          <a href="{{ url_for('equipos.editar_equipo', equipo_id=equipo.asd_id) }}" class="btn btn-primary">Actualizar</a>
+        </td>
+        <td>
+          <a href="{{ url_for('pdf.crear_pdf', equipo_id=equipo.asd_id) }}" class="btn btn-success">Generar PDF</a>
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+</div>
+</div>
 </div>
 
-{% endblock%}
+
+{% endblock %} {% block scripts %} {{ super() }} {% endblock %}
