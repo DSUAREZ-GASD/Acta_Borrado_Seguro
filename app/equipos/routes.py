@@ -6,7 +6,7 @@ import os
 from . import equipos
 from app import db
 from app.auth.routes import acceso_requerido
-from app.models import Equipo
+from app.models import Equipo, Jal, Consulta, Proceso
 from .forms import NuevoEquipo, EditEquipoForm
 
 # Diccionario de labels para imagenes de equipo de los formularios
@@ -35,24 +35,7 @@ def crear_equipo():
             form_registrar.populate_obj(equipo)
             equipo.imagenes = []
             equipo.usuario_id = current_user.id
-            
-            # Guardar el equipo inicialmente para obtener el asd_id
-            db.session.add(equipo)
-            db.session.commit()
-            
-            # Formatear el nombre del equipo con el asd_id
-            nombre_final = f"{equipo.nombre} (ASD{equipo.asd_id}_{equipo.comision}_{equipo.municipio}_{equipo.departamento}_{equipo.cod_comision})"
-            
-            # Verificar si el nombre del equipo ya existe
-            if Equipo.query.filter_by(nombre=nombre_final).first():
-                flash("El nombre del equipo ya existe. Por favor, elige otro nombre.")
-                db.session.delete(equipo)  # Eliminar el equipo creado previamente
-                db.session.commit()
-                return redirect(url_for('equipos.crear_equipo'))
-            
-            # Asignar el nombre final al equipo
-            equipo.nombre = nombre_final
-            
+           
             # Guardar cada imagen
             for imagen_field in form_registrar.imagenes:
                 if imagen_field.data:
@@ -60,16 +43,32 @@ def crear_equipo():
                     imagen_field.data.save(os.path.join('app/static/img', filename))
                     equipo.imagenes.append(filename)
             
-            # Agregar el equipo a la base de datos      
-            db.session.commit()            
-            flash("Registro de equipo exitoso")
+            # Agregar el equipo a la base de datos
+            db.session.add(equipo)      
+            db.session.commit() 
+            
+            # Insertar en Jal o Consulta
+            if equipo.proceso == Proceso.JAL:
+                nuevo_jal = Jal(cod_comision=equipo.cod_comision, equipo_id=equipo.asd_id)
+                db.session.add(nuevo_jal)
+                db.session.commit()
+                equipo.jal_id = nuevo_jal.id
+            elif equipo.proceso == Proceso.CONSULTA:
+                nuevo_consulta = Consulta(cod_comision=equipo.cod_comision, equipo_id=equipo.asd_id)
+                db.session.add(nuevo_consulta)
+                db.session.commit()
+                equipo.consulta_id = nuevo_consulta.id
+                
+            db.session.commit()
+                     
+            flash(_("Registro de equipo exitoso"), "success")
             if current_user.rol.value == "Administrador":
                 return redirect(url_for('equipos.lista_equipos'))
             elif current_user.rol.value == "Agente":
                 return redirect(url_for('equipos.lista_equipos_agente'))
         except Exception as e:
             db.session.rollback()
-            flash(_("Error al registrar equipo {}").format(e))
+            flash(_("Error al registrar equipo {}").format(e), "error")
             
     return render_template('crear_equipo.html', form=form_registrar, labels=labels)
 
@@ -82,7 +81,7 @@ def lista_equipos():
         equipos = Equipo.query.all()
         return render_template('lista_equipos.html', equipos=equipos)
     except Exception as e:
-        flash(_("Error al listar equipos: {}").format(e))
+        flash(_("Error al listar equipos: {}").format(e), "error")
         return redirect(url_for('equipos.lista_equipos'))
 
 # Ruta para listar los equipos por agente
@@ -94,7 +93,7 @@ def lista_equipos_agente():
         equipos = Equipo.query.all()
         return render_template('lista_equipos_agente.html', equipos=equipos)
     except Exception as e:
-        flash(_("Error al listar equipos {}").format(e))
+        flash(_("Error al listar equipos {}").format(e), "error")
         return redirect(url_for('equipos.lista_equipos_agente'))
 
 # Ruta para actualizar un equipo
@@ -104,29 +103,19 @@ def lista_equipos_agente():
 def editar_equipo(equipo_id):
     equipo = Equipo.query.get_or_404(equipo_id)
     form_edit_equipo = EditEquipoForm(obj=equipo)
-    
+
     # Cargar las imágenes actuales del equipo en el formulario
     current_images_count = len(equipo.imagenes)
+    
     # Solo agregar entradas si hay menos de max_entries
     while len(form_edit_equipo.imagenes.entries) < form_edit_equipo.imagenes.max_entries:
         form_edit_equipo.imagenes.append_entry()
 
     if form_edit_equipo.validate_on_submit():
-        try:
-            # Guardar los datos del equipo
-            nombre_actual = equipo.nombre.split(" (ASD")[0]  # Extraer el nombre base sin el formato
-            comision_actual = equipo.comision
-            municipio_actual = equipo.municipio
-            departamento_actual = equipo.departamento
-            cod_comision_actual = equipo.cod_comision
-            
+        try:            
             # Poblar el objeto equipo con los nuevos datos 
             form_edit_equipo.populate_obj(equipo)
-            
-            # Verificar si alguno de los datos del nombre ha cambiado (excepto asd_id)
-            if (nombre_actual != equipo.nombre or comision_actual != equipo.comision or municipio_actual != equipo.municipio or departamento_actual != equipo.departamento or cod_comision_actual != equipo.cod_comision):
-                equipo.nombre = f"{equipo.nombre.split(' (ASD')[0]} (ASD{equipo.asd_id}_{equipo.comision}_{equipo.municipio}_{equipo.departamento}_{equipo.cod_comision})"
-                
+            equipo.codigo_comision =  form_edit_equipo.cod_comision.data
             nuevas_imagenes = []
             
             # Guardar nuevas imágenes
@@ -141,20 +130,33 @@ def editar_equipo(equipo_id):
                     index = len(nuevas_imagenes)
                     if index < current_images_count:
                         nuevas_imagenes.append(equipo.imagenes[index])
+                        
             # Actualizar las imágenes en la base de datos
             equipo.imagenes = nuevas_imagenes
-            # Actualizar el estado y la fecha de finalización
+            
             equipo.actualizar_estado()
-            equipo.usuario_id = current_user.id
+            equipo.usuario_id = current_user.id   
+            
+            # Insertar en Jal o Consulta
+            if equipo.proceso == Proceso.JAL:
+                if not equipo.jal:
+                    nuevo_jal = Jal(cod_comision=equipo.cod_comision, equipo_id=equipo.asd_id)
+                    db.session.add(nuevo_jal)
+            elif equipo.proceso == Proceso.CONSULTA:
+                if not equipo.consulta:
+                    nuevo_consulta = Consulta(cod_comision=equipo.cod_comision, equipo_id=equipo.asd_id)
+                    db.session.add(nuevo_consulta)
+                    
             db.session.commit()
-            flash(_(f"Equipo actualizado exitosamente"))
+            limpiar_imagenes_huerfanas()
+            flash(_("Equipo actualizado exitosamente"), "success")
             if current_user.rol.value == "Administrador":
                 return redirect(url_for('equipos.lista_equipos'))
             elif current_user.rol.value == "Agente":
                 return redirect(url_for('equipos.lista_equipos_agente'))
         except Exception as e:
             db.session.rollback()
-            flash(_("Error al actualizar equipo {}").format(e))
+            flash(_("Error al actualizar equipo {}").format(e), "error")
             return redirect(url_for('equipos.editar_equipo', equipo_id=equipo_id))
         
     return render_template('editar_equipo.html', form=form_edit_equipo, equipo=equipo, enumerate=enumerate, labels=labels)
@@ -170,13 +172,13 @@ def eliminar_equipo(equipo_id):
            # Eliminar el registro del equipo de la base de datos
            db.session.delete(equipo)
            db.session.commit()
-           flash(_("Equipo Eliminado con exito"))
+           flash(_("Equipo Eliminado con exito"), "success")
            limpiar_imagenes_huerfanas()
        else:
-           flash("Equipo no encontrado")
+           flash(_("Equipo no encontrado"), "error")
    except Exception as e:
         db.session.rollback()
-        flash(_("Error al eliminar el equipo: {}").format(e))
+        flash(_("Error al eliminar el equipo: {}").format(e), "error")
    
    return redirect(url_for('equipos.lista_equipos'))
    
@@ -199,3 +201,4 @@ def limpiar_imagenes_huerfanas():
                 print(f"Imagenes huerfanas eliminadas: {img}")
             except Exception as e:
                 print(f"Error al eliminar la imagen {img}:", e)
+                

@@ -1,12 +1,9 @@
 {% extends "form_base.html" %}
 {% block title %}Editar Equipo{% endblock %}
 {% block form_content %}
-{% for mensaje in get_flashed_messages() %}
-<div class="alert alert-success alert-dismissable">
-  <button type="button" data-dismiss="alert" class="close">X</button>
-  {{ mensaje }}
-</div>
-{% endfor %}
+{% for categoria, mensaje in get_flashed_messages(with_categories=true) %}
+            <script class="flash-mensajes" data-icon="{{ categoria }}">{{ mensaje }}</script>
+          {% endfor %}
 <form method="POST" class="formularios" enctype="multipart/form-data">
     {{ form.hidden_tag() }}
     <h2 class="text-center my-4 titulo-responsivo">Editar Equipo</h2>
@@ -95,11 +92,15 @@
         {% endfor %}
     </div>
     <div class="form-group mb-3">
-        <label for="{{ form.md_5.asd_id }}" class="form-label">{{ form.md_5.label }}</label>
-        {{ form.md_5(class="form-control", rows=3) }}
-        {% for error in form.md_5.errors %}
-                <div class="text-danger">{{ error }}</div>
-        {% endfor %}
+        <label for="{{ form.proceso.id }}" class="form-label">{{ form.proceso.label }}</label>
+        <select id="{{ form.proceso.id }}" name="{{ form.proceso.name }}" class="form-control">
+            {% for value, label in form.proceso.choices %}
+                <option value="{{ value }}" {% if value == equipo.proceso.name %}selected{% endif %}>{{ label }}</option>
+            {% endfor %}
+        </select>
+        {% for error in form.proceso.errors %}
+         <div class="text-danger">{{ error }}</div>
+   {% endfor %}
     </div>
     <div class="form-group mb-3 form-observacion">
         <label for="{{ form.observacion.asd_id }}" class="form-label">{{ form.observacion.label }}</label>

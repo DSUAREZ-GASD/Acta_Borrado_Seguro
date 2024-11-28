@@ -41,7 +41,7 @@ def crear_app():
     
     #traemos los modelos 
     with app.app_context():
-        from .models import Equipo, Usuario, Representante
+        from .models import Equipo, Usuario, Representante, Jal, Consulta, Proceso
         db.create_all()
 
     #Mensaje de seguridad para prevencion de ataques

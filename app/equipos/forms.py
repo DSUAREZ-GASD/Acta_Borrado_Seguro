@@ -1,13 +1,19 @@
 from flask_wtf import FlaskForm
-from wtforms import IntegerField, StringField,TextAreaField, SubmitField, FieldList #Tipos de datos d formulario
+from wtforms import IntegerField, SelectField, StringField,TextAreaField, SubmitField, FieldList #Tipos de datos d formulario
 from flask_wtf.file import FileField,FileAllowed #Tipos de archivos que se van a cargar
 from wtforms.validators import InputRequired, Optional, Length #Validaciones de formulario
+from flask_babel import gettext as _
+from enum import Enum
+
+class Proceso(Enum):
+    JAL = "JAL"
+    CONSULTA = "CONSULTA"
 
 class EquipoForm():
     nombre = StringField("Nombre del equipo:",
                          validators=[
                              InputRequired(message="Por favor ingresa un nombre de equipo"),
-                             Length(max=50, message="El nombre del equipo no debe exceder los 50 caracteres")
+                             Length(max=60, message="El nombre del equipo no debe exceder los 50 caracteres")
                          ])
     comision = StringField("Comisión:",
                            validators=[
@@ -63,17 +69,16 @@ class EquipoForm():
                             InputRequired(message="Por favor ingresa el SHA-1"),
                             Length(max=50, message="El SHA-1 no debe exceder los 50 caracteres")
                         ])
-    md_5 = StringField("HASH (MD-5):",
-                       validators=[
-                           InputRequired(message="Por favor ingresa el MD 5"),
-                           Length(max=50, message="El MD 5 no debe exceder los 50 caracteres")
-                       ])
+    proceso = SelectField(_("Rol del Usuario:"),
+                          choices=[(proceso.name, proceso.value) for proceso in Proceso],
+                          validators=[InputRequired(message=_("Por favor ingresa el rol del usuario"))])
+                  
     observacion = TextAreaField("Observaciones:",
                                 validators=[Optional()])
     imagenes = FieldList(FileField("Imagen de equipo", validators=[
                             Optional(),
-                            FileAllowed(['jpg', 'png'], message='Solo se admiten imágenes')
-                         ]), min_entries=8, max_entries=8)
+                            FileAllowed(['jpg', 'png'], message='Solo se admiten imágenes')]), 
+                         min_entries=8, max_entries=8)
     
 #Definir el formulario de registro de equipos
 class NuevoEquipo(FlaskForm, EquipoForm):

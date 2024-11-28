@@ -2,7 +2,10 @@
 {% block title %}
     Iniciar Sesión
 {% endblock %}
-{% block content %}        
+{% block content %}
+{% for categoria, mensaje in get_flashed_messages(with_categories=true) %}
+<script class="flash-mensajes" data-icon="{{ categoria }}">{{ mensaje }}</script>
+{% endfor %}
     <form action="" class="login" method="POST" novalidate enctype="multipart/form-data">
         {{ form.hidden_tag() }}
         <h2 class="text-custom-blue text-left g-col-6">Iniciar sesión</h2>
@@ -26,12 +29,4 @@
             {{ form.submit(class="btn btn-primary") }}
         </div>
     </form>
-{% for mensaje in get_flashed_messages() %}
-<div class="alert alert-danger alert-dismissable">
- <button type="button" data-dismiss="alert" class="close">
-     X
- </button>
- {{ mensaje }}
-</div>
-{% endfor %}
 {% endblock %}  
