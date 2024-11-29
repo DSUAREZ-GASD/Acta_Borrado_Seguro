@@ -135,7 +135,6 @@ def editar_equipo(equipo_id):
                     nuevo_jal = Jal(cod_comision=equipo.cod_comision, equipo_id=equipo.asd_id)
                     db.session.add(nuevo_jal)
                     db.session.flush()
-                    db.session.commit()
                     equipo.jal_id = nuevo_jal.id
                     id_proceso = nuevo_jal.id
                 else:
@@ -145,7 +144,6 @@ def editar_equipo(equipo_id):
                     nuevo_consulta = Consulta(cod_comision=equipo.cod_comision, equipo_id=equipo.asd_id)
                     db.session.add(nuevo_consulta)
                     db.session.flush()
-                    db.session.commit()
                     equipo.consulta_id = nuevo_consulta.id
                     id_proceso = nuevo_consulta.id
                 else:
@@ -153,18 +151,13 @@ def editar_equipo(equipo_id):
                     id_proceso = equipo.consulta_id
             
             # Verificar si el nombre del equipo ha cambiado
-            if id_proceso is not None:   
-                if equipo.proceso != Proceso.BACKUP:
-                    equipo.nombre = f"{nombre_actual} (ASD{id_proceso}_{equipo.proceso.value}_{equipo.departamento}_{equipo.municipio}_{equipo.comision}_{equipo.cod_comision})"
-            else:
-                if( nombre_actual != equipo.nombre.split(" (ASD")[0] or
+            if equipo.proceso != Proceso.BACKUP or (
+                nombre_actual != equipo.nombre.split(" (ASD")[0] or
                 comision_actual != equipo.comision or
                 municipio_actual != equipo.municipio or
                 departamento_actual != equipo.departamento or
                 cod_comision_actual != equipo.cod_comision):
-                    equipo.nombre = f"{nombre_actual} (ASD{id_proceso}_{equipo.proceso.value}_{equipo.departamento}_{equipo.municipio}_{equipo.comision}_{equipo.cod_comision})"
-                else:
-                    equipo.nombre = f"{nombre_actual} (ASD{id_proceso}_{equipo.proceso.value}_{equipo.departamento}_{equipo.municipio}_{equipo.comision}_{equipo.cod_comision})"
+                equipo.nombre = f"{nombre_actual} (ASD{id_proceso}_{equipo.proceso.value}_{equipo.departamento}_{equipo.municipio}_{equipo.comision}_{equipo.cod_comision})"
             
             db.session.commit()
             limpiar_imagenes_huerfanas()
