@@ -153,8 +153,18 @@ def editar_equipo(equipo_id):
                     id_proceso = equipo.consulta_id
             
             # Verificar si el nombre del equipo ha cambiado
-            if equipo.proceso != Proceso.BACKUP:
-                equipo.nombre = f"{nombre_actual} (ASD{id_proceso}_{equipo.proceso.value}_{equipo.departamento}_{equipo.municipio}_{equipo.comision}_{equipo.cod_comision})"
+            if id_proceso is not None:   
+                if equipo.proceso != Proceso.BACKUP:
+                    equipo.nombre = f"{nombre_actual} (ASD{id_proceso}_{equipo.proceso.value}_{equipo.departamento}_{equipo.municipio}_{equipo.comision}_{equipo.cod_comision})"
+            else:
+                if( nombre_actual != equipo.nombre.split(" (ASD")[0] or
+                comision_actual != equipo.comision or
+                municipio_actual != equipo.municipio or
+                departamento_actual != equipo.departamento or
+                cod_comision_actual != equipo.cod_comision):
+                    equipo.nombre = f"{nombre_actual} (ASD{id_proceso}_{equipo.proceso.value}_{equipo.departamento}_{equipo.municipio}_{equipo.comision}_{equipo.cod_comision})"
+                else:
+                    equipo.nombre = f"{nombre_actual} (ASD{id_proceso}_{equipo.proceso.value}_{equipo.departamento}_{equipo.municipio}_{equipo.comision}_{equipo.cod_comision})"
             
             db.session.commit()
             limpiar_imagenes_huerfanas()
@@ -179,6 +189,15 @@ def eliminar_equipo(equipo_id):
    try:
        if equipo:
            # Eliminar el registro del equipo de la base de datos
+           if equipo.jal_id:
+               jal = Jal.query.get_or_404(equipo.jal_id)
+               if jal:
+                   db.session.delete(jal)
+           if equipo.consulta_id:
+                consulta = Consulta.query.get_or_404(equipo.consulta_id)
+                if consulta:
+                    db.session.delete(consulta)
+               
            db.session.delete(equipo)
            db.session.commit()
            flash(_("Equipo Eliminado con exito"), "success")
