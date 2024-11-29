@@ -3,7 +3,7 @@
 {% block form_content %}
 {% for categoria, mensaje in get_flashed_messages(with_categories=true) %}
             <script class="flash-mensajes" data-icon="{{ categoria }}">{{ mensaje }}</script>
-          {% endfor %}
+{% endfor %}
 <form method="POST" class="formularios" enctype="multipart/form-data">
     {{ form.hidden_tag() }}
     <h2 class="text-center my-4 titulo-responsivo">Editar Equipo</h2>

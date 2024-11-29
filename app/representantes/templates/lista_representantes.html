@@ -1,10 +1,7 @@
 {% extends "base_admin.html " %} {% block head %} {{ super() }} {% endblock %}
-{% block title %} Lista de Representantes {% endblock %} {% block content %} {%
-for mensaje in get_flashed_messages() %}
-<div class="alert alert-success alert-dismissable">
-  <button type="button" data-dismiss="alert" class="close">X</button>
-  {{ mensaje }}
-</div>
+{% block title %} Lista de Representantes {% endblock %} {% block content %}
+{% for categoria, mensaje in get_flashed_messages(with_categories=true) %}
+<script class="flash-mensajes" data-icon="{{ categoria }}">{{ mensaje }}</script>
 {% endfor %}
 <div class="container-fluid">
   <div class="row">

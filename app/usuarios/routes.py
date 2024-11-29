@@ -26,11 +26,11 @@ def crear_usuario():
             usuario.set_password(default_password)
             db.session.add(usuario)
             db.session.commit()
-            flash("Registro de usuario exitoso")
+            flash(_("Registro de usuario exitoso"), "success")
             return redirect(url_for('usuarios.lista_usuarios'))
         except Exception as e:
             db.session.rollback()
-            flash(_("Error al crear usuario: {}").format(e))
+            flash(_("Error al crear usuario: {}").format(e), "error")
     
     form_registrar.password.data = default_password
 
@@ -45,7 +45,7 @@ def lista_usuarios():
         usuarios = Usuario.query.all()
         return render_template('lista_usuarios.html', usuarios=usuarios)
     except Exception as e:
-        flash(_("Error al obtener lista de usuarios: {}").format(e))
+        flash(_("Error al obtener lista de usuarios: {}").format(e), "error")
         return redirect(url_for('equipos.listar'))
     
     
@@ -66,11 +66,11 @@ def restablecer_usuario(usuario_id):
                 intentos_fallidos[usuario.userName] = {'intentos': 0, 'ultimo_intento': None}
             usuario.set_password(default_password)  
             db.session.commit()
-            flash(f"{usuario.userName} de usuario restaurado")
+            flash(_(f"{usuario.userName} de usuario restaurado"), "success")
             return redirect(url_for('usuarios.lista_usuarios'))
         except Exception as e:
             db.session.rollback()
-            flash(_(f"Error al restablecer el usuario: {usuario.userName}").format(e))
+            flash(_(f"Error al restablecer el usuario: {usuario.userName}").format(e), "error")
     
     form_restablecer.password.data = default_password
     
@@ -86,16 +86,16 @@ def eliminar_usuario(usuario_id):
     # Verificar si el usuario tiene equipos asignados
     equipos_asignados = Equipo.query.filter(Equipo.usuario_id == usuario.id).all()
     if equipos_asignados:
-        flash("No se puede eliminar el usuario porque tiene equipos asignados")
+        flash(_("No se puede eliminar el usuario porque tiene equipos asignados"), "error")
         return redirect(url_for('usuarios.lista_usuarios'))
     
     try:
         db.session.delete(usuario)
         db.session.commit()
-        flash(f"{usuario.userName} Eliminado")
+        flash(_(f"{usuario.userName} Eliminado"), "success")
     except Exception as e:
         db.session.rollback()
-        flash(_("Error al eliminar el usuario: {}").format(e))
+        flash(_("Error al eliminar el usuario: {}").format(e), "error")
      
     return redirect(url_for('usuarios.lista_usuarios'))
  
@@ -110,17 +110,17 @@ def perfil(usuario_id):
     
     # Verificar si el usuario logueado es el mismo que el usuario a modificar
     if current_user.id != int(usuario_id):
-        flash("No tienes permiso para editar este perfil")
+        flash(_("No tienes permiso para editar este perfil"), "info")
         return redirect(url_for('equipos.lista_agente'))
     
     if form_perfil.validate_on_submit():
         try:
             # Verificar que la contraseña actual sea correcta
             if not usuario.check_password(form_perfil.current_password.data):
-                flash(_("La contraseña actual no es correcta"))
+                flash(_("La contraseña actual no es correcta"), "error")
                 return redirect (url_for('usuarios.perfil', usuario_id=usuario_id))
             elif form_perfil.password.data != form_perfil.confirm_password.data:
-                flash(_("Las contraseñas no coinciden"))
+                flash(_("Las contraseñas no coinciden"), "error")
                 return redirect (url_for('usuarios.perfil', usuario_id=usuario_id))
             else:
                 cambios = False
@@ -136,12 +136,12 @@ def perfil(usuario_id):
 
                 if cambios:    
                     db.session.commit()
-                    flash("Tus datos fueron modificados con exito")
+                    flash(_("Tus datos fueron modificados con exito"), "success")
                 else:
-                    flash("No se realizaron cambios")
+                    flash(_("No se realizaron cambios"), "info")
         except Exception as e:
             db.session.rollback()
-            flash(_("Error al modificar tus datos: {}").format(e))
+            flash(_("Error al modificar tus datos: {}").format(e), "error")
         
         return redirect(url_for('equipos.lista_agente'))
     
@@ -157,30 +157,30 @@ def cambiar_clave(usuario_id):
     
     # Verificar si el usuario logueado es el mismo que el usuario a editar
     if current_user.id != int(usuario_id):
-        flash("No tienes permiso para editar este perfil")
+        flash(_("No tienes permiso para editar este perfil"), "info")
         return redirect(url_for('auth.login'))
     
     if form_cambio.validate_on_submit():
         try:
             if not usuario.check_password(form_cambio.current_password.data):
-                flash("La contraseña actual no es correcta")
+                flash(_("La contraseña actual no es correcta"), "error")
                 return redirect (url_for('usuarios.cambiar_clave', usuario_id=usuario_id))
             elif form_cambio.password.data != form_cambio.confirm_password.data:
-                flash("Las contraseñas no coinciden")
+                flash(_("Las contraseñas no coinciden"), "error")
                 return redirect (url_for('usuarios.cambiar_clave', usuario_id=usuario_id))
             else:
                 usuario.set_password(form_cambio.password.data)
                 db.session.commit()
-                flash("Cambio de clave exitoso")
+                flash(_("Cambio de clave exitoso"), "success")
                 if current_user.rol.value == "Administrador":
                     return redirect(url_for('equipos.lista_equipos'))
                 elif current_user.rol.value == "Agente":
                     return redirect(url_for('equipos.lista_equipos_agente'))
                 else:
-                    flash("Error al cambiar la contraseña")
+                    flash(_("Error al cambiar la contraseña"), "error")
                     return redirect(url_for('auth.login'))
         except Exception as e:
             db.session.rollback()
-            flash(_("Error al cambiar la contraseña: {}").format(e))
+            flash(_("Error al cambiar la contraseña: {}").format(e), "error")
     
     return render_template('cambiar_clave.html', form=form_cambio)

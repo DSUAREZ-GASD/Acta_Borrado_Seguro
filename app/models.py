@@ -31,6 +31,7 @@ class Estado_usuario(Enum):
 class Proceso(Enum):
     JAL = "JAL"
     CONSULTA = "CONSULTA"
+    BACKUP = "BACKUP"
     
     
 # Modelo de usuario  

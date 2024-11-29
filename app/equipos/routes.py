@@ -45,22 +45,7 @@ def crear_equipo():
             
             # Agregar el equipo a la base de datos
             db.session.add(equipo)      
-            db.session.commit() 
-            
-            # Insertar en Jal o Consulta
-            if equipo.proceso == Proceso.JAL:
-                nuevo_jal = Jal(cod_comision=equipo.cod_comision, equipo_id=equipo.asd_id)
-                db.session.add(nuevo_jal)
-                db.session.commit()
-                equipo.jal_id = nuevo_jal.id
-            elif equipo.proceso == Proceso.CONSULTA:
-                nuevo_consulta = Consulta(cod_comision=equipo.cod_comision, equipo_id=equipo.asd_id)
-                db.session.add(nuevo_consulta)
-                db.session.commit()
-                equipo.consulta_id = nuevo_consulta.id
-                
-            db.session.commit()
-                     
+            db.session.commit()                
             flash(_("Registro de equipo exitoso"), "success")
             if current_user.rol.value == "Administrador":
                 return redirect(url_for('equipos.lista_equipos'))
@@ -112,13 +97,18 @@ def editar_equipo(equipo_id):
         form_edit_equipo.imagenes.append_entry()
 
     if form_edit_equipo.validate_on_submit():
-        try:            
-            # Poblar el objeto equipo con los nuevos datos 
+        try:
+            # Guardar los datos actuales del equipo
+            nombre_actual = equipo.nombre.split(" (ASD")[0]  # Extraer el nombre base sin el formato
+            comision_actual = equipo.comision
+            municipio_actual = equipo.municipio
+            departamento_actual = equipo.departamento
+            cod_comision_actual = equipo.cod_comision
+                               
             form_edit_equipo.populate_obj(equipo)
-            equipo.codigo_comision =  form_edit_equipo.cod_comision.data
+
+            # Guardar las nuevas imágenes
             nuevas_imagenes = []
-            
-            # Guardar nuevas imágenes
             for imagen_field in form_edit_equipo.imagenes:
                 if imagen_field.data and hasattr(imagen_field.data, 'filename') and imagen_field.data.filename:
                     filename = secure_filename(imagen_field.data.filename)
@@ -132,21 +122,40 @@ def editar_equipo(equipo_id):
                         nuevas_imagenes.append(equipo.imagenes[index])
                         
             # Actualizar las imágenes en la base de datos
-            equipo.imagenes = nuevas_imagenes
-            
+            equipo.imagenes = nuevas_imagenes 
             equipo.actualizar_estado()
-            equipo.usuario_id = current_user.id   
+            
+            equipo.usuario_id = current_user.id       
+            db.session.commit()
             
             # Insertar en Jal o Consulta
+            id_proceso = None
             if equipo.proceso == Proceso.JAL:
                 if not equipo.jal:
                     nuevo_jal = Jal(cod_comision=equipo.cod_comision, equipo_id=equipo.asd_id)
                     db.session.add(nuevo_jal)
+                    db.session.flush()
+                    db.session.commit()
+                    equipo.jal_id = nuevo_jal.id
+                    id_proceso = nuevo_jal.id
+                else:
+                    equipo.jal.cod_comision = equipo.cod_comision
             elif equipo.proceso == Proceso.CONSULTA:
                 if not equipo.consulta:
                     nuevo_consulta = Consulta(cod_comision=equipo.cod_comision, equipo_id=equipo.asd_id)
                     db.session.add(nuevo_consulta)
-                    
+                    db.session.flush()
+                    db.session.commit()
+                    equipo.consulta_id = nuevo_consulta.id
+                    id_proceso = nuevo_consulta.id
+                else:
+                    equipo.consulta.cod_comision = equipo.cod_comision
+                    id_proceso = equipo.consulta_id
+            
+            # Verificar si el nombre del equipo ha cambiado
+            if equipo.proceso != Proceso.BACKUP:
+                equipo.nombre = f"{nombre_actual} (ASD{id_proceso}_{equipo.proceso.value}_{equipo.departamento}_{equipo.municipio}_{equipo.comision}_{equipo.cod_comision})"
+            
             db.session.commit()
             limpiar_imagenes_huerfanas()
             flash(_("Equipo actualizado exitosamente"), "success")

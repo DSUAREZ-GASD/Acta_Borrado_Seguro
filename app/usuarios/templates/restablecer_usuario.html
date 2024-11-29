@@ -2,12 +2,9 @@
 {% block title %}
     Editar Usuario
 {% endblock %}
-{% for mensaje in get_flashed_messages() %}
-<div class="alert alert-success alert-dismissable">
-    <button type="button" data-dismiss="alert" class="close">X</button>
-    {{ mensaje }}
-  </div>
-  {% endfor %}
+{% for categoria, mensaje in get_flashed_messages(with_categories=true) %}
+<script class="flash-mensajes" data-icon="{{ categoria }}">{{ mensaje }}</script>
+{% endfor %}
 {% block form_content %}
     <form action="" class="login" method="POST" novalidate enctype="multipart/form-data">
         {{ form.hidden_tag() }}

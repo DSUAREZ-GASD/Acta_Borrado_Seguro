@@ -3,11 +3,8 @@
     Cambiar Clave
 {% endblock %}
 {% block content %}
-{% for mensaje in get_flashed_messages() %}
-<div class="alert alert-success alert-dismissable">
-  <button type="button" data-dismiss="alert" class="close">X</button>
-  {{ mensaje }}
-</div>
+{% for categoria, mensaje in get_flashed_messages(with_categories=true) %}
+<script class="flash-mensajes" data-icon="{{ categoria }}">{{ mensaje }}</script>
 {% endfor %}
     <form action="" class="login" method="POST" novalidate enctype="multipart/form-data">
         {{ form.hidden_tag() }}

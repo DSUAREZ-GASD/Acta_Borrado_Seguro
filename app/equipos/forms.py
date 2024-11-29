@@ -8,6 +8,7 @@ from enum import Enum
 class Proceso(Enum):
     JAL = "JAL"
     CONSULTA = "CONSULTA"
+    BACKUP = "BACKUP"
 
 class EquipoForm():
     nombre = StringField("Nombre del equipo:",

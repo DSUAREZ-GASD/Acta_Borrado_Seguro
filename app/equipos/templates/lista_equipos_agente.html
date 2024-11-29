@@ -10,8 +10,8 @@ Lista de equipos agente
 {{ super() }}
 {% endblock %}
 {% for categoria, mensaje in get_flashed_messages(with_categories=true) %}
-            <script class="flash-mensajes" data-icon="{{ categoria }}">{{ mensaje }}</script>
-          {% endfor %}
+<script class="flash-mensajes" data-icon="{{ categoria }}">{{ mensaje }}</script>
+{% endfor %}
 <div class="container-fluid">
   <div class="row">
     <div class="col">
@@ -34,7 +34,7 @@ Lista de equipos agente
       <tr>
         <th>#</th>
         <th>Estado</th>
-        <!--proceso-->
+        <th>Proceso</th>
         <th>Nombre de equipo</th>
         <th>Actualizar</th>
         <th>Imprimir</th>
@@ -45,6 +45,7 @@ Lista de equipos agente
       <tr>
         <td>{{equipo.asd_id}}</td>
         <td>{{equipo.estado.value}}</td>
+        <td>{{equipo.proceso.value}}</td>
         <td>{{equipo.nombre}}</td>
         <td>
           <a href="{{ url_for('equipos.editar_equipo', equipo_id=equipo.asd_id) }}" class="btn btn-primary">Actualizar</a>

@@ -10,8 +10,8 @@ Lista de equipos
 {{ super() }} 
 {% endblock %} 
 {% for categoria, mensaje in get_flashed_messages(with_categories=true) %}
-            <script class="flash-mensajes" data-icon="{{ categoria }}">{{ mensaje }}</script>
-          {% endfor %}
+<script class="flash-mensajes" data-icon="{{ categoria }}">{{ mensaje }}</script>
+{% endfor %}
 <div class="container-fluid">
   <div class="row">
     <div class="col">
@@ -38,6 +38,7 @@ Lista de equipos
             <tr>
               <th>#</th>
               <th>Estado</th>
+              <th>Proceso</th>
               <th>Nombre de equipo</th>
               <th>Registrado por</th>
               <th>Actualizar</th>
@@ -50,6 +51,7 @@ Lista de equipos
             <tr>
               <td>{{equipo.asd_id}}</td>
               <td>{{equipo.estado.value}}</td>
+              <td>{{equipo.proceso.value}}</td>
               <td>{{equipo.nombre}}</td>
               <td>{{equipo.usuario.userName}}</td>
               <td>

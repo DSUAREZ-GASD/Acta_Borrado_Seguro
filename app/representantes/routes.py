@@ -1,5 +1,6 @@
 from flask import render_template, redirect, flash, url_for
 from werkzeug.utils import secure_filename
+from flask_babel import _
 import os
 from . import representantes
 from app import db
@@ -27,11 +28,11 @@ def registro_representante():
             
             file = form.firma.data
             file.save(os.path.join('app','static','firmas', representante.firma))
-            flash("Registro de representante exitoso")
+            flash(_("Registro de representante exitoso"), "success")
             return redirect(url_for('representantes.lista_representantes'))
         except Exception as e:
             db.session.rollback()
-            flash("Error al registrar la firma: "+str(e))
+            flash(_("Error al registrar la firma: ").format(e), "error")
         
     return render_template('registro_representante.html', form=form)
 
@@ -44,7 +45,7 @@ def lista_representantes():
         representantes = Representante.query.all()
         return render_template('lista_representantes.html', representantes=representantes)
     except Exception as e:
-        flash("Error al cargar la lista de representantes: "+str(e))
+        flash(_("Error al cargar la lista de representantes: ")+format(e), "error")
         return redirect(url_for('representantes.lista_representantes'))
 
 # Edición de representantes
@@ -54,7 +55,7 @@ def lista_representantes():
 def editar_representante(representante_id):
     representante = Representante.query.get_or_404(representante_id) 
     if representante is None:
-        flash('El representante no existe')
+        flash(_("El representante no existe"), "error")
         return redirect(url_for('representantes.lista_representantes'))
         
     form_edit = EditRespresentanteForm(obj=representante)
@@ -73,12 +74,12 @@ def editar_representante(representante_id):
                 representante.firma = current_firma
                                 
             db.session.commit()
-            flash("Representante actualizado con éxito")
+            flash(_("Representante actualizado con éxito"), "success")
             limpiar_firmas()
             return redirect(url_for('representantes.lista_representantes'))
         except Exception as e:
             db.session.rollback()
-            flash("Error al actualizar el representante: "+str(e))
+            flash(_("Error al actualizar el representante: ").format(e), "error")
                   
     return render_template('editar_representante.html', form=form_edit, representante=representante)             
    
@@ -92,11 +93,11 @@ def eliminar_representante(representante_id):
         if representante:
             db.session.delete(representante)
             db.session.commit()
-            flash("Firma eliminada con éxito")
+            flash(_("Representante eliminado con éxito"), "success")
             limpiar_firmas()
     except Exception as e:
         db.session.rollback()
-        flash("Error al eliminar el representante: "+str(e))
+        flash(("Error al eliminar el representante: ").format(e), "error")
         return redirect(url_for('representantes.lista_representantes'))
     
     return redirect(url_for('representantes.lista_representantes'))
