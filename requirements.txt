@@ -28,4 +28,5 @@ reportlab
 pip 
 pillow
 python-dotenv
+wfastcgi
 

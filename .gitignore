@@ -1,2 +1,8 @@
 .venv/
 migrations/
+*.jpeg
+*.jpg
+*.png
+*.zip
+*.pdf
+__pycache__/
