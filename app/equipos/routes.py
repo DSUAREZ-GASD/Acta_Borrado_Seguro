@@ -157,7 +157,7 @@ def editar_equipo(equipo_id):
                 municipio_actual != equipo.municipio or
                 departamento_actual != equipo.departamento or
                 cod_comision_actual != equipo.cod_comision):
-                equipo.nombre = f"{nombre_actual} (ASD{id_proceso}_{equipo.proceso.value}_{equipo.departamento}_{equipo.municipio}_{equipo.comision}_{equipo.cod_comision})"
+                equipo.nombre = f"ASD{id_proceso}_{equipo.proceso.value}_{equipo.departamento}_{equipo.municipio}_{equipo.comision}_{equipo.cod_comision}"
             
             db.session.commit()
             limpiar_imagenes_huerfanas()
@@ -182,12 +182,10 @@ def eliminar_equipo(equipo_id):
    try:
        if equipo:
            # Eliminar el registro del equipo de la base de datos
-        
            jal = Jal.query.filter_by(equipo_id=equipo_id).all()
            for j in jal:
                db.session.delete(j)
                    
-           
            consulta = Consulta.query.filter_by(equipo_id=equipo_id).all()
            for c in consulta:
                db.session.delete(c)

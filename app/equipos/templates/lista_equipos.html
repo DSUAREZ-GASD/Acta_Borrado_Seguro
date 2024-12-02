@@ -69,11 +69,7 @@ Lista de equipos
                 >
               </td>
               <td>
-                <a
-                  href="{{ url_for('pdf.crear_pdf', equipo_id=equipo.asd_id) }}"
-                  class="btn btn-success"
-                  >Generar PDF</a
-                >
+                <a href="{{ url_for('pdf.crear_pdf', equipo_id=equipo.asd_id) }}" class="btn btn-success">Generar PDF</a>
               </td>
             </tr>
             {% endfor %}

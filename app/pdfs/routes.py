@@ -7,18 +7,16 @@ import zipfile
 import os
 from flask_babel import _
 
-@pdf.route('/generar_pdf/<int:equipo_id>')
-@acceso_requerido(roles=["Administrador","Agente"])
+@pdf.route('/crear_pdf/<int:equipo_id>', methods=['GET'])
+@acceso_requerido(roles=["Administrador", "Agente"])
 @login_required
 def crear_pdf(equipo_id):
     try:
         # Importar equipo aquí en lugar de al inicio
         from app.models import Equipo, Representante
         equipo = Equipo.query.get_or_404(equipo_id)
-        representante = Representante.query.all()
-       
-        representantes_ids = [1,2,3,4,5] # Obtener los ids de los representantes del equipo
-        representante = Representante.query.filter(Representante.id.in_(representantes_ids)).all()
+        representantes_ids = [1, 2, 3, 4, 5]
+        representantes = Representante.query.filter(Representante.id.in_(representantes_ids)).all()
         
         # Verificar que el estado del equipo sea finalizado 
         if equipo.estado.value != "Finalizado":
@@ -31,7 +29,7 @@ def crear_pdf(equipo_id):
         nombre_archivo = f"{equipo.nombre}.pdf"  
                 
         # Generar el PDF
-        ruta_pdf = generar_pdf(nombre_archivo, equipo)
+        ruta_pdf = generar_pdf(nombre_archivo, equipo, representantes)
         
         return send_file(ruta_pdf, as_attachment=True, mimetype='application/pdf')
         
@@ -46,13 +44,13 @@ def crear_pdf(equipo_id):
 def generar_todos_pdfs():
     try:
         # Importar equipo y representante
-        from app.models import Equipo, Representante
+        from app.models import Equipo
         equipos = Equipo.query.all()
-        representante = Representante.query.all()
+        #representante = Representante.query.all()
         
-        if not representante:
-            flash("No hay representante registrada")
-            return redirect('/equipos/listar')
+        # if not representante:
+        #     flash("No hay representante registrada")
+        #     return redirect(url_for('equipos.lista_equipos') if current_user.rol.value == "Administrador" else url_for('equipos.lista_equipos_agente'))
 
         #Generar PDF para cada equipo
         rutas_pdf = []
@@ -65,8 +63,8 @@ def generar_todos_pdfs():
             
             #Llamamos a la función generar_pdf
             try:
-                nombre_archivo = f"{equipo.nombre}_prueba.pdf"
-                ruta_pdf = generar_pdf(nombre_archivo, representante, equipo)
+                nombre_archivo = f"{equipo.nombre}.pdf"
+                ruta_pdf = generar_pdf(nombre_archivo, equipo)
                 rutas_pdf.append(ruta_pdf)
             except Exception as e:
                 flash(f"Error generando PDF para {equipo.nombre}.")
@@ -90,11 +88,11 @@ def generar_todos_pdfs():
         if equipos_sin_pdf:
             flash(f"No se generaron PDFs para los siguientes equipos: {', '.join(equipos_sin_pdf)}. El estado debe ser 'finalizado'.")
         
-        return redirect('/equipos/listar')
+        return redirect(url_for('equipos.lista_equipos') if current_user.rol.value == "Administrador" else url_for('equipos.lista_equipos_agente'))
     
     except Exception as e:
         print(f"Error generando PDF: {e}")
         flash("Ocurrió un error al generar los PDFs.")
-        return redirect('/equipos/listar')
+        return redirect(url_for('equipos.lista_equipos') if current_user.rol.value == "Administrador" else url_for('equipos.lista_equipos_agente'))
     
     
