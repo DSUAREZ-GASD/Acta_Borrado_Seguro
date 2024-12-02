@@ -28,7 +28,7 @@ def crear_pdf(equipo_id):
             elif current_user.rol.value == "Agente":
                 return redirect(url_for('equipos.lista_equipos_agente'))
         
-        nombre_archivo = f"{equipo.nombre}_prueba.pdf"  
+        nombre_archivo = f"{equipo.nombre}.pdf"  
                 
         # Generar el PDF
         ruta_pdf = generar_pdf(nombre_archivo, equipo)

@@ -41,7 +41,7 @@ class Usuario(UserMixin, db.Model):
     userName = db.Column(db.String(100), unique=True, nullable=False)
     email = db.Column(db.String(120), unique=True, nullable=False)
     rol = db.Column(db.Enum(Rol), default=Rol.AGENTE)
-    password = db.Column(db.String(128), nullable=False)
+    password = db.Column(db.String(512), nullable=False)
     estado = db.Column(db.Enum(Estado_usuario), default=Estado_usuario.ACTIVO)
     created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
@@ -69,6 +69,7 @@ class Equipo(db.Model):
     estado = db.Column(db.Enum(EstadoEnum), default=EstadoEnum.REGISTRADO)
     comision = db.Column(db.String(100), nullable=True)
     cod_comision = db.Column(db.Numeric(10, 0), nullable=True)# identificador de la comision por jal o consulta
+    capacidad = db.Column(db.String(100), nullable=True)
     municipio = db.Column(db.String(100), nullable=True)
     departamento = db.Column(db.String(100), nullable=True)
     equipo_marca = db.Column(db.String(100), nullable=True)

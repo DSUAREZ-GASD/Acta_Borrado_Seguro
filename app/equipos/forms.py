@@ -14,7 +14,7 @@ class EquipoForm():
     nombre = StringField("Nombre del equipo:",
                          validators=[
                              InputRequired(message="Por favor ingresa un nombre de equipo"),
-                             Length(max=60, message="El nombre del equipo no debe exceder los 50 caracteres")
+                             Length(max=80, message="El nombre del equipo no debe exceder los 50 caracteres")
                          ])
     comision = StringField("Comisión:",
                            validators=[
@@ -60,6 +60,11 @@ class EquipoForm():
                                 InputRequired(message="Por favor ingresa el modelo del disco duro"),
                                 Length(max=50, message="El modelo del disco duro no debe exceder los 50 caracteres")
                             ])
+    capacidad = StringField("Capacidad de disco:",
+                            validators=[
+                                InputRequired(message="Por favor ingresa una capacidad"),
+                                Length(max=50, message="La capacidad no debe exceder los 50 caracteres")
+                                ])
     dd_serial = StringField("Serial de disco duro:",
                             validators=[
                                 InputRequired(message="Por favor ingresa el serial del disco duro"),
@@ -70,7 +75,7 @@ class EquipoForm():
                             InputRequired(message="Por favor ingresa el SHA-1"),
                             Length(max=50, message="El SHA-1 no debe exceder los 50 caracteres")
                         ])
-    proceso = SelectField(_("Rol del Usuario:"),
+    proceso = SelectField(_("Proceso:"),
                           choices=[(proceso.name, proceso.value) for proceso in Proceso],
                           validators=[InputRequired(message=_("Por favor ingresa el rol del usuario"))])
                   

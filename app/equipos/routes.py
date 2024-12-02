@@ -182,14 +182,15 @@ def eliminar_equipo(equipo_id):
    try:
        if equipo:
            # Eliminar el registro del equipo de la base de datos
-           if equipo.jal_id:
-               jal = Jal.query.get_or_404(equipo.jal_id)
-               if jal:
-                   db.session.delete(jal)
-           if equipo.consulta_id:
-                consulta = Consulta.query.get_or_404(equipo.consulta_id)
-                if consulta:
-                    db.session.delete(consulta)
+        
+           jal = Jal.query.filter_by(equipo_id=equipo_id).all()
+           for j in jal:
+               db.session.delete(j)
+                   
+           
+           consulta = Consulta.query.filter_by(equipo_id=equipo_id).all()
+           for c in consulta:
+               db.session.delete(c)
                
            db.session.delete(equipo)
            db.session.commit()

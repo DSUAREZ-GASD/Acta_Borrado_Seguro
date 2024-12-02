@@ -28,7 +28,6 @@ Usando los comandos
  
 Cada vez que realices un cambio en el modelo, debes generar un nuevo script de migración. Usa el siguiente comando para crear un script basado en los cambios detectados en los modelos:
  
-    flask db migrate -m "Mensaje de confirmación"
  
 * Comando que actualizará la base de datos aplicando los cambios definidos en el último script de migración.
  
