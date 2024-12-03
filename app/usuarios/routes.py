@@ -1,6 +1,6 @@
 from flask import flash, redirect, render_template, url_for
 from flask_login import login_required, current_user
-from flask_babel import gettext as _
+from flask_babel import gettext as _# type: ignore
 from . import usuarios
 from app import db
 from app.auth.routes import acceso_requerido

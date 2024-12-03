@@ -28,10 +28,10 @@ def acceso_requerido(roles=None):
         def decorated_function(*args, **kwargs):
             if current_user.is_authenticated is False:
                 flash("Debes iniciar sesión para acceder a esta página", "warning")
-                return redirect('/auth/login')
+                return redirect(url_for('auth.login'))
             if roles and current_user.rol.value not in roles:
                 flash("No tienes permisos para acceder a esta página", "error")
-                return redirect('/auth/login')
+                return redirect(url_for('auth.login'))
             return f(*args, **kwargs)
         return decorated_function
     return decorador

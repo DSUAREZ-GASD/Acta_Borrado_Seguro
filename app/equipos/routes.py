@@ -1,10 +1,10 @@
 from flask import render_template, redirect, flash, url_for
 from flask_login import login_required, current_user
 from werkzeug.utils import secure_filename
-from flask_babel import _
+from flask_babel import _ # type: ignore
 import os
 from . import equipos
-from app import db
+from app import db, directory_exists
 from app.auth.routes import acceso_requerido
 from app.models import Equipo, Jal, Consulta, Proceso
 from .forms import NuevoEquipo, EditEquipoForm
@@ -40,7 +40,9 @@ def crear_equipo():
             for imagen_field in form_registrar.imagenes:
                 if imagen_field.data:
                     filename = imagen_field.data.filename
-                    imagen_field.data.save(os.path.join('app/static/img', filename))
+                    file_path = os.path.join('app/static/img', filename)
+                    directory_exists(file_path)
+                    imagen_field.data.save(file_path)
                     equipo.imagenes.append(filename)
             
             # Agregar el equipo a la base de datos
@@ -113,6 +115,7 @@ def editar_equipo(equipo_id):
                 if imagen_field.data and hasattr(imagen_field.data, 'filename') and imagen_field.data.filename:
                     filename = secure_filename(imagen_field.data.filename)
                     file_path = os.path.join('app/static/img', filename)
+                    directory_exists(file_path)
                     imagen_field.data.save(file_path)
                     nuevas_imagenes.append(filename)
                 else:

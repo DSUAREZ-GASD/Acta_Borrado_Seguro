@@ -1,3 +1,4 @@
+import os
 from flask import Flask, redirect, url_for
 from flask_sqlalchemy import SQLAlchemy
 from flask_migrate import Migrate
@@ -74,4 +75,10 @@ def init_admin_user():
         db.session.add(admin_user)
         db.session.commit()
 
+# Crear directorio si no existe
+def directory_exists(file_path):
+    directory = os.path.dirname(file_path)
+    if not os.path.exists(directory):
+        os.makedirs(directory)
+        
 app = crear_app()

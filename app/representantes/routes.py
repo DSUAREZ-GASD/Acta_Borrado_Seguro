@@ -3,7 +3,7 @@ from werkzeug.utils import secure_filename
 from flask_babel import _ # type: ignore
 import os
 from . import representantes
-from app import db
+from app import db, directory_exists
 from app.auth.routes import acceso_requerido
 from app.models import Representante
 from .forms import Nuevo_Representante, EditRespresentanteForm
@@ -27,7 +27,9 @@ def registro_representante():
             db.session.commit()
             
             file = form.firma.data
-            file.save(os.path.join('app','static','firmas', representante.firma))
+            file_path = os.path.join('app','static','firmas', representante.firma)
+            directory_exists(file_path)
+            file.save(file_path)
             flash(_("Registro de representante exitoso"), "success")
             return redirect(url_for('representantes.lista_representantes'))
         except Exception as e:
@@ -68,6 +70,7 @@ def editar_representante(representante_id):
             if form_edit.firma.data and hasattr(form_edit.firma.data, 'filename'):
                 filename = secure_filename(form_edit.firma.data.filename)  
                 ruta_path = os.path.join('app','static','firmas', filename)
+                directory_exists(ruta_path)
                 form_edit.firma.data.save(ruta_path)
                 representante.firma = filename
             else:

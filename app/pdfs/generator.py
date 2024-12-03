@@ -7,14 +7,14 @@ from reportlab.lib.styles import ParagraphStyle, getSampleStyleSheet# type: igno
 from reportlab.lib.enums import TA_CENTER, TA_JUSTIFY, TA_LEFT, TA_RIGHT# type: ignore
 from reportlab.lib.units import cm# type: ignore
 import os
-from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Image# type: ignore
+from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Image # type: ignore
+from app import directory_exists
 
 def generar_pdf(nombre_archivo, equipo, representantes):        
     ruta_pdf = os.path.join(current_app.root_path, 'static', 'tmp', nombre_archivo)
     
     # Crear la carpeta si no existe
-    if not os.path.exists(os.path.dirname(ruta_pdf)):
-        os.makedirs(os.path.dirname(ruta_pdf))  
+    directory_exists(ruta_pdf)
         
     # Logo 
     logo = os.path.join(current_app.root_path, 'static', 'img_static', 'logo_rnec.png')

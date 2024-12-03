@@ -1,5 +1,6 @@
 from flask import flash, send_file, current_app,redirect, url_for
 from flask_login import current_user, login_required
+from app import directory_exists
 from app.auth.routes import acceso_requerido
 from . import pdf
 from .generator import  generar_pdf
@@ -70,6 +71,7 @@ def generar_todos_pdfs():
     
         if rutas_pdf:
             zip_file = os.path.join(current_app.root_path,'static','tmp','actas_pdfs.zip')
+            directory_exists(zip_file)
             with zipfile.ZipFile(zip_file, 'w') as zip_ref:
                 for ruta_pdf in rutas_pdf:
                     zip_ref.write(ruta_pdf, os.path.basename(ruta_pdf)) # Añadir el archivo al zip
