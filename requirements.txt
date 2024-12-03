@@ -10,7 +10,7 @@ Flask-Migrate
 Flask-SQLAlchemy
 Flask-WTF
 Flask-Limiter
-Flask_Babel
+flask-babel
 greenlet
 itsdangerous
 Jinja2

@@ -18,7 +18,7 @@ Instala las dependencias dentro del archivo requirements.txt
  
 pip install -r requirements.txt
  
-Ahora crea una base de datos con el mismo nombre de la que se encuentra en el archivo config en este caso es flask_shopy_2687365.
+Ahora crea una base de datos con el mismo nombre de la que se encuentra en el archivo config en este caso es secure_deletion_records.
  
 Usando los comandos 
  

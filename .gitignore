@@ -6,3 +6,6 @@ migrations/
 *.zip
 *.pdf
 __pycache__/
+
+# Permitir específicamente logo_rnec.png
+!logo_rnec.png

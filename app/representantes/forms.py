@@ -14,8 +14,7 @@ class Roles(Enum):
 class representanteForm():
     nombre =  StringField("Ingreso de responsable:",
                         validators=[InputRequired(message="por favor ingresa un nombre de represetante"),
-                                    Length(max=50, message="El nombre del equipo no debe exceder los 50 caracteres"),
-                                    Regexp(r'^[A-Z][a-zA-Z\s]*$', message="El nombre y apellido deben con letra mayúscula")])
+                                    Length(max=50, message="El nombre del equipo no debe exceder los 50 caracteres")])
     rol = SelectField("Rol del Usuario:",
                        choices=[(rol.name, rol.value)for rol in Roles],
                        validators= [InputRequired(message="por favor ingresa el rol del represetante")])

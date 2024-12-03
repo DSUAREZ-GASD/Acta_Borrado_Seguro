@@ -139,6 +139,7 @@ def editar_equipo(equipo_id):
                     id_proceso = nuevo_jal.id
                 else:
                     equipo.jal.cod_comision = equipo.cod_comision
+                    id_proceso = equipo.jal_id
             elif equipo.proceso == Proceso.CONSULTA:
                 if not equipo.consulta:
                     nuevo_consulta = Consulta(cod_comision=equipo.cod_comision, equipo_id=equipo.asd_id)
@@ -180,16 +181,7 @@ def editar_equipo(equipo_id):
 def eliminar_equipo(equipo_id):
    equipo = Equipo.query.get_or_404(equipo_id)
    try:
-       if equipo:
-           # Eliminar el registro del equipo de la base de datos
-           jal = Jal.query.filter_by(equipo_id=equipo_id).all()
-           for j in jal:
-               db.session.delete(j)
-                   
-           consulta = Consulta.query.filter_by(equipo_id=equipo_id).all()
-           for c in consulta:
-               db.session.delete(c)
-               
+       if equipo:              
            db.session.delete(equipo)
            db.session.commit()
            flash(_("Equipo Eliminado con exito"), "success")

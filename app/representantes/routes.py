@@ -1,6 +1,6 @@
 from flask import render_template, redirect, flash, url_for
 from werkzeug.utils import secure_filename
-from flask_babel import _
+from flask_babel import _ # type: ignore
 import os
 from . import representantes
 from app import db

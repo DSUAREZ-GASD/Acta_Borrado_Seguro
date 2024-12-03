@@ -101,6 +101,14 @@
                 <div class="text-danger">{{ error }}</div>
            {% endfor %}
        </div>
+
+       <div class="form-group mb-3">
+        <label for="{{ form.md5.id }}" class="form-label">{{ form.md5.label }}</label>
+        {{ form.md5(class="form-control", rows=3) }}
+        {% for error in form.md5.errors %}
+             <div class="text-danger">{{ error }}</div>
+        {% endfor %}
+    </div>
        
        <div class="form-group mb-3">
             <label for="{{ form.proceso.id }}" class="form-label">{{ form.proceso.label }}</label>

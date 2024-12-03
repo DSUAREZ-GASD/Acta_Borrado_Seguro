@@ -75,6 +75,10 @@ class EquipoForm():
                             InputRequired(message="Por favor ingresa el SHA-1"),
                             Length(max=50, message="El SHA-1 no debe exceder los 50 caracteres")
                         ])
+    md5 = StringField("HASH (MD5):",
+                      validators=[
+                          InputRequired(message="Por favor ingresa el MD5"),
+                          Length(max=50, message="El MD5 no debe exceder los 50 caracteres")])
     proceso = SelectField(_("Proceso:"),
                           choices=[(proceso.name, proceso.value) for proceso in Proceso],
                           validators=[InputRequired(message=_("Por favor ingresa el rol del usuario"))])

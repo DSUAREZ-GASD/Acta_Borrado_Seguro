@@ -1,13 +1,13 @@
-from reportlab.lib.pagesizes import letter
-from reportlab.pdfgen import canvas
-from reportlab.lib import  colors
+from reportlab.lib.pagesizes import letter# type: ignore
+from reportlab.pdfgen import canvas# type: ignore
+from reportlab.lib import  colors# type: ignore
 from flask import current_app # Ruta base de tu aplicación
-from reportlab.lib.units import inch
-from reportlab.lib.styles import ParagraphStyle, getSampleStyleSheet
-from reportlab.lib.enums import TA_CENTER, TA_JUSTIFY, TA_LEFT, TA_RIGHT
-from reportlab.lib.units import cm
+from reportlab.lib.units import inch# type: ignore
+from reportlab.lib.styles import ParagraphStyle, getSampleStyleSheet# type: ignore
+from reportlab.lib.enums import TA_CENTER, TA_JUSTIFY, TA_LEFT, TA_RIGHT# type: ignore
+from reportlab.lib.units import cm# type: ignore
 import os
-from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Image
+from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Image# type: ignore
 
 def generar_pdf(nombre_archivo, equipo, representantes):        
     ruta_pdf = os.path.join(current_app.root_path, 'static', 'tmp', nombre_archivo)
@@ -45,46 +45,9 @@ def generar_pdf(nombre_archivo, equipo, representantes):
         else:
             filas_imagenes.append(["Imagen no encontrada", "", img_name])
     
-    # Datos de los representantes 
-    filas_representantes = []
-    w = 100
-    h = 60
-    
-    for representante in representantes:
-        firma_path = os.path.join(current_app.root_path, 'static', 'firmas', representante.firma)
-        if os.path.exists(firma_path):
-            try:
-                img_firma=Image(firma_path, w, h)
-                
-                filas_representantes.append([
-                    f"{representante.rol.value}",
-                    f"{representante.nombre}",
-                    img_firma  # Incluye la imagen de la firma
-                ])
-            except Exception as e:
-                print(f"Error al agregar firma de {representante.nombre}: {e}")
-                filas_representantes.append([
-                    f"Error al cargar la firma de {representante.rol.value}",
-                    f"Error al cargar la firma de {representante.nombre}",
-                    "Firma no encontrada"
-                ])
-        else:
-            filas_representantes.append([
-                f"Firma no encontrada para {representante.rol.value}",
-                f"Firma no encontrada para {representante.nombre}",
-                "Firma no encontrada"
-            ])
-    
-    while len(filas_representantes) < 5:
-        filas_representantes.append(["", "", ""])
-        
-    representante1 = filas_representantes[0]
-    representante2 = filas_representantes[1]
-    representante3 = filas_representantes[2]
-    representante4 = filas_representantes[3]
-    representante5 = filas_representantes[4]
-            
-    
+    # imagenes de las firmas de representantes 
+   
+  
     # Configuración del PDF
     pdf = SimpleDocTemplate(
         ruta_pdf, pagesize=letter,
@@ -142,11 +105,11 @@ def generar_pdf(nombre_archivo, equipo, representantes):
         ["Versión del software:","9.1" ],
         ["Tipo Licencia:", "GNU"],
         [],
-        [],
         [Paragraph("<b>IDENTIFICACION DE LA IMAGEN DE LA COPIA DE SEGURIDAD</b>", estilos["EstiloGrande"])],
         [Paragraph("La copia de seguridad del equipo tendrá las siguientes características:",estilos["EstiloMediano"])],
         ["Nombre:", equipo.nombre ],
         ["HASH (SHA-1):", equipo.sha_1 ],
+        ["HASH (MD5):", equipo.md5 ],
         [Paragraph("La copia de seguridad será almacenada en un medio de almacenamiento con las siguientes características: Cada disco duro debe estar marcado con una etiqueta con esta misma información",estilos["EstiloMediano"])],
         ["Marca:","SEAGATE" ],
         ["Capacidad:","18 TB" ],
@@ -178,11 +141,11 @@ def generar_pdf(nombre_archivo, equipo, representantes):
         [Paragraph(f"Para constancia se firma en formato PDF con firma digita {equipo.fecha_hora_fin.strftime('%H:%M:%S')}  {equipo.fecha_hora_fin.strftime('%Y-%m-%d')} por quienes en ella intervienen",estilos["EstiloMediano"])],
         [Paragraph("Observaciones: Para dar claridad en la nitidez de las fotos se adjunta medio magnético al acta de cierre con la consolidación del registro fotográfico tomado por cada copia de seguridad",estilos["EstiloMediano"])],
         [],
-        [f"Rep. {representante1[0]}", f"Nombre: {representante1[1]}", f"Firma: {representante1[2]}"],
-        [f"Rep. {representante2[0]}", f"Nombre: {representante2[1]}", f"Firma: {representante2[2]}"],
-        [f"Rep. {representante3[0]}", f"Nombre: {representante3[1]}", f"Firma: {representante3[2]}"],
-        [f"Rep. {representante4[0]}", f"Nombre: {representante4[1]}", f"Firma: {representante4[2]}"],
-        [f"Rep. {representante5[0]}", f"Nombre: {representante5[1]}", f"Firma: {representante5[2]}"],
+        [f"Rep. {representantes[0].rol.value}", f"Nombre: {representantes[0].nombre}", "XXXXXXXX"],
+        [f"Rep. {representantes[1].rol.value}", f"Nombre: {representantes[1].nombre}", "XXXXXXXX"],
+        [f"Rep. {representantes[2].rol.value}", f"Nombre: {representantes[2].nombre}", "XXXXXXXX"],
+        [f"Rep. {representantes[3].rol.value}", f"Nombre: {representantes[3].nombre}", "XXXXXXXX"],
+        ["","", ""],
         [],
         ["REGISTRO FOTOGRAFICO" ],
         [],
@@ -202,7 +165,7 @@ def generar_pdf(nombre_archivo, equipo, representantes):
     data_tabla = [encabezados] + datos  # Combinar encabezados y datos
 
     # Crear la tabla
-    tabla = Table(data_tabla, colWidths = [132, 132, 24, 132, 132],rowHeights=[60, 3, 16, 3, 80, 3, 16, 3, 16, 16, 16, 16, 16, 3, 16, 16, 16, 16, 16, 16, 16, 16, 16, 3, 16, 3,16, 16, 16,3,16, 3, 16,16, 16, 3,3, 16, 16,16,16, 30, 16,16, 3, 15,15, 2, 16, 30, 30, 30, 16,16, 16, 16,2, 2, 16,16,16, 16, 16,16, 16, 16,3, 3, 16, 16,30, 2, 25,25, 25, 25,25, 2, 16,2,190, 16, 5,200, 16, 5,200, 30, 5,200,16])
+    tabla = Table(data_tabla, colWidths = [132, 132, 24, 132, 132],rowHeights=[60, 3, 16, 3, 80, 3, 16, 3, 16, 16, 16, 16, 16, 3, 16, 16, 16, 16, 16, 16, 16, 16, 16, 3, 16, 3,16, 16, 16,3,16, 3, 16,16, 16, 2, 15, 15, 15,15,15, 30, 16,16, 0, 15,15, 2, 16, 30, 30, 30, 16,16, 16, 16,2, 2, 16,16,16, 16, 16,16, 16, 16,3, 3, 16, 16,30, 2, 25,25, 25, 25,25, 2, 16,2,190, 16, 5,200, 16, 5,200, 30, 5,200,16])
 
     # Aplicar estilos
     estilos = TableStyle([
@@ -246,9 +209,9 @@ def generar_pdf(nombre_archivo, equipo, representantes):
         ("SPAN", (1, 33), (4, 33)),
         ("SPAN", (1, 34), (4, 34)),
         ("SPAN", (0, 35), (4, 35)),
-        ("SPAN", (0, 36), (4, 36)),
-        ("SPAN", (0, 37), (4, 37)),#IDENTIFICACION DE LA IMAGEN DE LA COPIA DE SEGURIDAD
-        ("SPAN", (0, 38), (4, 38)),
+        ("SPAN", (0, 36), (4, 36)),#IDENTIFICACION DE LA IMAGEN DE LA COPIA DE SEGURIDAD
+        ("SPAN", (0, 37), (4, 37)),
+        ("SPAN", (1, 38), (4, 38)),
         ("SPAN", (1, 39), (4, 39)),
         ("SPAN", (1, 40), (4, 40)),
         ("SPAN", (0, 41), (4, 41)),
@@ -337,7 +300,8 @@ def generar_pdf(nombre_archivo, equipo, representantes):
         ("BACKGROUND", (1, 32), (4, 32), colors.lightgrey),
         ("BACKGROUND", (1, 33), (4, 33), colors.lightgrey),
         ("BACKGROUND", (1, 34), (4, 34), colors.lightgrey),
-        ("BACKGROUND", (0, 37), (4, 37), colors.lightgrey),
+        ("BACKGROUND", (0, 36), (4, 36), colors.lightgrey),
+        ("BACKGROUND", (1, 38), (4, 38), colors.lightgrey),
         ("BACKGROUND", (1, 39), (4, 39), colors.lightgrey),
         ("BACKGROUND", (1, 40), (4, 40), colors.lightgrey),
         ("BACKGROUND", (1, 42), (4, 42), colors.lightgrey),

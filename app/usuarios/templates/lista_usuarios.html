@@ -56,11 +56,9 @@ menu %} {{ super() }} {% endblock %}
                 >
               </td>
               <td>
-                <a
-                  href="{{ url_for('usuarios.eliminar_usuario', usuario_id=usuario.id) }}"
-                  class="btn btn-danger"
-                  >Eliminar</a
-                >
+                {% if usuario.userName != 'admin' %}
+                <a href="{{ url_for('usuarios.eliminar_usuario', usuario_id=usuario.id) }}" class="btn btn-danger">Eliminar</a>
+                {% endif %}
               </td>
             </tr>
             {% endfor %}
