@@ -23,20 +23,23 @@ def generar_pdf(nombre_archivo, equipo, representantes):
     else:
         logo_renc = Paragraph("Logo no encontrado", getSampleStyleSheet()["Normal"])
     
-    firma_path = os.path.join(current_app.root_path, 'static', 'firmas', 'Firma_2_H.jpg')
-    print(firma_path)
     # Dimensiones de la imagen
-    h = 20
-    w = 80
-    # Verificar si la imagen existe
-    if os.path.exists(firma_path):
-        try:
-            firma_image = Image(firma_path, width=w, height=h)
-        except Exception as e:
+    firmas_content = []   
+    w,h = 80, 20
+    for representante in representantes:
+        firma_path = os.path.join(current_app.root_path, 'static', 'firmas', representante.firma)
+        print(firma_path)
+        
+        # Verificar si la imagen existe
+        if os.path.exists(firma_path):
+            try:
+                firma_image = Image(firma_path, width=w, height=h)
+                firmas_content.append(firma_image)
+            except Exception as e:
+                firma_image = "Sin imagen"
+        else:
+            print("La imagen no existe en la ruta especificada.")
             firma_image = "Sin imagen"
-    else:
-        print("La imagen no existe en la ruta especificada.")
-        firma_image = "Sin imagen"
     
     
     # Inicializa la lista de filas para la tabla
@@ -156,10 +159,10 @@ def generar_pdf(nombre_archivo, equipo, representantes):
         [Paragraph(f"Para constancia se firma en formato PDF con firma digita {equipo.fecha_hora_fin.strftime('%H:%M:%S') if equipo.fecha_hora_fin else "Fecha no disponible"}  {equipo.fecha_hora_fin.strftime('%Y-%m-%d') if equipo.fecha_hora_fin else "Hora no disponible"} por quienes en ella intervienen",estilos["EstiloMediano"])],
         [Paragraph("Observaciones: Para dar claridad en la nitidez de las fotos se adjunta medio magnético al acta de cierre con la consolidación del registro fotográfico tomado por cada copia de seguridad",estilos["EstiloMediano"])],
         [],
-        [f"Rep. {representantes[0].rol.value}", f"Nombre: {representantes[0].nombre}","","", firma_image],
-        [f"Rep. {representantes[1].rol.value}", f"Nombre: {representantes[1].nombre}", f"XXXXXXXX"],
-        [f"Rep. {representantes[2].rol.value}", f"Nombre: {representantes[2].nombre}", "XXXXXXXX"],
-        [f"Rep. {representantes[3].rol.value}", f"Nombre: {representantes[3].nombre}", "XXXXXXXX"],
+        [f"Rep. {representantes[0].rol.value}", f"Nombre: {representantes[0].nombre}","","", firmas_content[0]],
+        [f"Rep. {representantes[1].rol.value}", f"Nombre: {representantes[1].nombre}","","", firmas_content[1]],
+        [f"Rep. {representantes[2].rol.value}", f"Nombre: {representantes[2].nombre}","","", firmas_content[2]],
+        [f"Rep. {representantes[3].rol.value}", f"Nombre: {representantes[3].nombre}","","", firmas_content[3]],
         ["","", "", "", ""],
         [],
         ["REGISTRO FOTOGRAFICO" ],
