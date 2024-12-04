@@ -101,11 +101,7 @@ def editar_equipo(equipo_id):
     if form_edit_equipo.validate_on_submit():
         try:
             # Guardar los datos actuales del equipo
-            nombre_actual = equipo.nombre.split(" (ASD")[0]  # Extraer el nombre base sin el formato
-            comision_actual = equipo.comision
-            municipio_actual = equipo.municipio
-            departamento_actual = equipo.departamento
-            cod_comision_actual = equipo.cod_comision
+            nombre_actual = equipo.nombre
                                
             form_edit_equipo.populate_obj(equipo)
 
@@ -132,36 +128,26 @@ def editar_equipo(equipo_id):
             db.session.commit()
             
             # Insertar en Jal o Consulta
-            id_proceso = None
             if equipo.proceso == Proceso.JAL:
                 if not equipo.jal:
                     nuevo_jal = Jal(cod_comision=equipo.cod_comision, equipo_id=equipo.asd_id)
                     db.session.add(nuevo_jal)
                     db.session.flush()
                     equipo.jal_id = nuevo_jal.id
-                    id_proceso = nuevo_jal.id
                 else:
                     equipo.jal.cod_comision = equipo.cod_comision
-                    id_proceso = equipo.jal_id
             elif equipo.proceso == Proceso.CONSULTA:
                 if not equipo.consulta:
                     nuevo_consulta = Consulta(cod_comision=equipo.cod_comision, equipo_id=equipo.asd_id)
                     db.session.add(nuevo_consulta)
                     db.session.flush()
                     equipo.consulta_id = nuevo_consulta.id
-                    id_proceso = nuevo_consulta.id
                 else:
                     equipo.consulta.cod_comision = equipo.cod_comision
-                    id_proceso = equipo.consulta_id
             
             # Verificar si el nombre del equipo ha cambiado
-            if equipo.proceso != Proceso.BACKUP or (
-                nombre_actual != equipo.nombre.split(" (ASD")[0] or
-                comision_actual != equipo.comision or
-                municipio_actual != equipo.municipio or
-                departamento_actual != equipo.departamento or
-                cod_comision_actual != equipo.cod_comision):
-                equipo.nombre = f"ASD{id_proceso}_{equipo.proceso.value}_{equipo.departamento}_{equipo.municipio}_{equipo.comision}_{equipo.cod_comision}"
+            if nombre_actual != equipo.nombre:
+                equipo.nombre = nombre_actual
             
             db.session.commit()
             limpiar_imagenes_huerfanas()

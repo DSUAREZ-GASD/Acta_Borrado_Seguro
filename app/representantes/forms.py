@@ -20,7 +20,7 @@ class representanteForm():
                        validators= [InputRequired(message="por favor ingresa el rol del represetante")])
     firma =  FileField("Imagen de producto", validators=[
                             FileRequired(message="Debes ingresar un archivo"),
-                            FileAllowed(['jpg', 'png','pdf'], message='Solo se admiten imágenes')])
+                            FileAllowed(['jpg', 'png','pdf','webp', 'jpeg'], message='Solo se admiten imágenes')])
 
 
 class Nuevo_Representante(FlaskForm, representanteForm):

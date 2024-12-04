@@ -19,12 +19,12 @@ def crear_pdf(equipo_id):
         representantes = Representante.query.all()
         
         # Verificar que el estado del equipo sea finalizado 
-        if equipo.estado.value != "Finalizado":
-            flash(_("El estado del equipo tiene que ser finalizado para que se generar el pdf"), "error")
-            if current_user.rol.value == "Administrador":
-                return redirect(url_for('equipos.lista_equipos'))
-            elif current_user.rol.value == "Agente":
-                return redirect(url_for('equipos.lista_equipos_agente'))
+        # if equipo.estado.value != "Finalizado":
+        #     flash(_("El estado del equipo tiene que ser finalizado para que se generar el pdf"), "error")
+        #     if current_user.rol.value == "Administrador":
+        #         return redirect(url_for('equipos.lista_equipos'))
+        #     elif current_user.rol.value == "Agente":
+        #         return redirect(url_for('equipos.lista_equipos_agente'))
         
         nombre_archivo = f"{equipo.nombre}.pdf"  
                 
@@ -56,10 +56,10 @@ def generar_todos_pdfs():
         rutas_pdf = []
         equipos_sin_pdf = []
         for equipo in equipos:
-            # Verificar que el estado del equipo sea finalizado
-            if equipo.estado.value != "Finalizado":
-                equipos_sin_pdf.append(equipo.nombre)
-                continue # Omitir estos equipos
+            # # Verificar que el estado del equipo sea finalizado
+            # if equipo.estado.value != "Finalizado":
+            #     equipos_sin_pdf.append(equipo.nombre)
+            #     continue # Omitir estos equipos
             
             #Llamamos a la función generar_pdf
             try:

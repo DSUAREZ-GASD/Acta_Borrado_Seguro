@@ -52,12 +52,12 @@ class EquipoForm():
                                 ])
     dd_marca = StringField("Marca de disco duro:",
                            validators=[
-                               InputRequired(message="Por favor ingresa la marca del disco duro"),
+                               InputRequired(message="Por favor ingresa una marca de disco duro"),
                                Length(max=50, message="La marca del disco duro no debe exceder los 50 caracteres")
                            ])
     dd_modelo = StringField("Modelo de disco duro:",
                             validators=[
-                                InputRequired(message="Por favor ingresa el modelo del disco duro"),
+                                Optional(),
                                 Length(max=50, message="El modelo del disco duro no debe exceder los 50 caracteres")
                             ])
     capacidad = StringField("Capacidad de disco:",
@@ -67,17 +67,17 @@ class EquipoForm():
                                 ])
     dd_serial = StringField("Serial de disco duro:",
                             validators=[
-                                InputRequired(message="Por favor ingresa el serial del disco duro"),
+                                Optional(),
                                 Length(max=50, message="El serial del disco duro no debe exceder los 50 caracteres")
                             ])
     sha_1 = StringField("HASH (SHA-1):",
                         validators=[
-                            InputRequired(message="Por favor ingresa el SHA-1"),
+                            Optional(),
                             Length(max=50, message="El SHA-1 no debe exceder los 50 caracteres")
                         ])
     md5 = StringField("HASH (MD5):",
                       validators=[
-                          InputRequired(message="Por favor ingresa el MD5"),
+                          Optional(),
                           Length(max=50, message="El MD5 no debe exceder los 50 caracteres")])
     proceso = SelectField(_("Proceso:"),
                           choices=[(proceso.name, proceso.value) for proceso in Proceso],
@@ -87,7 +87,7 @@ class EquipoForm():
                                 validators=[Optional()])
     imagenes = FieldList(FileField("Imagen de equipo", validators=[
                             Optional(),
-                            FileAllowed(['jpg', 'png'], message='Solo se admiten imágenes')]), 
+                            FileAllowed(['jpg', 'png', 'webp', 'jpeg'], message='Solo se admiten imágenes')]), 
                          min_entries=8, max_entries=8)
     
 #Definir el formulario de registro de equipos

@@ -1,0 +1,29 @@
+version: '3.8'
+
+services:
+  web:
+    build: .
+    ports:
+      - "8000:8000"
+    volumes:
+      - .:/app
+    environment:
+      FLASK_APP: app
+      FLASK_ENV: production
+      DATABASE_URL: mysql+mysqlconnector://root@db:3306/secure_deletion_records
+    depends_on:
+      - db
+
+  db:
+    image: mysql:8.0
+    restart: always
+    environment:
+      MYSQL_DATABASE: secure_deletion_records
+      MYSQL_USER: root
+      MYSQL_PASSWORD: ""
+      MYSQL_ROOT_PASSWORD: ""
+    ports:
+      - "3306:3306"
+
+volumes:
+  mysql_data:

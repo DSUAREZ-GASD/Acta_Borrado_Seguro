@@ -1,7 +1,7 @@
 from flask_wtf import FlaskForm
 from wtforms import StringField,EmailField,PasswordField,SubmitField, SelectField
 from wtforms.validators import InputRequired, Optional, Email, EqualTo, Length, Regexp
-from flask_babel import gettext as _
+from flask_babel import gettext as _ # type: ignore
 from enum import Enum
 
 # Columnas de atributos enumerados
@@ -69,7 +69,8 @@ class FormPerfil(FlaskForm):
                                     Regexp(r'^[\w\.-]+@grupoasd\.com$', message=_("El correo debe ser de la compañía '@grupoasd.com'"))])
     
     current_password = PasswordField(_("Contraseña Actual:"),
-                                     validators=[InputRequired(message=_("Por favor ingresa tu contraseña actual."))])
+                                     validators=[Optional(),Length(min=8, message=_("La contraseña debe tener al menos 8 caracteres")),
+            Regexp(r'^(?=.*[A-Z])(?=.*[a-z])(?=.*\d)(?=.*[*#@.$£]).+$',message=_("Por favor ingresa tu contraseña actual."))])
     
     password=PasswordField(_("Nueva Contraseña:"),validators=[Optional(), Length(min=8, message=_("La contraseña debe tener al menos 8 caracteres")),
             Regexp(r'^(?=.*[A-Z])(?=.*[a-z])(?=.*\d)(?=.*[*#@.$£]).+$', message=_("La contraseña debe contener al menos una letra mayúscula, una letra minúscula, un número y un carácter especial (*,#,@,.,$,£)"))])

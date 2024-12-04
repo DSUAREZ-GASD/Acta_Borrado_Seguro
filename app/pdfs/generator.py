@@ -1,13 +1,12 @@
-from reportlab.lib.pagesizes import letter# type: ignore
-from reportlab.pdfgen import canvas# type: ignore
-from reportlab.lib import  colors# type: ignore
-from flask import current_app # Ruta base de tu aplicación
-from reportlab.lib.units import inch# type: ignore
+from reportlab.lib.pagesizes import letter
+from reportlab.lib import  colors
+from flask import current_app 
+from reportlab.lib.units import inch
 from reportlab.lib.styles import ParagraphStyle, getSampleStyleSheet# type: ignore
 from reportlab.lib.enums import TA_CENTER, TA_JUSTIFY, TA_LEFT, TA_RIGHT# type: ignore
-from reportlab.lib.units import cm# type: ignore
+from reportlab.lib.units import cm
 import os
-from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Image # type: ignore
+from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Image 
 from app import directory_exists
 
 def generar_pdf(nombre_archivo, equipo, representantes):        
@@ -24,9 +23,24 @@ def generar_pdf(nombre_archivo, equipo, representantes):
     else:
         logo_renc = Paragraph("Logo no encontrado", getSampleStyleSheet()["Normal"])
     
+    firma_path = os.path.join(current_app.root_path, 'static', 'firmas', 'Firma_2_H.jpg')
+    print(firma_path)
+    # Dimensiones de la imagen
+    h = 20
+    # Verificar si la imagen existe
+    if os.path.exists(firma_path):
+        try:
+            firma_image = Image(firma_path, height=h)
+        except Exception as e:
+            firma_image = "Sin imagen"
+    else:
+        print("La imagen no existe en la ruta especificada.")
+        firma_image = "Sin imagen"
+    
+    
     # Inicializa la lista de filas para la tabla
     filas_imagenes = []
-    width = 180
+    width = 240
     height = 180
     
     # Limitar a 8 imágenes y preparar filas para la tabla
@@ -68,7 +82,7 @@ def generar_pdf(nombre_archivo, equipo, representantes):
     estilos.add(ParagraphStyle(name="EstiloPequeno", parent=estilos["Normal"], fontSize=7, leading=12, alignment=TA_CENTER))
 
     # Datos de la tabla con encabezados
-    encabezados = [logo_renc,Paragraph("<b>ACTA INDIVIDUAL PARA LA GENERACION DE LAS IMAGENES DE LA COPIA DE SEGURIDAD DE LOS DISCOS DUROS Y BORRADO SEGURO DE EQUIPOS DE ESCRUTINIO UTILIZADOS EN LAS CONSULTAS POPULARES PARA LA CONFORMACIÓN DEL ÁREA METROPOLITANA DEL SUROCCIDENTE DE COLOMBIA Y DEL PIEDEMONTE AMAZÓNICO Y ELECCIÓN DE LAS JUNTAS ADMINISTRADORAS LOCALES (JAL) 2024.</b>", estilos["EstiloPequeno"])]
+    encabezados = [firma_image,Paragraph("<b>ACTA INDIVIDUAL PARA LA GENERACION DE LAS IMAGENES DE LA COPIA DE SEGURIDAD DE LOS DISCOS DUROS Y BORRADO SEGURO DE EQUIPOS DE ESCRUTINIO UTILIZADOS EN LAS CONSULTAS POPULARES PARA LA CONFORMACIÓN DEL ÁREA METROPOLITANA DEL SUROCCIDENTE DE COLOMBIA Y DEL PIEDEMONTE AMAZÓNICO Y ELECCIÓN DE LAS JUNTAS ADMINISTRADORAS LOCALES (JAL) 2024.</b>", estilos["EstiloPequeno"])]
     datos = [
         [],
         [Paragraph("<b>INTRODUCCIÓN</b>", estilos["EstiloGrande"])],
@@ -80,9 +94,9 @@ def generar_pdf(nombre_archivo, equipo, representantes):
         ["Dirección:","Cra 10 # 17 – 72 Piso 3"],
         ["Ciudad:", "Bogotá D.C."],
         ["nombre del Edificio:","WTC I"],
-        ["Fecha:", equipo.fecha_hora_inicio.strftime('%Y-%m-%d')],
-        ["Hora:", equipo.fecha_hora_inicio.strftime('%H:%M:%S')],
-         [],
+        ["Fecha:", equipo.fecha_hora_inicio.strftime('%Y-%m-%d') if equipo.fecha_hora_inicio else "Fecha no disponible" ],
+        ["Hora:", equipo.fecha_hora_inicio.strftime('%H:%M:%S') if equipo.fecha_hora_inicio else "Hora no disponible"],
+        [],
         [Paragraph("<b>IDENTIFICACION DEL EQUIPO A EJECUTAR PROCEDIMIENTO</b>", estilos["EstiloGrande"])],
         ["Escrutinio/Comisión:", equipo.comision],
         ["Municipio:",equipo.municipio],
@@ -138,27 +152,27 @@ def generar_pdf(nombre_archivo, equipo, representantes):
         [],
         [],
         [Paragraph("<b>FIRMAS</b>", estilos["EstiloGrande"])],
-        [Paragraph(f"Para constancia se firma en formato PDF con firma digita {equipo.fecha_hora_fin.strftime('%H:%M:%S')}  {equipo.fecha_hora_fin.strftime('%Y-%m-%d')} por quienes en ella intervienen",estilos["EstiloMediano"])],
+        [Paragraph(f"Para constancia se firma en formato PDF con firma digita {equipo.fecha_hora_fin.strftime('%H:%M:%S') if equipo.fecha_hora_fin else "Fecha no disponible"}  {equipo.fecha_hora_fin.strftime('%Y-%m-%d') if equipo.fecha_hora_fin else "Hora no disponible"} por quienes en ella intervienen",estilos["EstiloMediano"])],
         [Paragraph("Observaciones: Para dar claridad en la nitidez de las fotos se adjunta medio magnético al acta de cierre con la consolidación del registro fotográfico tomado por cada copia de seguridad",estilos["EstiloMediano"])],
         [],
-        [f"Rep. {representantes[0].rol.value}", f"Nombre: {representantes[0].nombre}", "XXXXXXXX"],
-        [f"Rep. {representantes[1].rol.value}", f"Nombre: {representantes[1].nombre}", "XXXXXXXX"],
-        [f"Rep. {representantes[2].rol.value}", f"Nombre: {representantes[2].nombre}", "XXXXXXXX"],
-        [f"Rep. {representantes[3].rol.value}", f"Nombre: {representantes[3].nombre}", "XXXXXXXX"],
+        [f"Rep. {representantes[0].rol.value}", f"Nombre: {representantes[0].nombre}", firma_image, ""],
+        [f"Rep. {representantes[1].rol.value}", f"Nombre: {representantes[1].nombre}", "XXXXXXXX" , ""],
+        [f"Rep. {representantes[2].rol.value}", f"Nombre: {representantes[2].nombre}", "XXXXXXXX" , ""],
+        [f"Rep. {representantes[3].rol.value}", f"Nombre: {representantes[3].nombre}", "XXXXXXXX" , ""],
         ["","", ""],
         [],
         ["REGISTRO FOTOGRAFICO" ],
         [],
-        [filas_imagenes[0][0] if len(filas_imagenes) > 0 else "Sin imagen", "", "", filas_imagenes[1][0] if len(filas_imagenes) > 1 else "Sin imagen", ""],
+        [filas_imagenes[0][0] if len(filas_imagenes) > 0 else logo_renc, "", "", filas_imagenes[1][0] if len(filas_imagenes) > 1 else logo_renc, ""],
         [Paragraph("<b>1. Foto de la caja del equipo</b>", estilos["EstiloPequeno"]), "", "", Paragraph("<b>2. Foto del equipo</b>", estilos["EstiloPequeno"])],
         [],
-        [filas_imagenes[2][0] if len(filas_imagenes) > 2 else "Sin imagen", "", "", filas_imagenes[3][0] if len(filas_imagenes) > 3 else "Sin imagen", ""],
+        [filas_imagenes[2][0] if len(filas_imagenes) > 2 else logo_renc, "", "", filas_imagenes[3][0] if len(filas_imagenes) > 3 else logo_renc, ""],
         [Paragraph("<b>3. Foto serial del equipo</b>", estilos["EstiloPequeno"]), "", "", Paragraph("<b>4. Foto de la Identificación de la comisión</b>", estilos["EstiloPequeno"])],
         [],
-        [filas_imagenes[4][0] if len(filas_imagenes) > 4 else "Sin imagen", "", "", filas_imagenes[5][0] if len(filas_imagenes) > 5 else "Sin imagen", ""],
+        [filas_imagenes[4][0] if len(filas_imagenes) > 4 else logo_renc, "", "", filas_imagenes[5][0] if len(filas_imagenes) > 5 else logo_renc, ""],
         [Paragraph("5. Foto inicio de generación de la imagen de la copia de seguridad ",estilos["EstiloMediano"]), "", "", Paragraph("6. Foto finalización de la generación de la imagen de la copia de seguridad",estilos["EstiloMediano"])],
         [],
-        [filas_imagenes[6][0] if len(filas_imagenes) > 6 else "Sin imagen", "", "", filas_imagenes[7][0] if len(filas_imagenes) > 7 else "Sin imagen", ""],
+        [filas_imagenes[6][0] if len(filas_imagenes) > 6 else logo_renc, "", "", filas_imagenes[7][0] if len(filas_imagenes) > 7 else logo_renc, ""],
         [Paragraph("<b>7. Foto inicio del borrado</b>", estilos["EstiloPequeno"]), "", "", Paragraph("<b>8. Foto finalización del borrado</b>", estilos["EstiloPequeno"])]        
     ]
     
