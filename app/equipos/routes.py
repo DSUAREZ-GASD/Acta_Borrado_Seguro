@@ -3,6 +3,7 @@ from flask_login import login_required, current_user
 from werkzeug.utils import secure_filename
 from flask_babel import _ # type: ignore
 import os
+import uuid
 from . import equipos
 from app import db, directory_exists
 from app.auth.routes import acceso_requerido
@@ -40,10 +41,11 @@ def crear_equipo():
             for imagen_field in form_registrar.imagenes:
                 if imagen_field.data:
                     filename = imagen_field.data.filename
-                    file_path = os.path.join('app/static/img', filename)
+                    unique_filename = f"{uuid.uuid4()}_{filename}"
+                    file_path = os.path.join('app/static/img', unique_filename)
                     directory_exists(file_path)
                     imagen_field.data.save(file_path)
-                    equipo.imagenes.append(filename)
+                    equipo.imagenes.append(unique_filename)
             
             # Agregar el equipo a la base de datos
             db.session.add(equipo)      
@@ -99,10 +101,7 @@ def editar_equipo(equipo_id):
         form_edit_equipo.imagenes.append_entry()
 
     if form_edit_equipo.validate_on_submit():
-        try:
-            # Guardar los datos actuales del equipo
-            nombre_actual = equipo.nombre
-                               
+        try:                  
             form_edit_equipo.populate_obj(equipo)
 
             # Guardar las nuevas imágenes
@@ -110,10 +109,11 @@ def editar_equipo(equipo_id):
             for imagen_field in form_edit_equipo.imagenes:
                 if imagen_field.data and hasattr(imagen_field.data, 'filename') and imagen_field.data.filename:
                     filename = secure_filename(imagen_field.data.filename)
-                    file_path = os.path.join('app/static/img', filename)
+                    unique_filename = f"{uuid.uuid4()}_{filename}"
+                    file_path = os.path.join('app/static/img', unique_filename)
                     directory_exists(file_path)
                     imagen_field.data.save(file_path)
-                    nuevas_imagenes.append(filename)
+                    nuevas_imagenes.append(unique_filename)
                 else:
                     # Si no se ha subido una nueva imagen, mantener la imagen actual
                     index = len(nuevas_imagenes)
@@ -144,10 +144,6 @@ def editar_equipo(equipo_id):
                     equipo.consulta_id = nuevo_consulta.id
                 else:
                     equipo.consulta.cod_comision = equipo.cod_comision
-            
-            # Verificar si el nombre del equipo ha cambiado
-            if nombre_actual != equipo.nombre:
-                equipo.nombre = nombre_actual
             
             db.session.commit()
             limpiar_imagenes_huerfanas()

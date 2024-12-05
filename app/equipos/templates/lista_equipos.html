@@ -36,9 +36,9 @@ Lista de equipos
         >
           <thead class="table-dark">
             <tr>
-              <th>#</th>
               <th>Estado</th>
               <th>Proceso</th>
+              <th>Serial de equipo</th>
               <th>Nombre de equipo</th>
               <th>Registrado por</th>
               <th>Actualizar</th>
@@ -49,9 +49,9 @@ Lista de equipos
           <tbody>
             {% for equipo in equipos %}
             <tr>
-              <td>{{equipo.asd_id}}</td>
               <td>{{equipo.estado.value}}</td>
               <td>{{equipo.proceso.value}}</td>
+              <td>{{equipo.equipo_serial}}</td>
               <td>{{equipo.nombre}}</td>
               <td>{{equipo.usuario.userName}}</td>
               <td>

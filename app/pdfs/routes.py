@@ -6,7 +6,23 @@ from . import pdf
 from .generator import  generar_pdf
 import zipfile
 import os
+import threading
+import time
 from flask_babel import _ # type: ignore
+
+def eliminar_archivo_temporal(ruta, delay):
+    def eleminar():
+        time.sleep(delay)
+        try:
+            if os.path.exists(ruta):
+                os.remove(ruta)
+                print(f"Archivo {ruta} eliminado")
+        except Exception as e:
+            print(f"Error eliminando archivo {ruta}: {e}")
+    
+    kill = threading.Thread(target=eleminar)
+    kill.start()
+    
 
 @pdf.route('/crear_pdf/<int:equipo_id>', methods=['GET'])
 @acceso_requerido(roles=["Administrador", "Agente"])
@@ -26,10 +42,12 @@ def crear_pdf(equipo_id):
         #     elif current_user.rol.value == "Agente":
         #         return redirect(url_for('equipos.lista_equipos_agente'))
         
-        nombre_archivo = f"{equipo.nombre}.pdf"  
+        nombre_archivo = f"{equipo.nombre}.pdf"
                 
         # Generar el PDF
         ruta_pdf = generar_pdf(nombre_archivo, equipo, representantes)
+        
+        eliminar_archivo_temporal(ruta_pdf, 3600);   
         
         return send_file(ruta_pdf, as_attachment=True, mimetype='application/pdf')
         
@@ -37,7 +55,6 @@ def crear_pdf(equipo_id):
         flash(_("Error al crear el pdf {}").format(e), "error")
         return redirect(url_for('equipos.lista_equipos'))
          
-
 @pdf.route('/generar_todos_pdfs', methods=['POST'])
 @acceso_requerido(roles=["Administrador","Agente"])
 @login_required
@@ -67,7 +84,7 @@ def generar_todos_pdfs():
                 ruta_pdf = generar_pdf(nombre_archivo, equipo, representante)
                 rutas_pdf.append(ruta_pdf)
             except Exception as e:
-                flash(_(f"Error generando PDF para {equipo.nombre}."), "error")
+                flash(_(f"Error generando PDF para {equipo.nombre}.").format(e), "error")
     
         if rutas_pdf:
             zip_file = os.path.join(current_app.root_path,'static','tmp','actas_pdfs.zip')
@@ -79,6 +96,8 @@ def generar_todos_pdfs():
             # Limpiar los archivos PDF temporales
             for ruta_pdf in rutas_pdf:
                 os.remove(ruta_pdf)
+            
+            eliminar_archivo_temporal(zip_file, 3600)
                 
             return send_file(zip_file, as_attachment=True, mimetype='application/zip', download_name='actas_pdfs.zip')
         
