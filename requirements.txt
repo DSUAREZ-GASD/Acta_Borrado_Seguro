@@ -26,8 +26,7 @@ visitor
 Werkzeug
 WTForms
 mysql-connector-python
-reportlab
-pip 
+reportlab 
 pillow
 python-dotenv
 wfastcgi
