@@ -11,7 +11,7 @@ body{
     text-align: left;
     padding: 4.5em 6em;
     margin: auto;
-    width: 90%;
+    width: 100%;
     max-width: 500px;
     box-shadow: 0 5px 10px -5px rgba(0, 0, 0, 0.535);
 }

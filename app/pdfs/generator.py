@@ -124,7 +124,7 @@ def generar_pdf(nombre_archivo, equipo, representantes):
         ["Tipo Licencia:", "GNU"],
         [],
         [Paragraph("<b>IDENTIFICACION DE LA IMAGEN DE LA COPIA DE SEGURIDAD</b>", estilos["EstiloGrande"])],
-        [Paragraph("La copia de seguridad del equipo tendrá las siguientes características:",estilos["EstiloMediano"])],
+        [Paragraph("La copia de seguridad del equipo tendrá las siguientes características:", estilos["EstiloMediano"])],
         ["Nombre:", equipo.nombre ],
         ["HASH (SHA-1):", equipo.sha_1 ],
         ["HASH (MD5):", equipo.md5 ],
