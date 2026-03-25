@@ -14,7 +14,7 @@ def generar_pdf(nombre_archivo, equipo, representantes):
     
     # Crear la carpeta si no existe
     directory_exists(ruta_pdf)
-        
+            
     # Logo 
     logo = os.path.join(current_app.root_path, 'static', 'img_static', 'logo_rnec.png')
     
@@ -338,5 +338,7 @@ def generar_pdf(nombre_archivo, equipo, representantes):
     pdf.build(elementos)
     
     return ruta_pdf
+
+    
 
 

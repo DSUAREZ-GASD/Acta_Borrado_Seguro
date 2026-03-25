@@ -7,7 +7,7 @@ import uuid
 from . import equipos
 from app import db, directory_exists
 from app.auth.routes import acceso_requerido
-from app.models import Equipo, Jal, Consulta, Proceso
+from app.models import Equipo
 from .forms import NuevoEquipo, EditEquipoForm
 
 # Diccionario de labels para imagenes de equipo de los formularios
@@ -21,6 +21,7 @@ labels = {
     6: "Foto inicio del borrado",
     7: "Foto finalización del borrado",
 }
+
 
 # Ruta para crear un equipo
 @equipos.route('/crear-equipo', methods=["GET","POST"])
@@ -127,25 +128,6 @@ def editar_equipo(equipo_id):
             equipo.usuario_id = current_user.id       
             db.session.commit()
             
-            # Insertar en Jal o Consulta
-            if equipo.proceso == Proceso.JAL:
-                if not equipo.jal:
-                    nuevo_jal = Jal(cod_comision=equipo.cod_comision, equipo_id=equipo.asd_id)
-                    db.session.add(nuevo_jal)
-                    db.session.flush()
-                    equipo.jal_id = nuevo_jal.id
-                else:
-                    equipo.jal.cod_comision = equipo.cod_comision
-            elif equipo.proceso == Proceso.CONSULTA:
-                if not equipo.consulta:
-                    nuevo_consulta = Consulta(cod_comision=equipo.cod_comision, equipo_id=equipo.asd_id)
-                    db.session.add(nuevo_consulta)
-                    db.session.flush()
-                    equipo.consulta_id = nuevo_consulta.id
-                else:
-                    equipo.consulta.cod_comision = equipo.cod_comision
-            
-            db.session.commit()
             limpiar_imagenes_huerfanas()
             flash(_("Equipo actualizado exitosamente"), "success")
             if current_user.rol.value == "Administrador":
@@ -158,7 +140,7 @@ def editar_equipo(equipo_id):
             return redirect(url_for('equipos.editar_equipo', equipo_id=equipo_id))
         
     return render_template('editar_equipo.html', form=form_edit_equipo, equipo=equipo, enumerate=enumerate, labels=labels)
-  
+
     
 @equipos.route('/eleminar-equipo/<equipo_id>', methods=['GET','POST'])
 @acceso_requerido(roles=["Administrador"])

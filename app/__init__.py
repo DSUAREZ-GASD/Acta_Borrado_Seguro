@@ -44,7 +44,7 @@ def crear_app():
     
     #traemos los modelos 
     with app.app_context():
-        from .models import Equipo, Usuario, Representante, Jal, Consulta, Proceso, Estado_usuario, Rol
+        from .models import Equipo, Usuario, Representante, Proceso, Estado_usuario, Rol
         db.create_all()
         init_admin_user()
 

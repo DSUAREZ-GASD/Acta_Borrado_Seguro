@@ -8,7 +8,9 @@ import zipfile
 import os
 import threading
 import time
+import re
 from flask_babel import _ # type: ignore
+
 
 def eliminar_archivo_temporal(ruta, delay):
     def eleminar():
@@ -23,6 +25,11 @@ def eliminar_archivo_temporal(ruta, delay):
     kill = threading.Thread(target=eleminar)
     kill.start()
     
+def limpiar_nombre(nombre):
+    nombre = nombre.strip()
+    nombre = re.sub(r'[^\w\- ]', '', nombre)  # elimina caracteres peligrosos
+    nombre = nombre.replace(' ', '_')
+    return nombre
 
 @pdf.route('/crear_pdf/<int:equipo_id>', methods=['GET'])
 @acceso_requerido(roles=["Administrador", "Agente"])
@@ -34,22 +41,15 @@ def crear_pdf(equipo_id):
         equipo = Equipo.query.get_or_404(equipo_id)
         representantes = Representante.query.all()
         
-        # Verificar que el estado del equipo sea finalizado 
-        # if equipo.estado.value != "Finalizado":
-        #     flash(_("El estado del equipo tiene que ser finalizado para que se generar el pdf"), "error")
-        #     if current_user.rol.value == "Administrador":
-        #         return redirect(url_for('equipos.lista_equipos'))
-        #     elif current_user.rol.value == "Agente":
-        #         return redirect(url_for('equipos.lista_equipos_agente'))
-        
-        nombre_archivo = f"{equipo.nombre}.pdf"
+        nombre_limpio = limpiar_nombre(equipo.nombre)
+        nombre_archivo = f"{nombre_limpio}.pdf"
                 
         # Generar el PDF
         ruta_pdf = generar_pdf(nombre_archivo, equipo, representantes)
         
         eliminar_archivo_temporal(ruta_pdf, 3600);   
         
-        return send_file(ruta_pdf, as_attachment=True, mimetype='application/pdf')
+        return send_file(ruta_pdf, as_attachment=True, download_name=nombre_archivo, mimetype='application/pdf')
         
     except Exception as e:
         flash(_("Error al crear el pdf {}").format(e), "error")
@@ -73,12 +73,6 @@ def generar_todos_pdfs():
         rutas_pdf = []
         equipos_sin_pdf = []
         for equipo in equipos:
-            # # Verificar que el estado del equipo sea finalizado
-            # if equipo.estado.value != "Finalizado":
-            #     equipos_sin_pdf.append(equipo.nombre)
-            #     continue # Omitir estos equipos
-            
-            #Llamamos a la función generar_pdf
             try:
                 nombre_archivo = f"{equipo.nombre}.pdf"
                 ruta_pdf = generar_pdf(nombre_archivo, equipo, representante)
