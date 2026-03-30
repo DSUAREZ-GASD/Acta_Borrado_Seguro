@@ -20,38 +20,29 @@ Lista de equipos agente
   <div class="btn-group me-2 mb-2" role="group" aria-label="First group">
     <a href="{{ url_for('equipos.crear_equipo') }}" class="btn btn-primary">Crear equipo</a>
   </div>
-  <div class="btn-group me-2 mb-2" role="group" aria-label="First group">
-    <form action="{{ url_for('pdf.generar_todos_pdfs') }}" method="POST">
-      <button type="submit" class="btn btn-success">
-        Generar todas las actas
-      </button>
-    </form>
-  </div>
 </div>
 <div class="table-responsive mt-4">
   <table id="equiposTable"class="display responsive nowrap table table-striped table-bordered" style="width: 100%">
     <thead class="table-dark">
       <tr>
-        <th>#</th>
-        <th>Estado</th>
-        <th>Proceso</th>
         <th>Nombre de equipo</th>
+        <th>Departamento</th>
+        <th>Comisión</th>
+        <th>Serial</th>
+        <th>Registrado por</th>
         <th>Actualizar</th>
-        <th>Imprimir</th>
       </tr>
     </thead>
     <tbody>
       {% for equipo in equipos %}
       <tr>
-        <td>{{equipo.asd_id}}</td>
-        <td>{{equipo.estado.value}}</td>
-        <td>{{equipo.proceso.value}}</td>
         <td>{{equipo.nombre}}</td>
+        <td>{{equipo.departamento}}</td>
+        <td>{{equipo.comision}}</td>
+        <td>{{equipo.equipo_serial}}</td>
+        <td>{{equipo.usuario.userName}}</td>
         <td>
           <a href="{{ url_for('equipos.editar_equipo', equipo_id=equipo.asd_id) }}" class="btn btn-primary">Actualizar</a>
-        </td>
-        <td>
-          <a href="{{ url_for('pdf.crear_pdf', equipo_id=equipo.asd_id) }}" class="btn btn-success">Generar PDF</a>
         </td>
       </tr>
       {% endfor %}

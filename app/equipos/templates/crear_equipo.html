@@ -129,6 +129,30 @@
             {% endfor %}
         </div>
 
+        <div class="form-group mb-3">
+           <label for="{{ form.dd_marca_bk.id }}" class="form-label">{{ form.dd_marca_bk.label }}</label>
+           {{ form.dd_marca_bk(class="form-control") }}
+           {% for error in form.dd_marca_bk.errors %}
+                <div class="text-danger">{{ error }}</div>
+           {% endfor %}
+       </div>
+
+       <div class="form-group mb-3">
+           <label for="{{ form.dd_serial_bk.id }}" class="form-label">{{ form.dd_serial_bk.label }}</label>
+           {{ form.dd_serial_bk(class="form-control") }}
+           {% for error in form.dd_serial_bk.errors %}
+                <div class="text-danger">{{ error }}</div>
+           {% endfor %}
+       </div>
+
+       <div class="form-group mb-3">
+           <label for="{{ form.dd_capacidad_bk.id }}" class="form-label">{{ form.dd_capacidad_bk.label }}</label>
+           {{ form.dd_capacidad_bk(class="form-control") }}
+           {% for error in form.dd_capacidad_bk.errors %}
+                <div class="text-danger">{{ error }}</div>
+           {% endfor %}
+       </div>
+
        <div class="form-group mb-3 form-observacion">
            <label for="{{ form.observacion.id }}" class="form-label">{{ form.observacion.label }}</label>
            {{ form.observacion(class="form-control", rows=3) }}

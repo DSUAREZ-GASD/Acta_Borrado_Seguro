@@ -77,6 +77,9 @@ class Equipo(db.Model):
     dd_marca = db.Column(db.String(100), nullable=True)
     dd_modelo = db.Column(db.String(100), nullable=True)
     dd_serial = db.Column(db.String(100), nullable=True)
+    dd_marca_bk = db.Column(db.String(100), nullable=True)
+    dd_serial_bk = db.Column(db.String(100), nullable=True)
+    dd_capacidad_bk = db.Column(db.String(100), nullable=True)
     sha_1 = db.Column(db.String(100), nullable=True)
     md5 = db.Column(db.String(100), nullable=True)
     proceso = db.Column(db.Enum(Proceso), default=Proceso.CONGRESO)# cambiar campo por jal o consulta proceso
@@ -93,19 +96,23 @@ class Equipo(db.Model):
         
     # Método para actualizar el estado automáticamente
     def actualizar_estado(self):
-        estado_anterior = self.estado
+        cantidad = len(self.imagenes)
         
-        if len(self.imagenes) >= 8:
+        if cantidad >= 8:
             self.estado = EstadoEnum.FINALIZADO
-            self.fecha_hora_fin = datetime.now()
-        elif len(self.imagenes) > 0:
+            if not self.fecha_hora_fin:
+                self.fecha_hora_fin = datetime.now()
+        elif cantidad > 0:
             self.estado = EstadoEnum.EN_PROCESO
-            self.fecha_hora_inicio = datetime.now()
+            if not self.fecha_hora_inicio:
+                self.fecha_hora_inicio = datetime.now()
         else:
             self.estado = EstadoEnum.REGISTRADO
             
-        if self.nombre and not self.nombre.startswith("ILE3-"):
-            self.nombre = f"ILE3-{str(self.nombre).zfill(4)}"
+        if self.nombre:
+            numero = str(self.nombre).replace("ILE3-", "")
+            if numero.isdigit():
+                self.nombre = f"ILE3-{numero.zfill(3)}"
     
 # Modelo de Representante
 class Representante(db.Model):

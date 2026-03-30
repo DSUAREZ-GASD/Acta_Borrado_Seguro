@@ -55,7 +55,7 @@ class EquipoForm():
                                 ])
     dd_marca = StringField("Marca de disco duro:",
                            validators=[
-                               InputRequired(message="Por favor ingresa una marca de disco duro"),
+                               Optional(),
                                Length(max=50, message="La marca del disco duro no debe exceder los 50 caracteres")
                            ])
     dd_modelo = StringField("Modelo de disco duro:",
@@ -85,6 +85,18 @@ class EquipoForm():
     proceso = SelectField(_("Proceso:"),
                           choices=[(proceso.name, proceso.name) for proceso in Proceso],
                           validators=[InputRequired()])
+    dd_marca_bk = StringField("Marca de disco duro Backup:",
+                      validators=[
+                          Optional(),
+                          Length(max=50, message="El M no debe exceder los 50 caracteres")])
+    dd_serial_bk = StringField("Serial de disco duro Backup:",
+                      validators=[
+                          Optional(),
+                          Length(max=50, message="El M no debe exceder los 50 caracteres")])
+    dd_capacidad_bk = StringField("Capacidad de disco duro Backup:",
+                      validators=[
+                          Optional(),
+                          Length(max=50, message="El M no debe exceder los 50 caracteres")])
                   
     observacion = TextAreaField("Observaciones:",
                                 validators=[Optional()])

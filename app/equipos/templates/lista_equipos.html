@@ -36,24 +36,26 @@ Lista de equipos
         >
           <thead class="table-dark">
             <tr>
-              <th>Estado</th>
-              <th>Proceso</th>
-              <th>Serial de equipo</th>
               <th>Nombre de equipo</th>
+              <th>Departamento</th>
+              <th>Comisión</th>
+              <th>Serial</th>
               <th>Registrado por</th>
+              <th>Estado</th>
               <th>Actualizar</th>
-              <th>Eliminar</th>
               <th>Imprimir</th>
+              <th>Eliminar</th>
             </tr>
           </thead>
           <tbody>
             {% for equipo in equipos %}
             <tr>
-              <td>{{equipo.estado.value}}</td>
-              <td>{{equipo.proceso.value}}</td>
-              <td>{{equipo.equipo_serial}}</td>
               <td>{{equipo.nombre}}</td>
+              <td>{{equipo.departamento}}</td>
+              <td>{{equipo.comision}}</td>
+              <td>{{equipo.equipo_serial}}</td>
               <td>{{equipo.usuario.userName}}</td>
+              <td>{{equipo.estado.value}}</td>
               <td>
                 <a
                   href="{{ url_for('equipos.editar_equipo', equipo_id=equipo.asd_id) }}"
@@ -62,14 +64,14 @@ Lista de equipos
                 >
               </td>
               <td>
+                <a href="{{ url_for('pdf.crear_pdf', equipo_id=equipo.asd_id) }}" class="btn btn-success">Generar PDF</a>
+              </td>
+              <td>
                 <a
                   href="{{ url_for('equipos.eliminar_equipo', equipo_id=equipo.asd_id) }}"
                   class="btn btn-danger"
                   >Eliminar</a
                 >
-              </td>
-              <td>
-                <a href="{{ url_for('pdf.crear_pdf', equipo_id=equipo.asd_id) }}" class="btn btn-success">Generar PDF</a>
               </td>
             </tr>
             {% endfor %}

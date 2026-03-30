@@ -92,51 +92,71 @@ def lista_equipos_agente():
 @login_required
 def editar_equipo(equipo_id):
     equipo = Equipo.query.get_or_404(equipo_id)
+    
+    # Garantizar que imagenes sea lista antes de cargar el formulario
+    if equipo.imagenes is None:
+        equipo.imagenes = []
+        
     form_edit_equipo = EditEquipoForm(obj=equipo)
 
-    # Cargar las imágenes actuales del equipo en el formulario
+    # Preparar entradas del formulario
     current_images_count = len(equipo.imagenes)
-    
-    # Solo agregar entradas si hay menos de max_entries
     while len(form_edit_equipo.imagenes.entries) < form_edit_equipo.imagenes.max_entries:
         form_edit_equipo.imagenes.append_entry()
 
     if form_edit_equipo.validate_on_submit():
-        try:                  
+        try:
+            # 1. Evitar que populate_obj rompa si el formulario envía datos nulos
             form_edit_equipo.populate_obj(equipo)
 
-            # Guardar las nuevas imágenes
             nuevas_imagenes = []
+            # 2. SEGURO: Usar una copia local para la comparación de índices
+            fotos_previas = equipo.imagenes if equipo.imagenes is not None else []
+
+            # 3. Iterar sobre los campos del formulario de forma segura
             for imagen_field in form_edit_equipo.imagenes:
+                # Si hay un archivo nuevo cargado
                 if imagen_field.data and hasattr(imagen_field.data, 'filename') and imagen_field.data.filename:
                     filename = secure_filename(imagen_field.data.filename)
                     unique_filename = f"{uuid.uuid4()}_{filename}"
                     file_path = os.path.join('app/static/img', unique_filename)
-                    directory_exists(file_path)
+                    
+                    os.makedirs(os.path.dirname(file_path), exist_ok=True)
                     imagen_field.data.save(file_path)
                     nuevas_imagenes.append(unique_filename)
                 else:
-                    # Si no se ha subido una nueva imagen, mantener la imagen actual
-                    index = len(nuevas_imagenes)
-                    if index < current_images_count:
-                        nuevas_imagenes.append(equipo.imagenes[index])
-                        
-            # Actualizar las imágenes en la base de datos
-            equipo.imagenes = nuevas_imagenes 
-            equipo.actualizar_estado()
+                    # Si no hay archivo nuevo, intentar mantener la imagen anterior
+                    idx = len(nuevas_imagenes)
+                    if idx < len(fotos_previas):
+                        # Solo añadir si el valor previo no es None
+                        if fotos_previas[idx] is not None:
+                            nuevas_imagenes.append(fotos_previas[idx])
+
+            # 4. Actualizar el objeto con la nueva lista (limpia de Nones)
+            equipo.imagenes = nuevas_imagenes
             
-            equipo.usuario_id = current_user.id       
+            equipo.actualizar_estado()
+            equipo.usuario_id = current_user.id
+            
             db.session.commit()
             
-            limpiar_imagenes_huerfanas()
-            flash(_("Equipo actualizado exitosamente"), "success")
-            if current_user.rol.value == "Administrador":
-                return redirect(url_for('equipos.lista_equipos'))
-            elif current_user.rol.value == "Agente":
-                return redirect(url_for('equipos.lista_equipos_agente'))
+            # 5. Manejo seguro de funciones adicionales
+            try:
+                limpiar_imagenes_huerfanas()
+            except:
+                pass # Que no detenga el éxito del guardado principal
+
+            flash("Equipo actualizado exitosamente", "success")
+            
+            # Redirección
+            dest = 'equipos.lista_equipos' if current_user.rol.value == "Administrador" else 'equipos.lista_equipos_agente'
+            return redirect(url_for(dest))
+
         except Exception as e:
             db.session.rollback()
-            flash(_("Error al actualizar equipo {}").format(e), "error")
+            # Imprime el error en consola para ver exactamente qué falló (opcional)
+            print(f"Error detallado: {e}") 
+            flash(f"Error al actualizar: {e}", "error")
             return redirect(url_for('equipos.editar_equipo', equipo_id=equipo_id))
         
     return render_template('editar_equipo.html', form=form_edit_equipo, equipo=equipo, enumerate=enumerate, labels=labels)
