@@ -6,106 +6,72 @@ from . import pdf
 from .generator import  generar_pdf
 import zipfile
 import os
-import threading
-import time
+import io
 import re
-from flask_babel import _ # type: ignore
+from flask_babel import _
 
 
-def eliminar_archivo_temporal(ruta, delay):
-    def eleminar():
-        time.sleep(delay)
-        try:
-            if os.path.exists(ruta):
-                os.remove(ruta)
-                print(f"Archivo {ruta} eliminado")
-        except Exception as e:
-            print(f"Error eliminando archivo {ruta}: {e}")
-    
-    kill = threading.Thread(target=eleminar)
-    kill.start()
+def borrar_archivo(ruta):
+    try:
+        if os.path.exists(ruta): os.remove(ruta)
+    except: pass
     
 def limpiar_nombre(nombre):
     nombre = nombre.strip()
-    nombre = re.sub(r'[^\w\- ]', '', nombre)  # elimina caracteres peligrosos
+    nombre = re.sub(r'[^\w\- ]', '', nombre)
     nombre = nombre.replace(' ', '_')
     return nombre
 
-@pdf.route('/crear_pdf/<int:equipo_id>', methods=['GET'])
-@acceso_requerido(roles=["Administrador", "Agente"])
+@pdf.route('/crear_pdf/<int:equipo_id>')
 @login_required
 def crear_pdf(equipo_id):
-    try:
-        # Importar equipo aquí en lugar de al inicio
-        from app.models import Equipo, Representante
-        equipo = Equipo.query.get_or_404(equipo_id)
-        representantes = Representante.query.all()
-        
-        nombre_limpio = limpiar_nombre(equipo.nombre)
-        nombre_archivo = f"{nombre_limpio}.pdf"
-                
-        # Generar el PDF
-        ruta_pdf = generar_pdf(nombre_archivo, equipo, representantes)
-        
-        eliminar_archivo_temporal(ruta_pdf, 3600);   
-        
-        return send_file(ruta_pdf, as_attachment=True, download_name=nombre_archivo, mimetype='application/pdf')
-        
-    except Exception as e:
-        flash(_("Error al crear el pdf {}").format(e), "error")
-        return redirect(url_for('equipos.lista_equipos'))
+    from app.models import Equipo, Representante
+    equipo = Equipo.query.get_or_404(equipo_id)
+    representantes = Representante.query.all()
+    
+    nombre_archivo = f"{limpiar_nombre(equipo.nombre)}.pdf"
+    
+    # Generar físicamente
+    ruta_pdf = generar_pdf(nombre_archivo, equipo, representantes)
+    
+    # Enviamos el archivo y programamos el borrado
+    return send_file(ruta_pdf, as_attachment=True, download_name=nombre_archivo)
          
 @pdf.route('/generar_todos_pdfs', methods=['POST'])
-@acceso_requerido(roles=["Administrador","Agente"])
 @login_required
 def generar_todos_pdfs():
-    try:
-        # Importar equipo y representante
-        from app.models import Equipo, Representante
-        equipos = Equipo.query.all()
-        representante = Representante.query.all()
-        
-        if not representante:
-             flash(_("No hay representante registrado en el sistema."), "error")
-             return redirect(url_for('equipos.lista_equipos') if current_user.rol.value == "Administrador" else url_for('equipos.lista_equipos_agente'))
+    from app.models import Equipo, Representante
+    # Solo traer equipos que tengan imágenes para evitar PDFs vacíos
+    equipos = Equipo.query.filter(Equipo.imagenes != None).all()
+    representantes = Representante.query.all()
 
-        #Generar PDF para cada equipo
-        rutas_pdf = []
-        equipos_sin_pdf = []
+    if not equipos:
+        flash("No hay equipos para procesar", "info")
+        return redirect(url_for('equipos.lista_equipos'))
+
+    # Creamos el ZIP en memoria primero para que sea más rápido
+    buffer = io.BytesIO()
+    with zipfile.ZipFile(buffer, 'w', zipfile.ZIP_DEFLATED) as zip_file:
         for equipo in equipos:
             try:
-                nombre_archivo = f"{equipo.nombre}.pdf"
-                ruta_pdf = generar_pdf(nombre_archivo, equipo, representante)
-                rutas_pdf.append(ruta_pdf)
-            except Exception as e:
-                flash(_(f"Error generando PDF para {equipo.nombre}.").format(e), "error")
-    
-        if rutas_pdf:
-            zip_file = os.path.join(current_app.root_path,'static','tmp','actas_pdfs.zip')
-            directory_exists(zip_file)
-            with zipfile.ZipFile(zip_file, 'w') as zip_ref:
-                for ruta_pdf in rutas_pdf:
-                    zip_ref.write(ruta_pdf, os.path.basename(ruta_pdf)) # Añadir el archivo al zip
-                    
-            # Limpiar los archivos PDF temporales
-            for ruta_pdf in rutas_pdf:
-                os.remove(ruta_pdf)
-            
-            eliminar_archivo_temporal(zip_file, 3600)
+                nombre = f"{limpiar_nombre(equipo.nombre)}.pdf"
+                # Generamos el PDF temporalmente
+                ruta_temp = generar_pdf(nombre, equipo, representantes)
                 
-            return send_file(zip_file, as_attachment=True, mimetype='application/zip', download_name='actas_pdfs.zip')
-        
-        if not rutas_pdf:
-            flash(_("No se generaron PDFs para ningún equipo con estado 'finalizado'."), "info")
-        
-        # Si hay equipos que no cumplen la condición, mostrar un mensaje
-        if equipos_sin_pdf:
-            flash(_(f"No se generaron PDFs para los siguientes equipos: {', '.join(equipos_sin_pdf)}. El estado debe ser 'finalizado'."), "info")
-        
-        return redirect(url_for('equipos.lista_equipos') if current_user.rol.value == "Administrador" else url_for('equipos.lista_equipos_agente'))
-    
-    except Exception as e:
-        flash(_("Ocurrió un error al generar los PDFs."), "error")
-        return redirect(url_for('equipos.lista_equipos') if current_user.rol.value == "Administrador" else url_for('equipos.lista_equipos_agente'))
+                # Lo metemos al ZIP
+                zip_file.write(ruta_temp, arcname=nombre)
+                
+                # Borramos el PDF individual inmediatamente para no llenar el disco
+                borrar_archivo(ruta_temp)
+            except Exception as e:
+                print(f"Error en equipo {equipo.id}: {e}")
+
+    buffer.seek(0)
+    return send_file(
+        buffer, 
+        as_attachment=True, 
+        download_name='actas_completas.zip', 
+        mimetype='application/zip'
+    )
     
     

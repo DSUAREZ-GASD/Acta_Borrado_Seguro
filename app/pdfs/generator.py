@@ -1,31 +1,23 @@
 from reportlab.lib.pagesizes import letter
 from reportlab.lib import  colors
 from flask import current_app 
-from reportlab.lib.units import inch
-from reportlab.lib.styles import ParagraphStyle, getSampleStyleSheet# type: ignore
-from reportlab.lib.enums import TA_CENTER, TA_JUSTIFY, TA_LEFT, TA_RIGHT# type: ignore
+from reportlab.lib.styles import ParagraphStyle, getSampleStyleSheet
+from reportlab.lib.enums import TA_CENTER, TA_JUSTIFY 
 from reportlab.lib.units import cm
 import os
 from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Image 
-from app import directory_exists
 
 def generar_pdf(nombre_archivo, equipo, representantes):        
     ruta_pdf = os.path.join(current_app.root_path, 'static', 'tmp', nombre_archivo)
-    
-    # Crear la carpeta si no existe
-    directory_exists(ruta_pdf)
-            
+    os.makedirs(os.path.dirname(ruta_pdf), exist_ok=True)
+
     # Logo 
-    logo = os.path.join(current_app.root_path, 'static', 'img_static', 'logo_rnec.png')
-    
-    if os.path.exists(logo):
-        logo_renc = Image(logo)
-    else:
-        logo_renc = Paragraph("Logo no encontrado", getSampleStyleSheet()["Normal"])
+    ruta_logo = os.path.join(current_app.root_path, 'static', 'img_static', 'logo_rnec.png')
+    if os.path.exists(ruta_logo):
+        logo_renc = Image(ruta_logo, width=100, height=50)
     
     # Dimensiones de la imagen
     firmas_content = []   
-    w,h = 80, 20
     for representante in representantes:
         firma_path = os.path.join(current_app.root_path, 'static', 'firmas', representante.firma)
         print(firma_path)
@@ -33,7 +25,7 @@ def generar_pdf(nombre_archivo, equipo, representantes):
         # Verificar si la imagen existe
         if os.path.exists(firma_path):
             try:
-                firma_image = Image(firma_path, width=w, height=h)
+                firma_image = Image(firma_path, width=80, height=20)
                 firmas_content.append(firma_image)
             except Exception as e:
                 firma_image = "Sin imagen"
@@ -44,9 +36,7 @@ def generar_pdf(nombre_archivo, equipo, representantes):
     
     # Inicializa la lista de filas para la tabla
     filas_imagenes = []
-    width = 240
-    height = 180
-    
+
     # Limitar a 8 imágenes y preparar filas para la tabla
     for i in range(min(len(equipo.imagenes), 8)):
         img_name = equipo.imagenes[i]
@@ -54,7 +44,7 @@ def generar_pdf(nombre_archivo, equipo, representantes):
         # Verificar si la imagen existe
         if os.path.exists(ruta_imagen):
             try:
-                img = Image(ruta_imagen, width, height)
+                img = Image(ruta_imagen, width=230, height=170)
                 # Agregar la imagen a la tabla
                 filas_imagenes.append([img, "", img_name])  # Coloca la imagen, espacio vacío y el nombre de la imagen
             except Exception as e:
@@ -63,12 +53,10 @@ def generar_pdf(nombre_archivo, equipo, representantes):
         else:
             filas_imagenes.append(["Imagen no encontrada", "", img_name])
     
-    # imagenes de las firmas de representantes 
-   
-  
     # Configuración del PDF
-    pdf = SimpleDocTemplate(
-        ruta_pdf, pagesize=letter,
+    archivo_pdf = SimpleDocTemplate(
+        ruta_pdf,
+        pagesize=letter,
         leftMargin=1*cm,  # Margen izquierdo de 1 cm
         rightMargin=1*cm,  # Margen derecho de 1 cm
         topMargin=1*cm,  # Margen superior de 1 cm
@@ -337,7 +325,7 @@ def generar_pdf(nombre_archivo, equipo, representantes):
     elementos.append(tabla)
 
     # Guardar el PDF
-    pdf.build(elementos)
+    archivo_pdf.build(elementos)
     
     return ruta_pdf
 
