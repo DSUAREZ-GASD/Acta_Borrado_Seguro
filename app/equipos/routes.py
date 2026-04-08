@@ -26,33 +26,23 @@ labels = {
 STANDARD_SIZE = (1280, 720)
 
 def guardar_imagen_estandarizada(file_storage, upload_folder='app/static/img'):
-    """Procesa, estandariza tamaño y guarda una imagen."""
     if not (file_storage and hasattr(file_storage, 'filename') and file_storage.filename):
         return None
     
-    filename = secure_filename(file_storage.filename)
-    # Forzamos extensión .jpg para estandarizar formato y comprimir mejor
     temp_filename = f"{uuid.uuid4()}.jpg" 
     file_path = os.path.join(upload_folder, temp_filename)
-    
     os.makedirs(os.path.dirname(file_path), exist_ok=True)
 
     try:
-        # 1. Abrir la imagen subida con Pillow
         img = PILImage.open(file_storage)
 
-        # 2. Convertir a RGB (necesario si es PNG con transparencia y guardamos en JPG)
         if img.mode in ('RGBA', 'LA', 'P'):
             img = img.convert('RGB')
 
-        # 3. Corregir orientación automática basada en EXIF (fotos de móviles al revés)
         img = ImageOps.exif_transpose(img)
+        
+        img_estandarizada = ImageOps.contain(img, STANDARD_SIZE, PILImage.Resampling.LANCZOS)
 
-        # 4. Ajustar y Recortar (fit) al tamaño estándar
-        # ImageOps.fit recorta la imagen centralmente para llenar el tamaño exacto sin distorsionar
-        img_estandarizada = ImageOps.fit(img, STANDARD_SIZE, PILImage.Resampling.LANCZOS)
-
-        # 5. Guardar optimizada
         img_estandarizada.save(file_path, quality=90, optimize=True)
         
         return temp_filename

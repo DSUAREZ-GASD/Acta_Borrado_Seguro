@@ -96,7 +96,8 @@ class Equipo(db.Model):
         
     # Método para actualizar el estado automáticamente
     def actualizar_estado(self):
-        cantidad = len(self.imagenes)
+        lista_imagenes = self.imagenes if self.imagenes else []
+        cantidad = len(lista_imagenes)
         
         if cantidad >= 8:
             self.estado = EstadoEnum.FINALIZADO
@@ -113,6 +114,73 @@ class Equipo(db.Model):
             numero = str(self.nombre).replace("ILE3-", "")
             if numero.isdigit():
                 self.nombre = f"ILE3-{numero.zfill(3)}"
+    
+# Modelo de Actividad_verificacion
+class Actividad_verificacion(db.Model):
+    __tablename__ = "actividad_verificacion"
+    
+    asd_id = db.Column(db.Integer, primary_key=True)
+    nombre = db.Column(db.String(100), nullable=False)
+    estado = db.Column(db.Enum(EstadoEnum), default=EstadoEnum.REGISTRADO)
+    
+    # Datos técnicos (pueden ser diferentes a los del equipo original si se encuentra algo distinto)
+    direccion = db.Column(db.String(255), nullable=True)
+    comision = db.Column(db.String(100), nullable=True)
+    cod_comision = db.Column(db.Numeric(10, 0), nullable=True)
+    capacidad = db.Column(db.String(100), nullable=True)
+    municipio = db.Column(db.String(100), nullable=True)
+    departamento = db.Column(db.String(100), nullable=True)
+    
+    # Información del hardware verificado
+    equipo_marca = db.Column(db.String(100), nullable=True)
+    equipo_modelo = db.Column(db.String(100), nullable=True)
+    equipo_serial = db.Column(db.String(100), nullable=True)
+    dd_marca = db.Column(db.String(100), nullable=True)
+    dd_modelo = db.Column(db.String(100), nullable=True)
+    dd_serial = db.Column(db.String(100), nullable=True)
+    
+    # Seguridad y proceso
+    sha_1 = db.Column(db.String(100), nullable=True)
+    md5 = db.Column(db.String(100), nullable=True)
+    proceso = db.Column(db.Enum(Proceso), default=Proceso.CONGRESO)
+    observacion = db.Column(db.Text, nullable=True)
+    
+    # Tiempos y evidencias
+    fecha_hora_inicio = db.Column(db.DateTime, nullable=True)
+    fecha_hora_fin = db.Column(db.DateTime, nullable=True)
+    evidencias = db.Column(MutableList.as_mutable(JSON), default=[])
+    
+    # Auditoría
+    created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
+    
+    # Relación con el usuario que verifica
+    usuario_id = db.Column(db.Integer, db.ForeignKey('usuario.id', name='fk_verificador_id'), nullable=False)
+    usuario = db.relationship('Usuario', backref=db.backref('actividades_verificacion', lazy=True))
+
+    def actualizar_estado(self):
+        # Aseguramos que evidencias no sea None para evitar errores de len()
+        lista_evidencias = self.evidencias if self.evidencias else []
+        cantidad = len(lista_evidencias)
+        
+        if cantidad >= 5:
+            self.estado = EstadoEnum.FINALIZADO
+            if not self.fecha_hora_fin:
+                self.fecha_hora_fin = datetime.now()
+        elif cantidad > 0:
+            self.estado = EstadoEnum.EN_PROCESO
+            if not self.fecha_hora_inicio:
+                self.fecha_hora_inicio = datetime.now()
+        else:
+            self.estado = EstadoEnum.REGISTRADO
+            
+        # Normalización del nombre del acta (ej: VER-ILE3-001)
+        if self.nombre:
+            # Quitamos cualquier prefijo previo para normalizar
+            numero = "".join(filter(str.isdigit, self.nombre))
+            if numero:
+                self.nombre = f"VER-ILE3-{numero.zfill(3)}"
+    
     
 # Modelo de Representante
 class Representante(db.Model):

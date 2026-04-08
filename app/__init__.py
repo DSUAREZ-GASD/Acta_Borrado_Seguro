@@ -34,6 +34,7 @@ def crear_app():
     from app.usuarios import usuarios
     from app.auth import auth
     from app.representantes import representantes
+    from app.acta_verificacion import acta_verificacion
     
     # Registrar blueprint
     app.register_blueprint(pdf)
@@ -41,10 +42,11 @@ def crear_app():
     app.register_blueprint(usuarios)
     app.register_blueprint(auth)
     app.register_blueprint(representantes)
+    app.register_blueprint(acta_verificacion)
     
     #traemos los modelos 
     with app.app_context():
-        from .models import Equipo, Usuario, Representante, Proceso, Estado_usuario, Rol
+        from .models import Equipo, Usuario, Representante, Proceso, Estado_usuario, Rol, Actividad_verificacion
         db.create_all()
         init_admin_user()
 

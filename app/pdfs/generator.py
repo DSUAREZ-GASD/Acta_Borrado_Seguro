@@ -45,6 +45,7 @@ def generar_pdf(nombre_archivo, equipo, representantes):
         if os.path.exists(ruta_imagen):
             try:
                 img = Image(ruta_imagen, width=230, height=170)
+                img.keepAspectRatio = True
                 # Agregar la imagen a la tabla
                 filas_imagenes.append([img, "", img_name])  # Coloca la imagen, espacio vacío y el nombre de la imagen
             except Exception as e:

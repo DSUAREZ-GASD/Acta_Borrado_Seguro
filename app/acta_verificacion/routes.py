@@ -1,0 +1,181 @@
+from flask import render_template, redirect, flash, url_for
+from flask_login import login_required, current_user
+from werkzeug.utils import secure_filename
+from flask_babel import _ # type: ignore
+import os
+import uuid
+from . import acta_verificacion
+from app import db
+from app.auth.routes import acceso_requerido
+from app.models import Actividad_verificacion
+from .forms import Nueva_Acta_Verificacion, Edit_Acta_Verificacion
+from PIL import Image as PILImage, ImageOps
+
+
+labels = {
+    0: "Foto de la caja del equipo",
+    1: "Foto del equipo",
+    2: "Foto serial del equipo",
+    3: "Foto de la Identificación de la comisión",
+    4: "Foto inicio de generación de la imagen",
+}
+
+STANDARD_SIZE = (1280, 720)
+
+def guardar_imagen_estandarizada(file_storage, upload_folder='app/static/img'):
+    if not (file_storage and hasattr(file_storage, 'filename') and file_storage.filename):
+        return None
+    
+    temp_filename = f"{uuid.uuid4()}.jpg" 
+    file_path = os.path.join(upload_folder, temp_filename)
+    os.makedirs(os.path.dirname(file_path), exist_ok=True)
+
+    try:
+        img = PILImage.open(file_storage)
+
+        if img.mode in ('RGBA', 'LA', 'P'):
+            img = img.convert('RGB')
+
+        img = ImageOps.exif_transpose(img)
+        
+        img_estandarizada = ImageOps.contain(img, STANDARD_SIZE, PILImage.Resampling.LANCZOS)
+
+        img_estandarizada.save(file_path, quality=90, optimize=True)
+        
+        return temp_filename
+
+    except Exception as e:
+        print(f"Error procesando imagen: {e}")
+        return None
+    
+    
+def limpiar_imagenes_huerfanas():
+    img_d_ruta = 'app/static/img'
+     # Obtener todas las imágenes asociadas a los registros en la base de datos
+    imagenes_en_bd = Actividad_verificacion.query.with_entities(Actividad_verificacion.imagenes).all()
+     # Crear un conjunto de todas las imágenes en la base de datos
+    imagenes_en_bd_set = set()
+    for imagenes in imagenes_en_bd:
+        # Asumiendo que imagenes esta en una lista 
+        imagenes_en_bd_set.update(imagenes[0])
+    # Listar todas las imágenes en el directorio    
+    for img in os.listdir(img_d_ruta):
+        if img not in imagenes_en_bd_set:
+            try:
+                os.remove(os.path.join(img_d_ruta, img))
+                print(f"Imagenes huerfanas eliminadas: {img}")
+            except Exception as e:
+                print(f"Error al eliminar la imagen {img}:", e)
+                
+                
+@acta_verificacion.route('/crear-actividad', methods=["GET", "POST"])
+@acceso_requerido(roles=["Administrador", "Agente"])
+@login_required
+def crear_actividad():
+    form = Nueva_Acta_Verificacion()
+    if form.validate_on_submit():
+        try:
+            actividad = Actividad_verificacion()
+            form.populate_obj(actividad)
+            actividad.usuario_id = current_user.id
+            
+            # Procesar imágenes: Filtra solo las que tienen datos
+            actividad.imagenes = [
+                guardar_imagen_estandarizada(f.data) 
+                for f in form.imagenes if f.data
+            ]
+
+            db.session.add(actividad)
+            db.session.commit()
+            
+            flash(_("Registro de actividad exitoso"), "success")
+            dest = 'equipos.lista_equipos' if current_user.rol.value == "Administrador" else 'equipos.lista_equipos_agente'
+            return redirect(url_for(dest))
+            
+        except Exception as e:
+            db.session.rollback()
+            flash(_(f"Error al registrar actividad: {e}"), "error")
+            
+    return render_template('crear_actividad.html', form=form, labels=labels)
+
+
+# Ruta para listar los equipos por administrador
+@acta_verificacion.route('/lista-actividades')
+@acceso_requerido(roles=["Administrador"])
+@login_required
+def lista_actividades():
+    try:
+        actividades = Actividad_verificacion.query.all()
+        return render_template('lista_actividades.html', actividades=actividades)
+    except Exception as e:
+        flash(_("Error al listar actividades: {}").format(e), "error")
+        return redirect(url_for('acta_verificacion.lista_actividades'))
+    
+    
+@acta_verificacion.route('/editar-actividad/<actividad_id>', methods=['GET', 'POST'])
+@acceso_requerido(roles=["Administrador", "Agente"])
+@login_required
+def editar_actividad(actividad_id):
+    actividad = Actividad_verificacion.query.get_or_404(actividad_id)
+    form = Edit_Acta_Verificacion(obj=actividad)
+
+    # Rellenar entradas vacías para el formulario
+    while len(form.imagenes.entries) < form.imagenes.max_entries:
+        form.imagenes.append_entry()
+
+    if form.validate_on_submit():
+        try:
+            # Respaldamos las fotos actuales antes de poblar el objeto
+            fotos_previas = actividad.imagenes or []
+            form.populate_obj(actividad)
+            
+            nuevas_imagenes = []
+            for i, campo_imagen in enumerate(form.imagenes):
+                # Si se subió un archivo nuevo, lo guardamos
+                nombre_nuevo = guardar_imagen_estandarizada(campo_imagen.data)
+                
+                if nombre_nuevo:
+                    nuevas_imagenes.append(nombre_nuevo)
+                elif i < len(fotos_previas):
+                    # Si no hay archivo nuevo, mantenemos la que estaba en esa posición
+                    nuevas_imagenes.append(fotos_previas[i])
+
+            actividad.imagenes = nuevas_imagenes
+            actividad.usuario_id = current_user.id
+            actividad.actualizar_estado()
+            
+            db.session.commit()
+            
+            # Limpieza silenciosa
+            try: limpiar_imagenes_huerfanas() 
+            except: pass
+
+            flash("Actividad actualizada exitosamente", "success")
+            dest = 'acta_verificacion.lista_actividades' if current_user.rol.value == "Administrador" else 'acta_verificacion.lista_actividades_agente'
+            return redirect(url_for(dest))
+
+        except Exception as e:
+            db.session.rollback()
+            flash(f"Error al actualizar: {e}", "error")
+            return redirect(url_for('acta_verificacion.editar_actividad', actividad_id=actividad_id))
+        
+    return render_template('editar_actividad.html', form=form, actividad=actividad, labels=labels)
+
+@acta_verificacion.route('/eliminar-actividad/<actividad_id>', methods=['GET','POST'])
+@acceso_requerido(roles=["Administrador"])
+@login_required
+def eliminar_actividad(actividad_id):
+   actividad = Actividad_verificacion.query.get_or_404(actividad_id)
+   try:
+       if actividad:              
+           db.session.delete(actividad)
+           db.session.commit()
+           flash(_("Actividad Eliminada con exito"), "success")
+           limpiar_imagenes_huerfanas()
+       else:
+           flash(_("Actividad no encontrada"), "error")
+   except Exception as e:
+        db.session.rollback()
+        flash(_("Error al eliminar la actividad: {}").format(e), "error")
+   
+   return redirect(url_for('acta_verificacion.lista_actividades'))
