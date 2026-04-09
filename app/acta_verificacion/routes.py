@@ -52,7 +52,7 @@ def guardar_imagen_estandarizada(file_storage, upload_folder='app/static/img'):
 def limpiar_imagenes_huerfanas():
     img_d_ruta = 'app/static/img'
      # Obtener todas las imágenes asociadas a los registros en la base de datos
-    imagenes_en_bd = Actividad_verificacion.query.with_entities(Actividad_verificacion.imagenes).all()
+    imagenes_en_bd = Actividad_verificacion.query.with_entities(Actividad_verificacion.evidencias).all()
      # Crear un conjunto de todas las imágenes en la base de datos
     imagenes_en_bd_set = set()
     for imagenes in imagenes_en_bd:
@@ -69,28 +69,32 @@ def limpiar_imagenes_huerfanas():
                 
                 
 @acta_verificacion.route('/crear-actividad', methods=["GET", "POST"])
-@acceso_requerido(roles=["Administrador", "Agente"])
+@acceso_requerido(roles=["Administrador"])
 @login_required
 def crear_actividad():
     form = Nueva_Acta_Verificacion()
     if form.validate_on_submit():
         try:
             actividad = Actividad_verificacion()
+            
             form.populate_obj(actividad)
             actividad.usuario_id = current_user.id
             
             # Procesar imágenes: Filtra solo las que tienen datos
-            actividad.imagenes = [
+            lista_evidencias = [
                 guardar_imagen_estandarizada(f.data) 
-                for f in form.imagenes if f.data
+                for f in form.evidencias if f.data
             ]
+            
+            actividad.evidencias = [img for img in lista_evidencias if img is not None]
+            
+            actividad.actualizar_estado()
 
             db.session.add(actividad)
             db.session.commit()
             
             flash(_("Registro de actividad exitoso"), "success")
-            dest = 'equipos.lista_equipos' if current_user.rol.value == "Administrador" else 'equipos.lista_equipos_agente'
-            return redirect(url_for(dest))
+            return redirect(url_for('acta_verificacion.lista_actividades'))
             
         except Exception as e:
             db.session.rollback()
@@ -113,34 +117,34 @@ def lista_actividades():
     
     
 @acta_verificacion.route('/editar-actividad/<actividad_id>', methods=['GET', 'POST'])
-@acceso_requerido(roles=["Administrador", "Agente"])
+@acceso_requerido(roles=["Administrador"])
 @login_required
 def editar_actividad(actividad_id):
     actividad = Actividad_verificacion.query.get_or_404(actividad_id)
     form = Edit_Acta_Verificacion(obj=actividad)
 
     # Rellenar entradas vacías para el formulario
-    while len(form.imagenes.entries) < form.imagenes.max_entries:
-        form.imagenes.append_entry()
+    while len(form.evidencias.entries) < form.evidencias.max_entries:
+        form.evidencias.append_entry()
 
     if form.validate_on_submit():
         try:
             # Respaldamos las fotos actuales antes de poblar el objeto
-            fotos_previas = actividad.imagenes or []
+            fotos_previas = actividad.evidencias or []
             form.populate_obj(actividad)
             
-            nuevas_imagenes = []
-            for i, campo_imagen in enumerate(form.imagenes):
+            nuevas_evidencias = []
+            for i, campo_evidencia in enumerate(form.evidencias):
                 # Si se subió un archivo nuevo, lo guardamos
-                nombre_nuevo = guardar_imagen_estandarizada(campo_imagen.data)
+                nombre_nuevo = guardar_imagen_estandarizada(campo_evidencia.data)
                 
                 if nombre_nuevo:
-                    nuevas_imagenes.append(nombre_nuevo)
+                    nuevas_evidencias.append(nombre_nuevo)
                 elif i < len(fotos_previas):
                     # Si no hay archivo nuevo, mantenemos la que estaba en esa posición
-                    nuevas_imagenes.append(fotos_previas[i])
+                    nuevas_evidencias.append(fotos_previas[i])
 
-            actividad.imagenes = nuevas_imagenes
+            actividad.evidencias = nuevas_evidencias
             actividad.usuario_id = current_user.id
             actividad.actualizar_estado()
             
@@ -151,8 +155,7 @@ def editar_actividad(actividad_id):
             except: pass
 
             flash("Actividad actualizada exitosamente", "success")
-            dest = 'acta_verificacion.lista_actividades' if current_user.rol.value == "Administrador" else 'acta_verificacion.lista_actividades_agente'
-            return redirect(url_for(dest))
+            return redirect(url_for('acta_verificacion.lista_actividades'))
 
         except Exception as e:
             db.session.rollback()

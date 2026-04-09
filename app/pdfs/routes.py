@@ -1,7 +1,5 @@
-from flask import flash, send_file, current_app,redirect, url_for
-from flask_login import current_user, login_required
-from app import directory_exists
-from app.auth.routes import acceso_requerido
+from flask import flash, send_file, redirect, url_for, abort
+from flask_login import login_required
 from . import pdf
 from .generator import  generar_pdf
 import zipfile
@@ -22,17 +20,23 @@ def limpiar_nombre(nombre):
     nombre = nombre.replace(' ', '_')
     return nombre
 
-@pdf.route('/crear_pdf/<int:equipo_id>')
+@pdf.route('/crear_pdf/<string:tipo>/<int:obj_id>')
 @login_required
-def crear_pdf(equipo_id):
-    from app.models import Equipo, Representante
-    equipo = Equipo.query.get_or_404(equipo_id)
+def crear_pdf(tipo, obj_id):
+    from app.models import Equipo, Actividad_verificacion, Representante
     representantes = Representante.query.all()
     
-    nombre_archivo = f"{limpiar_nombre(equipo.nombre)}.pdf"
+    if tipo == 'equipo':
+        objeto = Equipo.query.get_or_404(obj_id)
+    elif tipo == 'verificacion':
+        objeto = Actividad_verificacion.query.get_or_404(obj_id)
+    else:
+        abort(404)
+    
+    nombre_archivo = f"{limpiar_nombre(objeto.nombre)}.pdf"
     
     # Generar físicamente
-    ruta_pdf = generar_pdf(nombre_archivo, equipo, representantes)
+    ruta_pdf = generar_pdf(nombre_archivo, objeto, representantes)
     
     # Enviamos el archivo y programamos el borrado
     return send_file(ruta_pdf, as_attachment=True, download_name=nombre_archivo)

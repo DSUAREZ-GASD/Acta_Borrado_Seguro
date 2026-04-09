@@ -14,11 +14,11 @@ Lista de equipos
 {% endfor %}
 <div class="container-fluid">
   <div class="row">
-    <div class="col">
+     <div class="col">
       <h1>Lista de actividades</h1>
       <div class="btn-toolbar mt-4" role="toolbar" aria-label="Toolbar with button groups">
         <div class="btn-group me-2 mb-2" role="group" aria-label="First group">
-          <a href="{{ url_for('acta_verificacion.crear-actividad') }}" class="btn btn-primary">Crear actividad</a>
+          <a href="{{ url_for('acta_verificacion.crear_actividad') }}" class="btn btn-primary">Crear actividad</a>
         </div>
         <div class="btn-group me-2 mb-2" role="group" aria-label="First group">
           <form action="{{ url_for('pdf.generar_todos_pdfs') }}" method="POST">
@@ -48,7 +48,7 @@ Lista de equipos
             </tr>
           </thead>
           <tbody>
-            {% for actividad in acta_verificacion %}
+            {% for actividad in actividades %}
             <tr>
               <td>{{actividad.nombre}}</td>
               <td>{{actividad.departamento}}</td>
@@ -58,17 +58,17 @@ Lista de equipos
               <td>{{actividad.estado.value}}</td>
               <td>
                 <a
-                  href="{{ url_for('acta_verificacion.editar-actividad', actividad_id=actividad.asd_id) }}"
+                  href="{{ url_for('acta_verificacion.editar_actividad', actividad_id=actividad.asd_id) }}"
                   class="btn btn-primary"
                   >Actualizar</a
                 >
               </td>
               <td>
-                <a href="{{ url_for('pdf.crear_pdf', equipo_id=actividad.asd_id) }}" class="btn btn-success">Generar PDF</a>
+                <a href="{{ url_for('pdf.crear_pdf', tipo='verificacion', obj_id=actividad.asd_id) }}" class="btn btn-success">Generar PDF</a>
               </td>
               <td>
                 <a
-                  href="{{ url_for('equipos.eliminar_equipo', equipo_id=actividad.asd_id) }}"
+                  href="{{ url_for('acta_verificacion.eliminar_actividad', actividad_id=actividad.asd_id) }}"
                   class="btn btn-danger"
                   >Eliminar</a
                 >

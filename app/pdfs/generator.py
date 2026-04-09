@@ -7,9 +7,15 @@ from reportlab.lib.units import cm
 import os
 from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Image 
 
-def generar_pdf(nombre_archivo, equipo, representantes):        
+def generar_pdf(nombre_archivo, objeto, representantes, tipo='borrado'):        
     ruta_pdf = os.path.join(current_app.root_path, 'static', 'tmp', nombre_archivo)
     os.makedirs(os.path.dirname(ruta_pdf), exist_ok=True)
+    
+    campo_fotos = 'evidencias' if tipo == 'verificacion' else 'imagenes'
+    lista_fotos_nombres = getattr(objeto, campo_fotos, [])
+    
+    max_fotos = 5 if tipo == 'verificacion' else 8
+    titulo_acta = "ACTA DE VERIFICACIÓN TÉCNICA" if tipo == 'verificacion' else "ACTA DE BORRADO SEGURO"
 
     # Logo 
     ruta_logo = os.path.join(current_app.root_path, 'static', 'img_static', 'logo_rnec.png')
@@ -36,23 +42,22 @@ def generar_pdf(nombre_archivo, equipo, representantes):
     
     # Inicializa la lista de filas para la tabla
     filas_imagenes = []
+    
+    fotos_a_procesar = lista_fotos_nombres[:max_fotos]
 
     # Limitar a 8 imágenes y preparar filas para la tabla
-    for i in range(min(len(equipo.imagenes), 8)):
-        img_name = equipo.imagenes[i]
+    for img_name in fotos_a_procesar:
         ruta_imagen = os.path.join(current_app.root_path, 'static', 'img', img_name)
-        # Verificar si la imagen existe
         if os.path.exists(ruta_imagen):
             try:
+                # Nota: keepAspectRatio=True es clave por lo que hablamos de redimensionar
                 img = Image(ruta_imagen, width=230, height=170)
                 img.keepAspectRatio = True
-                # Agregar la imagen a la tabla
-                filas_imagenes.append([img, "", img_name])  # Coloca la imagen, espacio vacío y el nombre de la imagen
+                filas_imagenes.append([img, "", Paragraph(f"Ref: {img_name}", estilos['Small'])])
             except Exception as e:
-                print(f"Error al agregar imagen {img_name}: {e}")
-                filas_imagenes.append(["Error al cargar la imagen", "", img_name])
+                filas_imagenes.append([Paragraph("Error al cargar archivo", estilos['Normal']), "", img_name])
         else:
-            filas_imagenes.append(["Imagen no encontrada", "", img_name])
+            filas_imagenes.append([Paragraph("Imagen no encontrada", estilos['Normal']), "", img_name])
     
     # Configuración del PDF
     archivo_pdf = SimpleDocTemplate(
@@ -87,18 +92,18 @@ def generar_pdf(nombre_archivo, equipo, representantes):
         ["Dirección:","Carrera 10 # 10-17 Piso 12 y 15"],
         ["Ciudad:", "Bogotá D.C."],
         ["nombre del Edificio:","Torre Colseguros"],
-        ["Fecha:", equipo.fecha_hora_inicio.strftime('%Y-%m-%d') if equipo.fecha_hora_inicio else "Fecha no disponible" ],
-        ["Hora:", equipo.fecha_hora_inicio.strftime('%H:%M:%S') if equipo.fecha_hora_inicio else "Hora no disponible"],
+        ["Fecha:", objeto.fecha_hora_inicio.strftime('%Y-%m-%d') if objeto.fecha_hora_inicio else "Fecha no disponible" ],
+        ["Hora:", objeto.fecha_hora_inicio.strftime('%H:%M:%S') if objeto.fecha_hora_inicio else "Hora no disponible"],
         [],
         [Paragraph("<b>IDENTIFICACION DEL EQUIPO A EJECUTAR PROCEDIMIENTO</b>", estilos["EstiloGrande"])],
-        ["Escrutinio/Comisión:", equipo.comision],
-        ["Municipio:",equipo.municipio],
-        ["Departamento:", equipo.departamento],
+        ["Escrutinio/Comisión:", objeto.comision],
+        ["Municipio:",objeto.municipio],
+        ["Departamento:", objeto.departamento],
         ["DISCO DURO", "", "","EQUIPO", ""],
-        ["Marca:",equipo.dd_marca,"","Marca:",equipo.equipo_marca],
-        ["Modelo:",equipo.dd_modelo,"","Modelo:",equipo.equipo_modelo],
-        ["Capacidad:", equipo.capacidad,"","Serial:",equipo.equipo_serial],
-        ["Serial DD:", equipo.dd_serial],
+        ["Marca:",objeto.dd_marca,"","Marca:",objeto.equipo_marca],
+        ["Modelo:",objeto.dd_modelo,"","Modelo:",objeto.equipo_modelo],
+        ["Capacidad:", objeto.capacidad,"","Serial:",objeto.equipo_serial],
+        ["Serial DD:", objeto.dd_serial],
         [],
         [Paragraph("<b>SOFTWARE PARA GENERAR IMAGEN DE LAS COPIAS DE SEGURIDAD</b>", estilos["EstiloGrande"])],
         [],
@@ -114,15 +119,15 @@ def generar_pdf(nombre_archivo, equipo, representantes):
         [],
         [Paragraph("<b>IDENTIFICACION DE LA IMAGEN DE LA COPIA DE SEGURIDAD</b>", estilos["EstiloGrande"])],
         [Paragraph("La copia de seguridad del equipo tendrá las siguientes características:", estilos["EstiloMediano"])],
-        ["Nombre:", equipo.nombre ],
-        ["HASH (SHA-1):", equipo.sha_1 ],
-        ["HASH (MD5):", equipo.md5 ],
+        ["Nombre:", objeto.nombre ],
+        ["HASH (SHA-1):", objeto.sha_1 ],
+        ["HASH (MD5):", objeto.md5 ],
         [Paragraph("La copia de seguridad será almacenada en un medio de almacenamiento con las siguientes características:Cada disco duro debe estar marcado con una etiqueta con esta misma información", estilos["EstiloMediano"])],
-        ["Marca:", equipo.dd_marca_bk ],
-        ["Serial:", equipo.dd_serial_bk],
+        ["Marca:", objeto.dd_marca_bk ],
+        ["Serial:", objeto.dd_serial_bk],
         [],
-        ["Capacidad:", equipo.dd_capacidad_bk],
-        ["Observación:", Paragraph(f"{equipo.observacion}", estilos["EstiloMediano"])],
+        ["Capacidad:", objeto.dd_capacidad_bk],
+        ["Observación:", Paragraph(f"{objeto.observacion}", estilos["EstiloMediano"])],
         [],
         [Paragraph("<b>PROTOCOLO REALIZADO POR CADA EQUIPO</b>", estilos["EstiloGrande"]) ],
         [Paragraph("<b>DESCRIPCION - SE REALIZARÁ ESTE PROCEDIMIENTO DE ACUERDO CON EL LINEAMIENTO ESTABLECIDO POR LA REGISTRADURIA NACIONAL DEL ESTADO CIVIL</b>", estilos["EstiloGrande"]) ],
@@ -145,7 +150,7 @@ def generar_pdf(nombre_archivo, equipo, representantes):
         [],
         [],
         [Paragraph("<b>FIRMAS</b>", estilos["EstiloGrande"])],
-        [Paragraph(f"Para constancia se firma en formato PDF con firma digita {equipo.fecha_hora_fin.strftime('%H:%M:%S') if equipo.fecha_hora_fin else "Fecha no disponible"}  {equipo.fecha_hora_fin.strftime('%Y-%m-%d') if equipo.fecha_hora_fin else "Hora no disponible"} por quienes en ella intervienen",estilos["EstiloMediano"])],
+        [Paragraph(f"Para constancia se firma en formato PDF con firma digita {objeto.fecha_hora_fin.strftime('%H:%M:%S') if objeto.fecha_hora_fin else "Fecha no disponible"}  {objeto.fecha_hora_fin.strftime('%Y-%m-%d') if objeto.fecha_hora_fin else "Hora no disponible"} por quienes en ella intervienen",estilos["EstiloMediano"])],
         [Paragraph("Observaciones: Para dar claridad en la nitidez de las fotos se adjunta medio magnético al acta de cierre con la consolidación del registro fotográfico tomado por cada copia de seguridad",estilos["EstiloMediano"])],
         [],
         [f"Rep. {representantes[0].rol.value}", f"Nombre: {representantes[0].nombre}","","", firmas_content[0]],
