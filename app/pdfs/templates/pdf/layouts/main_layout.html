@@ -1,0 +1,15 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <style>
+       {% include 'pdf/styles/base.css' %}
+    </style>
+    {% block extra_css %}{% endblock %}
+</head>
+<body>
+    <div class="content">
+        {% block content %}{% endblock %}
+    </div>
+</body>
+</html>

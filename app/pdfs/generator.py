@@ -1,340 +1,52 @@
-from reportlab.lib.pagesizes import letter
-from reportlab.lib import  colors
-from flask import current_app 
-from reportlab.lib.styles import ParagraphStyle, getSampleStyleSheet
-from reportlab.lib.enums import TA_CENTER, TA_JUSTIFY 
-from reportlab.lib.units import cm
 import os
-from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Image 
+from flask import current_app, render_template
+from weasyprint import HTML
+from app.models import ActaConfig
 
-def generar_pdf(nombre_archivo, objeto, representantes, tipo='borrado'):        
+def generar_pdf(nombre_archivo, objeto, representantes, config_campos=None):
+    """Genera un PDF usando WeasyPrint a partir de un template HTML."""
+    
+    # 1. Configuración de rutas
     ruta_pdf = os.path.join(current_app.root_path, 'static', 'tmp', nombre_archivo)
     os.makedirs(os.path.dirname(ruta_pdf), exist_ok=True)
     
-    campo_fotos = 'evidencias' if tipo == 'verificacion' else 'imagenes'
-    lista_fotos_nombres = getattr(objeto, campo_fotos, [])
-    
-    max_fotos = 5 if tipo == 'verificacion' else 8
-    titulo_acta = "ACTA DE VERIFICACIÓN TÉCNICA" if tipo == 'verificacion' else "ACTA DE BORRADO SEGURO"
+    # 2. Lógica de campos dinámicos (Si no vienen de la ruta, se buscan aquí)
+    if config_campos is None:
+        # Si tiene comision es borrado, si no, es verificacion
+        tipo_acta = 'borrado' if hasattr(objeto, 'comision') else 'verificacion'
+        config_campos = ActaConfig.query.filter_by(
+            tipo_acta=tipo_acta, 
+            es_visible=True
+        ).order_by(ActaConfig.orden).all()
 
-    # Logo 
-    ruta_logo = os.path.join(current_app.root_path, 'static', 'img_static', 'logo_rnec.png')
-    if os.path.exists(ruta_logo):
-        logo_renc = Image(ruta_logo, width=100, height=50)
-    
-    # Dimensiones de la imagen
-    firmas_content = []   
-    for representante in representantes:
-        firma_path = os.path.join(current_app.root_path, 'static', 'firmas', representante.firma)
-        print(firma_path)
+    # 3. Selección de la plantilla correcta
+    if hasattr(objeto, 'comision'):
+        template_name = 'pdf/borrado_seguro.html'
+    else:
+        template_name = 'pdf/verificacion_tecnica.html'
+
+    # 4. PREPARAR EL CONTEXTO (Debe ir ANTES de render_template)
+    contexto = {
+        'objeto': objeto,
+        'representantes': representantes,
+        'configuracion_acta': config_campos,
+        'getattr': getattr,
+        'hasattr': hasattr,
+        'os': os,
+        'base_path': current_app.root_path
+    }
+
+    # 5. Renderizado y Generación
+    try:
+        # Renderizamos el HTML con los datos
+        html_content = render_template(template_name, **contexto)
         
-        # Verificar si la imagen existe
-        if os.path.exists(firma_path):
-            try:
-                firma_image = Image(firma_path, width=80, height=20)
-                firmas_content.append(firma_image)
-            except Exception as e:
-                firma_image = "Sin imagen"
-        else:
-            print("La imagen no existe en la ruta especificada.")
-            firma_image = "Sin imagen"
-    
-    
-    # Inicializa la lista de filas para la tabla
-    filas_imagenes = []
-    
-    fotos_a_procesar = lista_fotos_nombres[:max_fotos]
-
-    # Limitar a 8 imágenes y preparar filas para la tabla
-    for img_name in fotos_a_procesar:
-        ruta_imagen = os.path.join(current_app.root_path, 'static', 'img', img_name)
-        if os.path.exists(ruta_imagen):
-            try:
-                # Nota: keepAspectRatio=True es clave por lo que hablamos de redimensionar
-                img = Image(ruta_imagen, width=230, height=170)
-                img.keepAspectRatio = True
-                filas_imagenes.append([img, "", Paragraph(f"Ref: {img_name}", estilos['Small'])])
-            except Exception as e:
-                filas_imagenes.append([Paragraph("Error al cargar archivo", estilos['Normal']), "", img_name])
-        else:
-            filas_imagenes.append([Paragraph("Imagen no encontrada", estilos['Normal']), "", img_name])
-    
-    # Configuración del PDF
-    archivo_pdf = SimpleDocTemplate(
-        ruta_pdf,
-        pagesize=letter,
-        leftMargin=1*cm,  # Margen izquierdo de 1 cm
-        rightMargin=1*cm,  # Margen derecho de 1 cm
-        topMargin=1*cm,  # Margen superior de 1 cm
-        bottomMargin=1*cm  # Margen inferior de 1 cm
-    )
-    
-    elementos = []
-    
-    # Estilos personalizados para párrafos
-    estilos = getSampleStyleSheet()
-
-    # Crear un estilo de párrafo con tamaño de letra personalizado
-    estilos.add(ParagraphStyle(name="EstiloGrande", parent=estilos["Normal"], fontSize=9, leading=12,alignment=TA_CENTER))
-    estilos.add(ParagraphStyle(name="EstiloMediano", parent=estilos["Normal"], fontSize=8, leading=12, alignment=TA_JUSTIFY))
-    estilos.add(ParagraphStyle(name="EstiloPequeno", parent=estilos["Normal"], fontSize=7, leading=12, alignment=TA_CENTER))
-
-    # Datos de la tabla con encabezados
-    encabezados = [logo_renc,Paragraph("<b>ACTA INDIVIDUAL PARA LA GENERACION DE LA COPIA DE SEGURIDAD DE LOS DISCOS DUROS (IMAGEN ESPEJO) Y BORRADO SEGURO DE EQUIPOS DE ESCRUTINIO UTILIZADOS EN LAS ELECCIONES DE CONGRESO DE LA REPÚBLICA, CITREP, CONSULTAS INTERPARTIDISTAS REALIZADAS EL 8 DE MARZO DE 2026</b>", estilos["EstiloPequeno"])]
-    datos = [
-        [],
-        [Paragraph("<b>INTRODUCCIÓN</b>", estilos["EstiloGrande"])],
-        [],
-        [Paragraph("<b>DESCRIPCION:</b>  Esta diligencia tiene como fin ejecutar el procedimiento descrito en el memorando GI-0305 del 17 de Marzo de 2026 y el PROTOCOLO DE REGISTRO Y VERIFICACIÓN DE LA INFORMACIÓN TÉCNICA CONTENIDA EN LOS EQUIPOS DE CÓMPUTO (GENERACION DE COPIA DE SEGURIDAD (IMAGEN ESPEJO) DE LOS DISCOS DUROS Y BORRADO SEGURO DE LOS EQUIPOS DE COMPUTO UTILIZADOS EN LAS COMISIONES ESCRUTADORAS), aprobado por la supervisión del contrato, en cumplimiento al cronograma de actividades establecido para las Elecciones de Congreso de la República, CITREP, Consultas interpartidistas 2026 y lo estipulado en el Contrato No. 049 de 2025 y la Adicion 02 y otrosí 03 de 2026.",estilos["EstiloMediano"])],
-        [],
-        [Paragraph("<b>IDENTIFICACION DEL LUGAR DONDE SE ENCUENTRAN UBICADOS LOS EQUIPOS</b>", estilos["EstiloGrande"])],
-        [""],
-        ["Dirección:","Carrera 10 # 10-17 Piso 12 y 15"],
-        ["Ciudad:", "Bogotá D.C."],
-        ["nombre del Edificio:","Torre Colseguros"],
-        ["Fecha:", objeto.fecha_hora_inicio.strftime('%Y-%m-%d') if objeto.fecha_hora_inicio else "Fecha no disponible" ],
-        ["Hora:", objeto.fecha_hora_inicio.strftime('%H:%M:%S') if objeto.fecha_hora_inicio else "Hora no disponible"],
-        [],
-        [Paragraph("<b>IDENTIFICACION DEL EQUIPO A EJECUTAR PROCEDIMIENTO</b>", estilos["EstiloGrande"])],
-        ["Escrutinio/Comisión:", objeto.comision],
-        ["Municipio:",objeto.municipio],
-        ["Departamento:", objeto.departamento],
-        ["DISCO DURO", "", "","EQUIPO", ""],
-        ["Marca:",objeto.dd_marca,"","Marca:",objeto.equipo_marca],
-        ["Modelo:",objeto.dd_modelo,"","Modelo:",objeto.equipo_modelo],
-        ["Capacidad:", objeto.capacidad,"","Serial:",objeto.equipo_serial],
-        ["Serial DD:", objeto.dd_serial],
-        [],
-        [Paragraph("<b>SOFTWARE PARA GENERAR IMAGEN DE LAS COPIAS DE SEGURIDAD</b>", estilos["EstiloGrande"])],
-        [],
-        ["Nombre del software:","AccessData® FTK® Imager" ],
-        ["Versión del software:","4.7.1.2" ],
-        ["Tipo Licencia:", "Freeware"],
-        [],
-        [Paragraph("<b>SOFTWARE PARA BORRADO SEGURO</b>", estilos["EstiloGrande"])],
-        [],
-        ["Nombre del software:","SHRED" ],
-        ["Versión del software:","9.7-3" ],
-        ["Tipo Licencia:", "GNU"],
-        [],
-        [Paragraph("<b>IDENTIFICACION DE LA IMAGEN DE LA COPIA DE SEGURIDAD</b>", estilos["EstiloGrande"])],
-        [Paragraph("La copia de seguridad del equipo tendrá las siguientes características:", estilos["EstiloMediano"])],
-        ["Nombre:", objeto.nombre ],
-        ["HASH (SHA-1):", objeto.sha_1 ],
-        ["HASH (MD5):", objeto.md5 ],
-        [Paragraph("La copia de seguridad será almacenada en un medio de almacenamiento con las siguientes características:Cada disco duro debe estar marcado con una etiqueta con esta misma información", estilos["EstiloMediano"])],
-        ["Marca:", objeto.dd_marca_bk ],
-        ["Serial:", objeto.dd_serial_bk],
-        [],
-        ["Capacidad:", objeto.dd_capacidad_bk],
-        ["Observación:", Paragraph(f"{objeto.observacion}", estilos["EstiloMediano"])],
-        [],
-        [Paragraph("<b>PROTOCOLO REALIZADO POR CADA EQUIPO</b>", estilos["EstiloGrande"]) ],
-        [Paragraph("<b>DESCRIPCION - SE REALIZARÁ ESTE PROCEDIMIENTO DE ACUERDO CON EL LINEAMIENTO ESTABLECIDO POR LA REGISTRADURIA NACIONAL DEL ESTADO CIVIL</b>", estilos["EstiloGrande"]) ],
-        [Paragraph("Identificado el equipo respectivo, al mismo se le insertará el medio de almacenamiento en el que se va a copiar imagen de la copia de seguridad",estilos["EstiloMediano"])],
-        [Paragraph("Se procederá a realizar el proceso de obtención de la imagen de la copia de seguridad del disco duro del respectivo equipo de computo de escrutinio. Para lo anterior se ejecutará el programa correspondiente para la generación de la misma.",estilos["EstiloMediano"])],
-        [Paragraph("Terminado el proceso se copia la imagen de la copia de seguridad al disco duro arriba mencionado.",estilos["EstiloMediano"])],
-        [Paragraph("Se procederá a realizar el proceso de borrado seguro del disco duro del equipo de la comisión",estilos["EstiloMediano"])],
-        [Paragraph("escrutadora. Para lo anterior se ejecutará el programa correspondiente para el borrado seguro.",estilos["EstiloMediano"]) ],
-        [Paragraph("Posteriormente, se tomarán las siguientes fotos del proceso: (Dichas fotos se anexaran a la presente acta.)",estilos["EstiloMediano"])],
-        [],
-        [],
-        [Paragraph("1.    Foto de la caja del equipo ",estilos["EstiloMediano"]) ],
-        [Paragraph("2.    Foto del equipo",estilos["EstiloMediano"])],
-        [Paragraph("3.    Foto serial del equipo ",estilos["EstiloMediano"])],
-        [Paragraph("4.    Foto de la Identificación de la comisión",estilos["EstiloMediano"])],
-        [Paragraph("5.    Foto inicio de generación de la imagen de la copia de seguridad ",estilos["EstiloMediano"])],
-        [Paragraph("6.    Foto finalización de la generación de la imagen de la copia de seguridad ",estilos["EstiloMediano"])],
-        [Paragraph("7.    Foto inicio del borrado ",estilos["EstiloMediano"]) ],
-        [Paragraph("8.    Foto finalización del borrado",estilos["EstiloMediano"])],
-        [],
-        [],
-        [Paragraph("<b>FIRMAS</b>", estilos["EstiloGrande"])],
-        [Paragraph(f"Para constancia se firma en formato PDF con firma digita {objeto.fecha_hora_fin.strftime('%H:%M:%S') if objeto.fecha_hora_fin else "Fecha no disponible"}  {objeto.fecha_hora_fin.strftime('%Y-%m-%d') if objeto.fecha_hora_fin else "Hora no disponible"} por quienes en ella intervienen",estilos["EstiloMediano"])],
-        [Paragraph("Observaciones: Para dar claridad en la nitidez de las fotos se adjunta medio magnético al acta de cierre con la consolidación del registro fotográfico tomado por cada copia de seguridad",estilos["EstiloMediano"])],
-        [],
-        [f"Rep. {representantes[0].rol.value}", f"Nombre: {representantes[0].nombre}","","", firmas_content[0]],
-        [f"Rep. {representantes[1].rol.value}" if len(representantes) > 1 else "", f"Nombre: {representantes[1].nombre}" if len(representantes) > 1 else "Nombre:","", "", firmas_content[1] if len(firmas_content) > 1 else ""],
-        [f"Rep. {representantes[2].rol.value}" if len(representantes) > 2 else "", f"Nombre: {representantes[2].nombre}" if len(representantes) > 2 else "Nombre:","", "", firmas_content[2] if len(firmas_content) > 2 else ""],
-        [f"Rep. {representantes[3].rol.value}" if len(representantes) > 3 else "", f"Nombre: {representantes[3].nombre}" if len(representantes) > 3 else "Nombre:","", "", firmas_content[3] if len(firmas_content) > 3 else ""],
-        ["","", "", "", ""],
-        [],
-        ["REGISTRO FOTOGRAFICO" ],
-        [],
-        [filas_imagenes[0][0] if len(filas_imagenes) > 0 else logo_renc, "", "", filas_imagenes[1][0] if len(filas_imagenes) > 1 else logo_renc, ""],
-        [Paragraph("<b>1. Foto de la caja del equipo</b>", estilos["EstiloPequeno"]), "", "", Paragraph("<b>2. Foto del equipo</b>", estilos["EstiloPequeno"])],
-        [],
-        [filas_imagenes[2][0] if len(filas_imagenes) > 2 else logo_renc, "", "", filas_imagenes[3][0] if len(filas_imagenes) > 3 else logo_renc, ""],
-        [Paragraph("<b>3. Foto serial del equipo</b>", estilos["EstiloPequeno"]), "", "", Paragraph("<b>4. Foto de la Identificación de la comisión</b>", estilos["EstiloPequeno"])],
-        [],
-        [filas_imagenes[4][0] if len(filas_imagenes) > 4 else logo_renc, "", "", filas_imagenes[5][0] if len(filas_imagenes) > 5 else logo_renc, ""],
-        [Paragraph("5. Foto inicio de generación de la imagen de la copia de seguridad ",estilos["EstiloMediano"]), "", "", Paragraph("6. Foto finalización de la generación de la imagen de la copia de seguridad",estilos["EstiloMediano"])],
-        [],
-        [filas_imagenes[6][0] if len(filas_imagenes) > 6 else logo_renc, "", "", filas_imagenes[7][0] if len(filas_imagenes) > 7 else logo_renc, ""],
-        [Paragraph("<b>7. Foto inicio del borrado</b>", estilos["EstiloPequeno"]), "", "", Paragraph("<b>8. Foto finalización del borrado</b>", estilos["EstiloPequeno"])]        
-    ]
-    
-    data_tabla = [encabezados] + datos  # Combinar encabezados y datos
-
-    # Crear la tabla
-    tabla = Table(data_tabla, colWidths = [132, 132, 24, 132, 132],rowHeights=[60, 3, 16, 3, 80, 3, 16, 3, 16, 16, 16, 16, 16, 3, 16, 16, 16, 16, 16, 16, 16, 16, 16, 3, 16, 3,16, 16, 16,3,16, 3, 16,16, 16, 2, 15, 15, 15,15,15, 30, 16,16, 0, 15,15, 2, 16, 30, 30, 30, 16,16, 16, 16,2, 2, 16,16,16, 16, 16,16, 16, 16,3, 3, 16, 16,30, 2, 25,25, 25, 25,25, 2, 16,2,190, 16, 5,200, 16, 5,200, 30, 5,200,16])
-
-    # Aplicar estilos
-    estilos = TableStyle([
-        # Estilo general
-        ("GRID", (0, 0), (-1, -1), 0.5, colors.black),  # Bordes
-        # combinacion de celdas
-        ("SPAN", (1, 0), (4, 0)),  #titulo formato
-        ("SPAN", (0, 1), (4, 1)),
-        ("SPAN", (0, 2), (4, 2)),  #introduccion
-        ("SPAN", (0, 3), (4, 3)),  
-        ("SPAN", (0, 4), (4, 4)), 
-        ("SPAN", (0, 5), (4, 5)),
-        ("SPAN", (0, 6), (4, 6)),#IDENTIFICACION DEL LUGAR DONDE SE ENCUENTRAN UBICADOS LOS EQUIPOS
-        ("SPAN", (0, 7), (4, 7)),
-        ("SPAN", (1, 8), (4, 8)),
-        ("SPAN", (1, 9), (4, 9)),
-        ("SPAN", (1, 10), (4, 10)),
-        ("SPAN", (1, 11), (4, 11)),
-        ("SPAN", (1, 12), (4, 12)),
-        ("SPAN", (0, 13), (4, 13)),
-        ("SPAN", (0, 14), (4, 14)),#IDENTIFICACION DEL EQUIPO A EJECUTAR PROCEDIMIENTO
-        ("SPAN", (1, 15), (4, 15)),
-        ("SPAN", (1, 16), (4, 16)),
-        ("SPAN", (1, 17), (4, 17)),
-        ("SPAN", (0, 18), (2, 18)),
-        ("SPAN", (3, 18), (4, 18)),
-        ("SPAN", (1, 19), (2, 19)),
-        ("SPAN", (1, 20), (2, 20)),
-        ("SPAN", (1, 21), (2, 21)),        
-        ("SPAN", (1, 22), (4, 22)),
-        ("SPAN", (0, 23), (4, 23)),
-        ("SPAN", (0, 24), (4, 24)),#SOFTWARE PARA GENERAR IMAGEN DE LAS COPIAS DE SEGURIDAD
-        ("SPAN", (0, 25), (4, 25)),
-        ("SPAN", (1, 26), (4, 26)),
-        ("SPAN", (1, 27), (4, 27)),
-        ("SPAN", (1, 28), (4, 28)),
-        ("SPAN", (0, 29), (4, 29)),
-        ("SPAN", (0, 30), (4, 30)),#SOFTWARE PARA BORRADO SEGURO
-        ("SPAN", (0, 31), (4, 31)),
-        ("SPAN", (1, 32), (4, 32)),
-        ("SPAN", (1, 33), (4, 33)),
-        ("SPAN", (1, 34), (4, 34)),
-        ("SPAN", (0, 35), (4, 35)),
-        ("SPAN", (0, 36), (4, 36)),#IDENTIFICACION DE LA IMAGEN DE LA COPIA DE SEGURIDAD
-        ("SPAN", (0, 37), (4, 37)),
-        ("SPAN", (1, 38), (4, 38)),
-        ("SPAN", (1, 39), (4, 39)),
-        ("SPAN", (1, 40), (4, 40)),
-        ("SPAN", (0, 41), (4, 41)),
-        ("SPAN", (1, 42), (4, 42)),
-        ("SPAN", (1, 43), (4, 43)),
-        ("SPAN", (1, 45), (4, 45)),
-        ("SPAN", (1, 46), (4, 46)),
-        ("SPAN", (1, 47), (4, 47)),
-        ("SPAN", (0, 48), (4, 48)),#PROTOCOLO REALIZADO POR CADA EQUIPO
-        ("SPAN", (0, 49), (4, 49)),
-        ("SPAN", (0, 50), (4, 50)),
-        ("SPAN", (0, 51), (4, 51)),
-        ("SPAN", (0, 52), (4, 52)),
-        ("SPAN", (0, 53), (4, 53)),
-        ("SPAN", (0, 54), (4, 54)),
-        ("SPAN", (0, 55), (4, 55)),
-        ("SPAN", (0, 56), (4, 56)),
-        ("SPAN", (0, 57), (4, 57)),
-        ("SPAN", (0, 58), (4, 58)),
-        ("SPAN", (0, 59), (4, 59)),
-        ("SPAN", (0, 60), (4, 60)),
-        ("SPAN", (0, 61), (4, 61)),
-        ("SPAN", (0, 62), (4, 62)),
-        ("SPAN", (0, 63), (4, 63)),
-        ("SPAN", (0, 64), (4, 64)),
-        ("SPAN", (0, 65), (4, 65)),
-        ("SPAN", (0, 66), (4, 66)),
-        ("SPAN", (0, 67), (4, 67)),
-        ("SPAN", (0, 68), (4, 68)),#FIRMAS
-        ("SPAN", (0, 69), (4, 69)),
-        ("SPAN", (0, 70), (4, 70)),
-        ("SPAN", (0, 71), (4, 71)),
-        ("SPAN", (1, 72), (3, 72)),
-        ("SPAN", (1, 73), (3, 73)),
-        ("SPAN", (1, 74), (3, 74)),
-        ("SPAN", (1, 75), (3, 75)),
-        ("SPAN", (1, 76), (3, 76)),
-        ("SPAN", (0, 77), (4, 77)),
-        ("SPAN", (0, 78), (4, 78)),#REGISTRO FOTOGRAFICO
-        ("SPAN", (0, 79), (4, 79)),
-        ("SPAN", (0, 80), (1, 80)),
-        ("SPAN", (3, 80), (4, 80)),
-        ("SPAN", (0, 81), (1, 81)),#foto1
-        ("SPAN", (3, 81), (4, 81)),#foto2
-        ("SPAN", (0, 82), (1, 82)),
-        ("SPAN", (3, 82), (4, 82)),
-        ("SPAN", (0, 83), (1, 83)),
-        ("SPAN", (3, 83), (4, 83)),
-        ("SPAN", (0, 84), (1, 84)),
-        ("SPAN", (3, 84), (4, 84)),
-        ("SPAN", (0, 85), (4, 85)),
-        ("SPAN", (0, 86), (1, 86)),
-        ("SPAN", (3, 86), (4, 86)),
-        ("SPAN", (0, 87), (1, 87)),
-        ("SPAN", (3, 87), (4, 87)),
-        ("SPAN", (0, 88), (4, 88)),
-        ("SPAN", (0, 89), (1, 89)),
-        ("SPAN", (3, 89), (4, 89)),
-        ("SPAN", (0, 90), (1, 90)),
-        ("SPAN", (3, 90), (4, 90)),
-        ("SPAN", (0, 91), (4, 91)),
+        # Convertimos a PDF
+        # base_url es fundamental para que WeasyPrint cargue imágenes de /static
+        HTML(string=html_content, base_url=current_app.root_path).write_pdf(ruta_pdf)
         
-        #Fondos de Filas
-        ("BACKGROUND", (0, 2), (4, 2), colors.lightgrey),
-        ("BACKGROUND", (0, 6), (4, 6), colors.lightgrey),
-        ("BACKGROUND", (1, 8), (4, 8), colors.lightgrey),
-        ("BACKGROUND", (1, 9), (4, 9), colors.lightgrey),
-        ("BACKGROUND", (1, 10), (4, 10), colors.lightgrey),
-        ("BACKGROUND", (1, 11), (4, 11), colors.lightgrey),
-        ("BACKGROUND", (1, 12), (4, 12), colors.lightgrey),
-        ("BACKGROUND", (0, 14), (4, 14), colors.lightgrey),
-        ("BACKGROUND", (1, 15), (4, 15), colors.lightgrey),
-        ("BACKGROUND", (1, 16), (4, 16), colors.lightgrey),
-        ("BACKGROUND", (1, 17), (4, 17), colors.lightgrey),
-        ("BACKGROUND", (1, 19), (2, 19), colors.lightgrey),
-        ("BACKGROUND", (4, 19), (4, 19), colors.lightgrey),
-        ("BACKGROUND", (1, 20), (2, 20), colors.lightgrey),
-        ("BACKGROUND", (4, 20), (4, 20), colors.lightgrey),
-        ("BACKGROUND", (1, 21), (2, 21), colors.lightgrey),
-        ("BACKGROUND", (4, 21), (4, 21), colors.lightgrey),
-        ("BACKGROUND", (1, 22), (4, 22), colors.lightgrey),
-        ("BACKGROUND", (0, 24), (4, 24), colors.lightgrey),
-        ("BACKGROUND", (1, 26), (4, 26), colors.lightgrey),
-        ("BACKGROUND", (1, 27), (4, 27), colors.lightgrey),
-        ("BACKGROUND", (1, 28), (4, 28), colors.lightgrey),
-        ("BACKGROUND", (0, 30), (4, 30), colors.lightgrey),
-        ("BACKGROUND", (1, 32), (4, 32), colors.lightgrey),
-        ("BACKGROUND", (1, 33), (4, 33), colors.lightgrey),
-        ("BACKGROUND", (1, 34), (4, 34), colors.lightgrey),
-        ("BACKGROUND", (0, 36), (4, 36), colors.lightgrey),
-        ("BACKGROUND", (1, 38), (4, 38), colors.lightgrey),
-        ("BACKGROUND", (1, 39), (4, 39), colors.lightgrey),
-        ("BACKGROUND", (1, 40), (4, 40), colors.lightgrey),
-        ("BACKGROUND", (1, 42), (4, 42), colors.lightgrey),
-        ("BACKGROUND", (1, 43), (4, 43), colors.lightgrey),
-        ("BACKGROUND", (1, 45), (4, 45), colors.lightgrey),
-        ("BACKGROUND", (0, 48), (4, 48), colors.lightgrey),
-        ("BACKGROUND", (0, 68), (4, 68), colors.lightgrey),
-        ("BACKGROUND", (0, 78), (4, 78), colors.lightgrey),
-    ])
+    except Exception as e:
+        print(f"Error crítico en la generación del PDF ({template_name}): {e}")
+        raise e
 
-    tabla.setStyle(estilos)
-
-    # Añadir tabla al documento
-    elementos.append(tabla)
-
-    # Guardar el PDF
-    archivo_pdf.build(elementos)
-    
     return ruta_pdf
-
-    
-
-

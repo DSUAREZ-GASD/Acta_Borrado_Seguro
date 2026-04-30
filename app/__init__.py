@@ -3,12 +3,12 @@ from flask import Flask, redirect, url_for
 from flask_sqlalchemy import SQLAlchemy
 from flask_migrate import Migrate
 from flask_login import LoginManager
-from flask_babel import Babel  # type: ignore
+from flask_babel import Babel 
 from .config import Config
 from werkzeug.security import generate_password_hash
 from datetime import datetime
 
-#Crear los objetos de SQLAlchemy y Migrate
+# 1. Definir objetos globales (sin inicializar)
 db = SQLAlchemy()
 migrate = Migrate()
 login = LoginManager()
@@ -16,19 +16,23 @@ login = LoginManager()
 def crear_app():
     app = Flask(__name__)
     app.config.from_object(Config)
+    app.config["SECRET_KEY"] = Config.SECRET_KEY
     
-    # Inicializar extensiones
+    # 2. Inicializar extensiones
     db.init_app(app)
     migrate.init_app(app, db)
     login.init_app(app)
-    login.login_view = 'auth.login' # Redirigir a la página de login si no está autenticado
-    babel = Babel(app)
+    login.login_view = 'auth.login'
     
-    # Configuración de Babel
+    babel = Babel(app)
     app.config['BABEL_DEFAULT_LOCALE'] = 'es'
     app.config['BABEL_DEFAULT_TIMEZONE'] = 'UTC'
 
-    #blueprints
+    # 3. Registrar Comandos de CLI ANTES de los Blueprints
+    from app.commands import sync_pdf_configs
+    app.cli.add_command(sync_pdf_configs)
+
+    # 4. Blueprints (Importación interna para evitar círculos)
     from app.pdfs import pdf
     from app.equipos import equipos
     from app.usuarios import usuarios
@@ -36,23 +40,22 @@ def crear_app():
     from app.representantes import representantes
     from app.acta_verificacion import acta_verificacion
     
-    # Registrar blueprint
     app.register_blueprint(pdf)
     app.register_blueprint(equipos)
     app.register_blueprint(usuarios)
     app.register_blueprint(auth)
     app.register_blueprint(representantes)
     app.register_blueprint(acta_verificacion)
-    
-    #traemos los modelos 
+
+    # 5. Contexto de aplicación
     with app.app_context():
-        from .models import Equipo, Usuario, Representante, Proceso, Estado_usuario, Rol, Actividad_verificacion
+        from .models import (
+            Equipo, Usuario, Representante, Proceso, 
+            Estado_usuario, Rol, Actividad_verificacion, ActaConfig
+        )
         db.create_all()
         init_admin_user()
-
-    #Mensaje de seguridad para prevencion de ataques
-    app.config["SECRET_KEY"] = Config.SECRET_KEY
-
+        asegurar_directorios(app) # Movido aquí adentro
 
     @app.route('/')
     def home():
@@ -60,7 +63,6 @@ def crear_app():
     
     return app
 
-# creacion de usuario por defecto
 def init_admin_user():
     from .models import Usuario, Rol, Estado_usuario
     admin_user = Usuario.query.filter_by(userName='admin').first()
@@ -70,17 +72,12 @@ def init_admin_user():
             email='admin@grupoasd.com', 
             rol=Rol.ADMINISTRADOR, 
             estado=Estado_usuario.ACTIVO, 
-            password=generate_password_hash('GrupoASD123*'),
-            created_at=datetime.utcnow(),
-            updated_at=datetime.utcnow()
+            password=generate_password_hash('GrupoASD123*')
         )
         db.session.add(admin_user)
         db.session.commit()
 
-# Crear directorio si no existe
-def directory_exists(file_path):
-    directory = os.path.dirname(file_path)
-    if not os.path.exists(directory):
-        os.makedirs(directory)
-        
-app = crear_app()
+def asegurar_directorios(app):
+    path_tmp = os.path.join(app.root_path, 'static', 'tmp')
+    if not os.path.exists(path_tmp):
+        os.makedirs(path_tmp)

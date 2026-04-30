@@ -1,0 +1,17 @@
+<table class="table-data">
+    <thead>
+        <tr>
+            <th colspan="2" class="bg-gray text-center">INFORMACIÓN TÉCNICA DEL ACTA</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for campo in configuracion_acta %}
+            {% if campo.es_visible %}
+            <tr>
+                <td width="40%"><strong>{{ campo.etiqueta_pdf }}:</strong></td>
+                <td>{{ getattr(objeto, campo.campo_sistema) if getattr(objeto, campo.campo_sistema) else 'N/A' }}</td>
+            </tr>
+            {% endif %}
+        {% endfor %}
+    </tbody>
+</table>

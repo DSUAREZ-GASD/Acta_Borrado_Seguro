@@ -1,0 +1,106 @@
+@page {
+  size: letter;
+  margin: 1.5cm;
+  @bottom-center {
+    content: "Página " counter(page) " de " counter(pages);
+    font-size: 8pt;
+    font-family: "Helvetica", sans-serif;
+  }
+}
+
+/* Estilos Base */
+body {
+  font-family: "Helvetica", "Arial", sans-serif;
+  font-size: 9pt;
+  line-height: 1.3;
+  color: #000;
+  margin: 0;
+  padding: 0;
+}
+
+/* Tablas tipo ReportLab */
+.table-data {
+  width: 100%;
+  border-collapse: collapse;
+  margin-bottom: 10px;
+  table-layout: fixed; /* Evita que las celdas se desborden */
+}
+
+.table-data td,
+.table-data th {
+  border: 0.5pt solid #000;
+  padding: 4px 6px;
+  vertical-align: middle;
+  word-wrap: break-word;
+}
+
+/* Clases de Utilidad */
+.bg-gray {
+  background-color: #d3d3d3 !important; /* Gris ReportLab */
+  -webkit-print-color-adjust: exact;
+}
+
+.text-center {
+  text-align: center;
+}
+.text-justify {
+  text-align: justify;
+}
+.bold {
+  font-weight: bold;
+}
+
+.header-logo {
+  width: 120px;
+  height: auto;
+}
+
+/* Contenedor de Fotos (2 por fila) */
+.photo-container {
+  width: 100%;
+  margin-top: 10px;
+  page-break-inside: avoid;
+}
+
+.photo-row {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 15px;
+}
+
+.photo-box {
+  width: 48%;
+  border: 0.5pt solid #000;
+  text-align: center;
+  padding: 5px;
+  page-break-inside: avoid;
+}
+
+.photo-box img {
+  max-width: 100%;
+  height: 180px; /* Altura similar a tu ReportLab */
+  object-fit: contain;
+}
+
+/* Sección de Firmas */
+.signature-section {
+  width: 100%;
+  margin-top: 30px;
+  page-break-inside: avoid;
+}
+
+.signature-box {
+  text-align: center;
+  font-size: 8pt;
+}
+
+.signature-line {
+  width: 80%;
+  border-top: 0.5pt solid #000;
+  margin: 40px auto 5px auto;
+}
+
+.firma-img {
+  height: 40px;
+  margin-bottom: -10px;
+}

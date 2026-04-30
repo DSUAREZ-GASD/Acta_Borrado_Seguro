@@ -1,0 +1,85 @@
+{% extends 'pdf/layouts/main_layout.html' %}
+
+{% block extra_css %}
+<style>
+    {% include 'pdf/styles/borrado_seguro.css' %}
+</style>
+{% endblock %}
+
+{% block content %}
+<table class="table-data table-borrado">
+    <!-- ENCABEZADO -->
+    <tr>
+        <td width="20%" class="text-center">
+            <img src="{{ url_for('static', filename='img_static/logo_rnec.png', _external=True) }}" style="width: 80px;">
+        </td>
+        <td colspan="4" class="estilo-pequeno">
+            <b>ACTA INDIVIDUAL PARA LA GENERACION DE LA COPIA DE SEGURIDAD DE LOS DISCOS DUROS (IMAGEN ESPEJO) Y BORRADO SEGURO DE EQUIPOS DE ESCRUTINIO UTILIZADOS EN LAS ELECCIONES DE CONGRESO DE LA REPÚBLICA, CITREP, CONSULTAS INTERPARTIDISTAS REALIZADAS EL 8 DE MARZO DE 2026</b>
+        </td>
+    </tr>
+
+    <!-- INTRODUCCIÓN -->
+    <tr><td colspan="5" class="bg-gray estilo-grande">INTRODUCCIÓN</td></tr>
+    <tr>
+        <td colspan="5" class="estilo-mediano">
+            <b>DESCRIPCION:</b> Esta diligencia tiene como fin ejecutar el procedimiento descrito en el memorando GI-0305 del 17 de Marzo de 2026... (completar texto)
+        </td>
+    </tr>
+
+    <!-- UBICACIÓN -->
+    <tr><td colspan="5" class="bg-gray estilo-grande">IDENTIFICACION DEL LUGAR DONDE SE ENCUENTRAN UBICADOS LOS EQUIPOS</td></tr>
+    <tr><td class="bg-gray bold">Dirección:</td><td colspan="4">Carrera 10 # 10-17 Piso 12 y 15</td></tr>
+    <tr><td class="bg-gray bold">Ciudad:</td><td colspan="4">Bogotá D.C.</td></tr>
+    <tr><td class="bg-gray bold">Edificio:</td><td colspan="4">Torre Colseguros</td></tr>
+    <tr>
+        <td class="bg-gray bold">Fecha:</td><td colspan="2">{{ objeto.fecha_hora_inicio.strftime('%Y-%m-%d') if objeto.fecha_hora_inicio else 'N/A' }}</td>
+        <td class="bg-gray bold">Hora:</td><td>{{ objeto.fecha_hora_inicio.strftime('%H:%M:%S') if objeto.fecha_hora_inicio else 'N/A' }}</td>
+    </tr>
+
+    <!-- IDENTIFICACIÓN EQUIPO -->
+    <tr><td colspan="5" class="bg-gray estilo-grande">IDENTIFICACION DEL EQUIPO A EJECUTAR PROCEDIMIENTO</td></tr>
+    <tr><td class="bg-gray bold">Escrutinio/Comisión:</td><td colspan="4" class="bold">{{ objeto.comision }}</td></tr>
+    <tr>
+        <td class="bg-gray bold" colspan="3">DISCO DURO</td>
+        <td class="bg-gray bold" colspan="2">EQUIPO</td>
+    </tr>
+    <tr>
+        <td class="bg-gray">Marca:</td><td>{{ objeto.dd_marca }}</td><td rowspan="4"></td>
+        <td class="bg-gray">Marca:</td><td>{{ objeto.equipo_marca }}</td>
+    </tr>
+    <tr>
+        <td class="bg-gray">Modelo:</td><td>{{ objeto.dd_modelo }}</td>
+        <td class="bg-gray">Modelo:</td><td>{{ objeto.equipo_modelo }}</td>
+    </tr>
+
+    <!-- FIRMAS -->
+    <tr><td colspan="5" class="bg-gray estilo-grande">FIRMAS</td></tr>
+    <tr>
+        <td colspan="5" class="estilo-mediano">
+            Para constancia se firma en formato PDF con firma digital {{ objeto.fecha_hora_fin.strftime('%H:%M:%S') if objeto.fecha_hora_fin else '' }} por quienes en ella intervienen.
+        </td>
+    </tr>
+</table>
+
+<!-- REGISTRO FOTOGRÁFICO (Sección Final) -->
+<h3 class="estilo-grande bg-gray" style="padding: 5px; border: 0.5pt solid black;">REGISTRO FOTOGRAFICO</h3>
+<div class="photo-grid">
+    {% set labels = [
+        "1. Foto de la caja del equipo", "2. Foto del equipo", 
+        "3. Foto serial del equipo", "4. Foto de la Identificación de la comisión",
+        "5. Inicio generación imagen", "6. Fin generación imagen",
+        "7. Inicio borrado", "8. Finalización borrado"
+    ] %}
+    
+    {% for i in range(8) %}
+    <div class="photo-box">
+        {% if objeto.imagenes and objeto.imagenes[i] %}
+            <img src="{{ url_for('static', filename='img/' + objeto.imagenes[i], _external=True) }}">
+        {% else %}
+            <div style="height: 150px; background: #eee; border: 1px solid #ccc;">Foto no disponible</div>
+        {% endif %}
+        <p class="estilo-pequeno"><b>{{ labels[i] }}</b></p>
+    </div>
+    {% endfor %}
+</div>
+{% endblock %}

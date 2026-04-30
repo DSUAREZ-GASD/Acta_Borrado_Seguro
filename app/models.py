@@ -191,3 +191,17 @@ class Representante(db.Model):
     firma = db.Column(db.String(100))
     created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
+    
+
+class ActaConfig(db.Model):
+    __tablename__="acta_config"
+    id = db.Column(db.Integer, primary_key=True)
+    tipo_acta = db.Column(db.String(50), nullable=False)
+    campo_sistema = db.Column(db.String(100), nullable=False)
+    etiqueta_pdf = db.Column(db.String(100), nullable=False)
+    es_visible = db.Column(db.Boolean, default=True)
+    orden = db.Column(db.Integer, default=0)
+    
+    def __repr__(self):
+        return f'<ActaConfig {self.tipo_acta} - {self.campo_sistema}>'
+    

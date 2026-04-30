@@ -3,7 +3,7 @@ from werkzeug.utils import secure_filename
 from flask_babel import _ # type: ignore
 import os
 from . import representantes
-from app import db, directory_exists
+from app import db
 from app.auth.routes import acceso_requerido
 from app.models import Representante
 from .forms import Nuevo_Representante, EditRespresentanteForm
