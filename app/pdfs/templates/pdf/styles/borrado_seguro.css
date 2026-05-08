@@ -17,13 +17,89 @@
     line-height: 12pt;
 }
 
-.table-borrado td {
-    border: 0.5pt solid black;
-    padding: 2px 5px;
+.text-center {
+    text-align: center !important;
+    vertical-align: middle !important;
 }
 
-.header-title { 
-    color: #1a2a6c; 
-    text-transform: uppercase; 
-    border-bottom: 2pt solid #1a2a6c; 
+.align-top {
+    vertical-align: top !important;
+    padding-top: 5px !important;
+    height: 40pt;
+}
+
+/* Configuración de tabla para replicar ReportLab */
+.table-borrado {
+    width: 100%;
+    border-collapse: collapse; /* Une los bordes eliminando huecos */
+    border-spacing: 0;
+    table-layout: fixed;
+    margin-bottom: 0;
+}
+
+.table-borrado td {
+    border: 0.5pt solid black;
+    padding: 2px 4px; /* Ajuste para que el texto quede pegado al borde como en ReportLab */
+    height: 16pt;     /* Altura exacta definida en tu generator.py */
+    vertical-align: middle;
+}
+
+.signature-cell {
+    height: 85pt !important; /* Aumentamos un poco la altura total */
+    border: 0.5pt solid black !important;
+}
+
+.signature-image {
+    /* Ahora la firma puede ser mucho más ancha */
+    width: auto;
+    max-width: 95%; 
+    
+    /* Aumentamos la altura visual de la firma */
+    max-height: 70pt; 
+    
+    display: block;
+    margin: 0 auto;
+    object-fit: contain;
+}
+
+.col-label { width: 20%; }
+.col-data  { width: 30%; }
+
+.border-left-only {
+    border: none !important;
+    border-left: 0.5pt solid black !important;
+    border-bottom: 0.5pt solid black !important;
+    border-left: 0.5pt solid black !important;
+    background-color: #d3d3d3 !important;
+}
+
+.no-border {
+    border: none !important;
+}
+
+.photo-grid {
+    width: 100%;
+    text-align: center;
+}
+
+.photo-box {
+    display: inline-block; /* Permite que se pongan una al lado de otra */
+    width: 45%;            /* Dos fotos por fila aproximadamente */
+    margin: 5px;
+    vertical-align: top;
+    border: 0.5pt solid #ccc;
+    padding: 5px;
+}
+
+.photo-box img {
+    width: 100%;
+    height: 150px;
+    object-fit: contain; /* Evita que la foto se deforme */
+}
+
+/* Ajuste para que el título de Registro Fotográfico ocupe todo el ancho */
+.full-width-title {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 15px;
 }

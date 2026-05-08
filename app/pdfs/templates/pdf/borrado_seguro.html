@@ -1,85 +1,318 @@
-{% extends 'pdf/layouts/main_layout.html' %}
-
-{% block extra_css %}
+{% extends 'pdf/layouts/main_layout.html' %} {% block extra_css %}
 <style>
-    {% include 'pdf/styles/borrado_seguro.css' %}
+  {% include 'pdf/styles/borrado_seguro.css' %}
 </style>
-{% endblock %}
-
-{% block content %}
+{% endblock %} {% block content %}
 <table class="table-data table-borrado">
-    <!-- ENCABEZADO -->
-    <tr>
-        <td width="20%" class="text-center">
-            <img src="{{ url_for('static', filename='img_static/logo_rnec.png', _external=True) }}" style="width: 80px;">
-        </td>
-        <td colspan="4" class="estilo-pequeno">
-            <b>ACTA INDIVIDUAL PARA LA GENERACION DE LA COPIA DE SEGURIDAD DE LOS DISCOS DUROS (IMAGEN ESPEJO) Y BORRADO SEGURO DE EQUIPOS DE ESCRUTINIO UTILIZADOS EN LAS ELECCIONES DE CONGRESO DE LA REPÚBLICA, CITREP, CONSULTAS INTERPARTIDISTAS REALIZADAS EL 8 DE MARZO DE 2026</b>
-        </td>
-    </tr>
+  <!-- ENCABEZADO -->
+  <tr>
+    <td width="20%" class="text-center">
+      <img
+        src="{{ url_for('static', filename='img_static/logo_rnec.png', _external=True) }}"
+        style="width: 80px"
+      />
+    </td>
+    <td colspan="3" class="estilo-pequeno">
+      <b
+        >ACTA INDIVIDUAL PARA LA GENERACION DE LA COPIA DE SEGURIDAD DE LOS
+        DISCOS DUROS (IMAGEN ESPEJO) Y BORRADO SEGURO DE EQUIPOS DE ESCRUTINIO
+        UTILIZADOS EN LAS ELECCIONES DE CONGRESO DE LA REPÚBLICA, CITREP,
+        CONSULTAS INTERPARTIDISTAS REALIZADAS EL 8 DE MARZO DE 2026</b
+      >
+    </td>
+  </tr>
 
-    <!-- INTRODUCCIÓN -->
-    <tr><td colspan="5" class="bg-gray estilo-grande">INTRODUCCIÓN</td></tr>
-    <tr>
-        <td colspan="5" class="estilo-mediano">
-            <b>DESCRIPCION:</b> Esta diligencia tiene como fin ejecutar el procedimiento descrito en el memorando GI-0305 del 17 de Marzo de 2026... (completar texto)
-        </td>
-    </tr>
+  <!-- INTRODUCCIÓN -->
+  <tr>
+    <td colspan="4" class="bg-gray estilo-grande">INTRODUCCIÓN</td>
+  </tr>
+  <tr>
+    <td colspan="4" class="estilo-mediano">
+      <b>DESCRIPCION:</b> Esta diligencia tiene como fin ejecutar el
+      procedimiento descrito en el memorando GI-0305 del 17 de Marzo de 2026 y
+      el PROTOCOLO DE REGISTRO Y VERIFICACIÓN DE LA INFORMACIÓN TÉCNICA
+      CONTENIDA EN LOS EQUIPOS DE CÓMPUTO (GENERACION DE COPIA DE SEGURIDAD
+      (IMAGEN ESPEJO) DE LOS DISCOS DUROS Y BORRADO SEGURO DE LOS EQUIPOS DE
+      COMPUTO UTILIZADOS EN LAS COMISIONES ESCRUTADORAS), aprobado por la
+      supervisión del contrato, en cumplimiento al cronograma de actividades
+      establecido para las Elecciones de Congreso de la República, CITREP,
+      Consultas interpartidistas 2026 y lo estipulado en el Contrato No. 049 de
+      2025 y la Adicion 02 y otrosí 03 de 2026.
+    </td>
+  </tr>
 
-    <!-- UBICACIÓN -->
-    <tr><td colspan="5" class="bg-gray estilo-grande">IDENTIFICACION DEL LUGAR DONDE SE ENCUENTRAN UBICADOS LOS EQUIPOS</td></tr>
-    <tr><td class="bg-gray bold">Dirección:</td><td colspan="4">Carrera 10 # 10-17 Piso 12 y 15</td></tr>
-    <tr><td class="bg-gray bold">Ciudad:</td><td colspan="4">Bogotá D.C.</td></tr>
-    <tr><td class="bg-gray bold">Edificio:</td><td colspan="4">Torre Colseguros</td></tr>
-    <tr>
-        <td class="bg-gray bold">Fecha:</td><td colspan="2">{{ objeto.fecha_hora_inicio.strftime('%Y-%m-%d') if objeto.fecha_hora_inicio else 'N/A' }}</td>
-        <td class="bg-gray bold">Hora:</td><td>{{ objeto.fecha_hora_inicio.strftime('%H:%M:%S') if objeto.fecha_hora_inicio else 'N/A' }}</td>
-    </tr>
+  <!-- UBICACIÓN -->
+  <tr>
+    <td colspan="4" class="bg-gray estilo-grande">
+      IDENTIFICACION DEL LUGAR DONDE SE ENCUENTRAN UBICADOS LOS EQUIPOS
+    </td>
+  </tr>
+  <tr>
+    <td class="bg-gray bold">Dirección:</td>
+    <td colspan="3" class="text-center">Carrera 10 # 10-17 Piso 12 y 15</td>
+  </tr>
+  <tr>
+    <td class="bg-gray bold">Ciudad:</td>
+    <td colspan="3" class="text-center">Bogotá D.C.</td>
+  </tr>
+  <tr>
+    <td class="bg-gray bold">Edificio:</td>
+    <td colspan="3" class="text-center">Torre Colseguros</td>
+  </tr>
+  <tr>
+    <td class="bg-gray bold">Fecha:</td>
+    <td colspan="3" class="text-center">
+      {{ objeto.fecha_hora_inicio.strftime('%Y-%m-%d') if
+      objeto.fecha_hora_inicio else 'N/A' }}
+    </td>
+  </tr>
+  <tr>
+    <td class="bg-gray bold">Hora:</td>
+    <td colspan="3" class="text-center">
+      {{ objeto.fecha_hora_inicio.strftime('%H:%M:%S') if
+      objeto.fecha_hora_inicio else 'N/A' }}
+    </td>
+  </tr>
 
-    <!-- IDENTIFICACIÓN EQUIPO -->
-    <tr><td colspan="5" class="bg-gray estilo-grande">IDENTIFICACION DEL EQUIPO A EJECUTAR PROCEDIMIENTO</td></tr>
-    <tr><td class="bg-gray bold">Escrutinio/Comisión:</td><td colspan="4" class="bold">{{ objeto.comision }}</td></tr>
-    <tr>
-        <td class="bg-gray bold" colspan="3">DISCO DURO</td>
-        <td class="bg-gray bold" colspan="2">EQUIPO</td>
-    </tr>
-    <tr>
-        <td class="bg-gray">Marca:</td><td>{{ objeto.dd_marca }}</td><td rowspan="4"></td>
-        <td class="bg-gray">Marca:</td><td>{{ objeto.equipo_marca }}</td>
-    </tr>
-    <tr>
-        <td class="bg-gray">Modelo:</td><td>{{ objeto.dd_modelo }}</td>
-        <td class="bg-gray">Modelo:</td><td>{{ objeto.equipo_modelo }}</td>
-    </tr>
+  <!-- IDENTIFICACIÓN EQUIPO -->
+  <tr>
+    <td colspan="4" class="bg-gray estilo-grande">
+      IDENTIFICACION DEL EQUIPO A EJECUTAR PROCEDIMIENTO
+    </td>
+  </tr>
+  <tr>
+    <td class="bg-gray bold">Comisión:</td>
+    <td colspan="3" class="text-center">{{ objeto.comision }}</td>
+  </tr>
+  <tr>
+    <td class="bg-gray bold">Municipio:</td>
+    <td colspan="3" class="text-center">{{ objeto.municipio }}</td>
+  </tr>
+  <tr>
+    <td class="bg-gray bold">Departamento:</td>
+    <td colspan="3" class="text-center">{{ objeto.departamento }}</td>
+  </tr>
+  <tr>
+    <td colspan="2" class="bg-gray bold text-center">EQUIPO</td>
+    <td colspan="2" class="bg-gray bold text-center">DISCO DURO</td>
+  </tr>
 
-    <!-- FIRMAS -->
-    <tr><td colspan="5" class="bg-gray estilo-grande">FIRMAS</td></tr>
-    <tr>
-        <td colspan="5" class="estilo-mediano">
-            Para constancia se firma en formato PDF con firma digital {{ objeto.fecha_hora_fin.strftime('%H:%M:%S') if objeto.fecha_hora_fin else '' }} por quienes en ella intervienen.
-        </td>
-    </tr>
-</table>
+  <tr>
+    <td class="bg-gray bold">Marca:</td>
+    <td class="text-center">{{ objeto.equipo_marca }}</td>
+    <td class="bg-gray bold">Marca:</td>
+    <td class="text-center">{{ objeto.dd_marca }}</td>
+  </tr>
 
-<!-- REGISTRO FOTOGRÁFICO (Sección Final) -->
-<h3 class="estilo-grande bg-gray" style="padding: 5px; border: 0.5pt solid black;">REGISTRO FOTOGRAFICO</h3>
-<div class="photo-grid">
-    {% set labels = [
-        "1. Foto de la caja del equipo", "2. Foto del equipo", 
-        "3. Foto serial del equipo", "4. Foto de la Identificación de la comisión",
-        "5. Inicio generación imagen", "6. Fin generación imagen",
-        "7. Inicio borrado", "8. Finalización borrado"
-    ] %}
-    
-    {% for i in range(8) %}
-    <div class="photo-box">
-        {% if objeto.imagenes and objeto.imagenes[i] %}
-            <img src="{{ url_for('static', filename='img/' + objeto.imagenes[i], _external=True) }}">
+  <tr>
+    <td class="bg-gray bold">Modelo:</td>
+    <td class="text-center">{{ objeto.equipo_modelo }}</td>
+    <td class="bg-gray bold">Modelo:</td>
+    <td class="text-center">{{ objeto.dd_modelo }}</td>
+  </tr>
+
+  <tr>
+    <td class="bg-gray bold">Serial:</td>
+    <td class="text-center">{{ objeto.equipo_serial }}</td>
+    <td class="bg-gray bold">Capacidad:</td>
+    <td class="text-center">{{ objeto.capacidad }}</td>
+  </tr>
+
+  <tr>
+    <td colspan="2" class="bg-gray border-left-only"></td>
+    <td class="bg-gray bold">Serial DD:</td>
+    <td class="text-center">{{ objeto.dd_serial }}</td>
+  </tr>
+  <tr>
+    <td colspan="4" class="bg-gray estilo-grande">
+      SOFTWARE PARA GENERAR IMAGEN DE LAS COPIAS DE SEGURIDAD
+    </td>
+  </tr>
+  <tr>
+    <td class="bg-gray bold">Nombre del software:</td>
+    <td colspan="3" class="text-center">AccessData® FTK® Imager</td>
+  </tr>
+  <tr>
+    <td class="bg-gray bold">Versión del software:</td>
+    <td colspan="3" class="text-center">4.7.1.2</td>
+  </tr>
+  <tr>
+    <td class="bg-gray bold">Tipo Licencia:</td>
+    <td colspan="3" class="text-center">Freeware</td>
+  </tr>
+  <tr>
+    <td colspan="4" class="bg-gray estilo-grande">
+      SOFTWARE PARA BORRADO SEGURO
+    </td>
+  </tr>
+  <tr>
+    <td class="bg-gray bold">Nombre:</td>
+    <td colspan="3" class="text-center">{{ objeto.nombre }}</td>
+  </tr>
+  <tr>
+    <td class="bg-gray bold">HASH (SHA-1):</td>
+    <td colspan="3" class="text-center">{{ objeto.sha_1 }}</td>
+  </tr>
+  <tr>
+    <td class="bg-gray bold">HASH (MD5):</td>
+    <td colspan="3" class="text-center">{{ objeto.md5 }}</td>
+  </tr>
+  <tr>
+    <td colspan="4" class="estilo-mediano">
+      La copia de seguridad será almacenada en un medio de almacenamiento con
+      las siguientes características:Cada disco duro debe estar marcado con una
+      etiqueta con esta misma información
+    </td>
+  </tr>
+  <tr>
+    <td class="bg-gray bold">MARCA:</td>
+    <td colspan="3" class="text-center">{{ objeto.dd_marca_bk }}</td>
+  </tr>
+  <tr>
+    <td class="bg-gray bold">SERIAL:</td>
+    <td colspan="3" class="text-center">{{ objeto.dd_serial_bk }}</td>
+  </tr>
+  <tr>
+    <td class="bg-gray bold">CAPACIDAD:</td>
+    <td colspan="3" class="text-center">{{ objeto.dd_capacidad_bk }}</td>
+  </tr>
+  <tr>
+    <td class="bg-gray bold align-top">OBSERVACIÓN:</td>
+    <td colspan="3" class="estilo-mediano align-top">
+      {{ objeto.observacion }}
+    </td>
+  </tr>
+
+  <!-- FIRMAS -->
+  <tr>
+    <td colspan="4" class="bg-gray estilo-grande">
+      PROTOCOLO REALIZADO POR CADA EQUIPO
+    </td>
+  </tr>
+  <tr>
+    <td colspan="4" class="bold estilo-grande">
+      DESCRIPCION - SE REALIZARÁ ESTE PROCEDIMIENTO DE ACUERDO CON EL
+      LINEAMIENTO ESTABLECIDO POR LA REGISTRADURIA NACIONAL DEL ESTADO CIVIL
+    </td>
+  </tr>
+  <tr>
+    <td colspan="4" class="estilo-mediano">
+      Identificado el equipo respectivo, al mismo se le insertará el medio de
+      almacenamiento en el que se va a copiar imagen de la copia de seguridad.
+    </td>
+  </tr>
+  <tr>
+    <td colspan="4" class="estilo-mediano">
+      Se procederá a realizar el proceso de obtención de la imagen de la copia
+      de seguridad del disco duro del respectivo equipo de computo de
+      escrutinio. Para lo anterior se ejecutará el programa correspondiente para
+      la generación de la misma.
+    </td>
+  </tr>
+  <tr>
+    <td colspan="4" class="estilo-mediano">
+      Terminado el proceso se copia la imagen de la copia de seguridad al disco
+      duro arriba mencionado.
+    </td>
+  </tr>
+  <tr>
+    <td colspan="4" class="estilo-mediano">
+      Se procederá a realizar el proceso de borrado seguro del disco duro del
+      equipo de la comisión escrutadora. Para lo anterior se ejecutará el
+      programa correspondiente para el borrado seguro.
+    </td>
+  </tr>
+  <tr>
+    <td colspan="4" class="estilo-mediano">
+      Posteriormente, se tomarán las siguientes fotos del proceso: (Dichas fotos
+      se anexaran a la presente acta.)
+
+      <p>1. Foto de la caja del equipo</p>
+      <p>2. Foto del equipo</p>
+      <p>3. Foto serial del equipo</p>
+      <p>4. Foto de la Identificación de la comisión</p>
+      <p>5. Foto inicio de generación de la imagen de la copia de seguridad</p>
+      <p>
+        6. Foto finalización de la generación de la imagen de la copia de
+        seguridad
+      </p>
+      <p>7. Foto inicio del borrado</p>
+      <p>8. Foto finalización del borrado</p>
+    </td>
+  </tr>
+  <tr>
+    <td colspan="4" class="bg-gray estilo-grande">FIRMAS</td>
+  </tr>
+  <tr>
+    <td colspan="4" class="estilo-mediano">
+      Para constancia se firma en formato PDF con firma digital {{
+      objeto.fecha_hora_fin.strftime('%H:%M:%S') if objeto.fecha_hora_fin else
+      "Fecha no disponible" }} {{ objeto.fecha_hora_fin.strftime('%Y-%m-%d') if
+      objeto.fecha_hora_fin else "Hora no disponible" }} por quienes en ella
+      intervienen.
+    </td>
+  </tr>
+  <tr>
+    <td colspan="4" class="estilo-mediano">
+      Observaciones: “Para dar claridad en la nitidez de las fotos se adjunta
+      medio magnético al acta de cierre con la consolidación del registro
+      fotográfico tomado por cada copia de seguridad”
+    </td>
+  </tr>
+  {% for rep in representantes %}
+  <tr>
+    <td class="estilo-pequeno text-center" style="width: 35%; vertical-align: middle;">
+      <b class="bold">Rep.</b> {{ rep.rol.value }}
+    </td>
+
+    <td class="estilo-mediano text-center" style="width: 35%; vertical-align: middle;">
+      <b>Nombre:</b> {{ rep.nombre }}
+    </td>
+    <td colspan="2" class="signature-cell" style="width: 45%; vertical-align: top; padding: 5px;">
+      <div class="bold estilo-pequeno" style="margin-bottom: 5px;">Firma:</div>
+      
+      <div class="text-center" style="width: 100%;">
+        {% if rep.firma %}
+          <img src="{{ url_for('static', filename='firmas/' + rep.firma, _external=True) }}" 
+               class="signature-image">
         {% else %}
-            <div style="height: 150px; background: #eee; border: 1px solid #ccc;">Foto no disponible</div>
+          <div style="height: 60pt; display: flex; align-items: center; justify-content: center;">
+            <span class="estilo-pequeno" style="color: #ccc;">(Espacio para firma)</span>
+          </div>
         {% endif %}
-        <p class="estilo-pequeno"><b>{{ labels[i] }}</b></p>
-    </div>
-    {% endfor %}
-</div>
+      </div>
+    </td>
+  </tr>
+  {% endfor %}
+  <tr>
+    <td colspan="4" class="bg-gray estilo-grande text-center">REGISTRO FOTOGRÁFICO</td>
+  </tr>
+  <tr>
+    <td colspan="4" style="padding: 10px;">
+      <div class="photo-grid">
+        {% set labels = [ 
+          "1. Foto de la caja del equipo", "2. Foto del equipo", 
+          "3. Foto serial del equipo", "4. Foto de la Identificación de la comisión", 
+          "5. Inicio generación imagen", "6. Fin generación imagen", 
+          "7. Inicio borrado", "8. Finalización borrado" 
+        ] %} 
+        
+        {% for i in range(8) %}
+        <div class="photo-box">
+          {% if objeto.imagenes and objeto.imagenes|length > i %}
+          <img src="{{ url_for('static', filename='img/' + objeto.imagenes[i], _external=True) }}" />
+          {% else %}
+          <div style="height: 150px; display: flex; align-items: center; justify-content: center; background: #f8f9fa; border: 1px dashed #ccc; font-size: 7pt;">
+            Foto no disponible
+          </div>
+          {% endif %}
+          <p class="estilo-pequeno" style="margin-top: 5px; text-align: center;">
+            <b>{{ labels[i] }}</b>
+          </p>
+        </div>
+        {% endfor %}
+      </div>
+    </td>
+  </tr>
+</table>
 {% endblock %}
