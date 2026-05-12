@@ -50,7 +50,7 @@ def crear_pdf(tipo, obj_id):
     
     # 4. Generar físicamente el PDF
     # Pasamos config_campos para que el template sepa qué columnas renderizar
-    ruta_pdf = generar_pdf(nombre_archivo, objeto, representantes, config_campos)
+    ruta_pdf = generar_pdf(nombre_archivo, objeto, representantes, config_campos, tipo_config)
     
     # 5. Programar el borrado del archivo después de enviarlo
     @after_this_request

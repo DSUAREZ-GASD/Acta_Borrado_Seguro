@@ -1,4 +1,4 @@
-from flask import render_template, redirect, flash, url_for
+from flask import jsonify, render_template, redirect, flash, request, url_for
 from flask_login import login_required, current_user
 from werkzeug.utils import secure_filename
 from flask_babel import _ # type: ignore
@@ -7,7 +7,7 @@ import uuid
 from . import acta_verificacion
 from app import db
 from app.auth.routes import acceso_requerido
-from app.models import Actividad_verificacion
+from app.models import Actividad_verificacion, Usuario
 from .forms import Nueva_Acta_Verificacion, Edit_Acta_Verificacion
 from PIL import Image as PILImage, ImageOps
 
@@ -66,8 +66,7 @@ def limpiar_imagenes_huerfanas():
                 print(f"Imagenes huerfanas eliminadas: {img}")
             except Exception as e:
                 print(f"Error al eliminar la imagen {img}:", e)
-                
-                
+
 @acta_verificacion.route('/crear-actividad', methods=["GET", "POST"])
 @acceso_requerido(roles=["Administrador"])
 @login_required
@@ -78,6 +77,12 @@ def crear_actividad():
             actividad = Actividad_verificacion()
             
             form.populate_obj(actividad)
+            
+            if form.examinador_select.data:
+                actividad.examinador_id = form.examinador_select.data.id
+            else:
+                actividad.examinador_id = None
+                
             actividad.usuario_id = current_user.id
             
             # Procesar imágenes: Filtra solo las que tienen datos
@@ -99,6 +104,8 @@ def crear_actividad():
         except Exception as e:
             db.session.rollback()
             flash(_(f"Error al registrar actividad: {e}"), "error")
+    else:
+        print(form.errors)
             
     return render_template('crear_actividad.html', form=form, labels=labels)
 
@@ -122,16 +129,27 @@ def lista_actividades():
 def editar_actividad(actividad_id):
     actividad = Actividad_verificacion.query.get_or_404(actividad_id)
     form = Edit_Acta_Verificacion(obj=actividad)
+    
+    if request.method == 'GET':
+        form.examinador_select.data = actividad.examinador_rel
 
     # Rellenar entradas vacías para el formulario
     while len(form.evidencias.entries) < form.evidencias.max_entries:
         form.evidencias.append_entry()
 
     if form.validate_on_submit():
+        
         try:
             # Respaldamos las fotos actuales antes de poblar el objeto
             fotos_previas = actividad.evidencias or []
             form.populate_obj(actividad)
+            
+            if form.examinador_select.data:
+                actividad.examinador_id = form.examinador_select.data.id
+            else:
+                actividad.examinador_id = None
+                
+            
             
             nuevas_evidencias = []
             for i, campo_evidencia in enumerate(form.evidencias):
@@ -161,6 +179,8 @@ def editar_actividad(actividad_id):
             db.session.rollback()
             flash(f"Error al actualizar: {e}", "error")
             return redirect(url_for('acta_verificacion.editar_actividad', actividad_id=actividad_id))
+    else:
+        print(form.errors)
         
     return render_template('editar_actividad.html', form=form, actividad=actividad, labels=labels)
 

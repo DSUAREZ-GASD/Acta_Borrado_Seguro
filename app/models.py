@@ -36,6 +36,8 @@ class Proceso(Enum):
 class Usuario(UserMixin, db.Model):
     __tablename__ = "usuario"
     id = db.Column(db.Integer, primary_key=True)
+    nombre = db.Column(db.String(150), nullable=False)
+    apellido = db.Column(db.String(150), nullable=False)
     userName = db.Column(db.String(100), unique=True, nullable=False)
     email = db.Column(db.String(120), unique=True, nullable=False)
     rol = db.Column(db.Enum(Rol), default=Rol.AGENTE)
@@ -143,7 +145,6 @@ class Actividad_verificacion(db.Model):
     sha_1 = db.Column(db.String(100), nullable=True)
     md5 = db.Column(db.String(100), nullable=True)
     proceso = db.Column(db.Enum(Proceso), default=Proceso.CONGRESO)
-    observacion = db.Column(db.Text, nullable=True)
     
     # Tiempos y evidencias
     fecha_hora_inicio = db.Column(db.DateTime, nullable=True)
@@ -154,9 +155,21 @@ class Actividad_verificacion(db.Model):
     created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
     
+    # Relaciones con usuario
+    examinador_id = db.Column(db.Integer, db.ForeignKey('usuario.id', name='fk_examinador_id'), nullable=True)
+    examinador_rel = db.relationship(
+        'Usuario', 
+        foreign_keys=[examinador_id], # <--- Indicar la llave específica
+        backref=db.backref('actividades_examinadas', lazy=True) # <--- Nombre único para el backref
+    )
+    
     # Relación con el usuario que verifica
     usuario_id = db.Column(db.Integer, db.ForeignKey('usuario.id', name='fk_verificador_id'), nullable=False)
-    usuario = db.relationship('Usuario', backref=db.backref('actividades_verificacion', lazy=True))
+    usuario = db.relationship(
+        'Usuario', 
+        foreign_keys=[usuario_id], # <--- Indicar la llave específica
+        backref=db.backref('actividades_creadas', lazy=True) # <--- Nombre único para el backref
+    )
 
     def actualizar_estado(self):
         # Aseguramos que evidencias no sea None para evitar errores de len()

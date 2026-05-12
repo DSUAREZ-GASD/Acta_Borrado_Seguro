@@ -68,6 +68,8 @@ def init_admin_user():
     admin_user = Usuario.query.filter_by(userName='admin').first()
     if not admin_user:
         admin_user = Usuario(
+            nombre="Administrador",
+            apellido="Sistema",
             userName='admin', 
             email='admin@grupoasd.com', 
             rol=Rol.ADMINISTRADOR, 

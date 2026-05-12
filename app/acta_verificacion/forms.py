@@ -2,8 +2,14 @@ from flask_wtf import FlaskForm
 from wtforms import IntegerField, SelectField, StringField,TextAreaField, SubmitField, FieldList #Tipos de datos d formulario
 from flask_wtf.file import FileField,FileAllowed #Tipos de archivos que se van a cargar
 from wtforms.validators import InputRequired, Optional, Length #Validaciones de formulario
+from wtforms_alchemy import QuerySelectField
 from flask_babel import gettext as _
 from enum import Enum
+from app.models import Usuario
+
+def get_usuarios_choices():
+    """Función fábrica que devuelve la consulta de usuarios para el formulario"""
+    return Usuario.query.order_by(Usuario.userName).all()
 
 class Proceso(Enum):
     CONGRESO = "CONGRESO"
@@ -85,31 +91,24 @@ class Actividad_Form():
     proceso = SelectField(_("Proceso:"),
                           choices=[(proceso.name, proceso.name) for proceso in Proceso],
                           validators=[InputRequired()])
-    dd_marca_bk = StringField("Marca de disco duro Backup:",
-                      validators=[
-                          Optional(),
-                          Length(max=50, message="El M no debe exceder los 50 caracteres")])
-    dd_serial_bk = StringField("Serial de disco duro Backup:",
-                      validators=[
-                          Optional(),
-                          Length(max=50, message="El M no debe exceder los 50 caracteres")])
-    dd_capacidad_bk = StringField("Capacidad de disco duro Backup:",
-                      validators=[
-                          Optional(),
-                          Length(max=50, message="El M no debe exceder los 50 caracteres")])
+    examinador_select = QuerySelectField(
+        'Examinador',
+        query_factory=get_usuarios_choices,
+        get_label='userName', # El atributo de Usuario que quieres mostrar
+        allow_blank=True,
+        blank_text='Seleccione un examinador...'
+    )
                   
-    observacion = TextAreaField("Observaciones:",
-                                validators=[Optional()])
     evidencias = FieldList(FileField("Imagen de equipo", validators=[
                             Optional(),
                             FileAllowed(['jpg', 'png', 'webp', 'jpeg'], message='Solo se admiten imágenes')]), 
                          min_entries=5, max_entries=5)
     
-#Definir el formulario de registro de equipos
+#Definir el formulario de registro de actividades y el formulario de edición de actividades, ambos heredan de Actividad_Form para reutilizar los campos comunes.
 class Nueva_Acta_Verificacion(FlaskForm, Actividad_Form):
     
-    submit = SubmitField("Registrar equipo")
+    submit = SubmitField("Registrar Verificación")
     
 class Edit_Acta_Verificacion(FlaskForm, Actividad_Form):
     
-    submit = SubmitField("Actualizar equipo")
+    submit = SubmitField("Actualizar Verificación")
