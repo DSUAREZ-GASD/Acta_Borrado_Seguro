@@ -34,15 +34,15 @@ def crear_app():
 
     # 4. Blueprints (Importación interna para evitar círculos)
     from app.pdfs import pdf
-    from app.equipos import equipos
-    from app.usuarios import usuarios
+    from app.equipo import equipos
+    from app.usuario import usuarios as usuarios_bp
     from app.auth import auth
-    from app.representantes import representantes
+    from app.representante import representantes
     from app.acta_verificacion import acta_verificacion
     
     app.register_blueprint(pdf)
     app.register_blueprint(equipos)
-    app.register_blueprint(usuarios)
+    app.register_blueprint(usuarios_bp)
     app.register_blueprint(auth)
     app.register_blueprint(representantes)
     app.register_blueprint(acta_verificacion)

@@ -9,7 +9,7 @@ from app.models import Usuario
 
 def get_usuarios_choices():
     """Función fábrica que devuelve la consulta de usuarios para el formulario"""
-    return Usuario.query.order_by(Usuario.userName).all()
+    return Usuario.query.order_by(Usuario.nombre, Usuario.apellido).all()
 
 class Proceso(Enum):
     CONGRESO = "CONGRESO"
@@ -94,7 +94,7 @@ class Actividad_Form():
     examinador_select = QuerySelectField(
         'Examinador',
         query_factory=get_usuarios_choices,
-        get_label='userName', # El atributo de Usuario que quieres mostrar
+        get_label=lambda u: f"{u.nombre} {u.apellido}", # El atributo de Usuario que quieres mostrar
         allow_blank=True,
         blank_text='Seleccione un examinador...'
     )

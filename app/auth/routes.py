@@ -101,9 +101,9 @@ def validar_usuario(u, password):
 
 def redirigir_por_rol(u):
     if u.rol.value == "Administrador":
-        return redirect(url_for('equipos.lista_equipos'))
+        return redirect(url_for('equipo.lista_equipos'))
     elif u.rol.value == "Agente":
-        return redirect(url_for('equipos.lista_equipos_agente'))
+        return redirect(url_for('equipo.lista_equipos_agente'))
     else:
         flash(*MSG_USUARIO_SIN_ROL)
         return redirect(url_for('auth.login'))
@@ -125,7 +125,7 @@ def login():
             
             if form.password.data == default_password:
                 flash(*MSG_CAMBIAR_CONTRASEÑA)
-                return redirect(url_for('usuarios.cambiar_clave', usuario_id=u.id))
+                return redirect(url_for('usuario.cambiar_clave', usuario_id=u.id))
             
             flash(*MSG_BIENVENIDO_EQUIPOS)
             return redirigir_por_rol(u)

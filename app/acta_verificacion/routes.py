@@ -13,11 +13,11 @@ from PIL import Image as PILImage, ImageOps
 
 
 labels = {
-    0: "Foto de la caja del equipo",
-    1: "Foto del equipo",
-    2: "Foto serial del equipo",
-    3: "Foto de la Identificación de la comisión",
-    4: "Foto inicio de generación de la imagen",
+    0: "1.	Proceso de Montado imagen de Copia de seguridad",
+    1: "2. Contenido Unidad C:/",
+    2: "3. Carpeta C:/ELE_ESCRUTINIOS_LOCALES_EVENTO",
+    3: "4. Carpeta C:/SoftwareBaseCongresoConsulta",
+    4: "5. Carpeta C:/LICENCIAS_ASD",
 }
 
 STANDARD_SIZE = (1280, 720)
@@ -67,10 +67,10 @@ def limpiar_imagenes_huerfanas():
             except Exception as e:
                 print(f"Error al eliminar la imagen {img}:", e)
 
-@acta_verificacion.route('/crear-actividad', methods=["GET", "POST"])
+@acta_verificacion.route('/crear', methods=["GET", "POST"])
 @acceso_requerido(roles=["Administrador"])
 @login_required
-def crear_actividad():
+def crear():
     form = Nueva_Acta_Verificacion()
     if form.validate_on_submit():
         try:
@@ -107,26 +107,26 @@ def crear_actividad():
     else:
         print(form.errors)
             
-    return render_template('crear_actividad.html', form=form, labels=labels)
+    return render_template('acta_verificacion/crear.html', form=form, labels=labels)
 
 
 # Ruta para listar los equipos por administrador
-@acta_verificacion.route('/lista-actividades')
+@acta_verificacion.route('/lista')
 @acceso_requerido(roles=["Administrador"])
 @login_required
-def lista_actividades():
+def lista():
     try:
         actividades = Actividad_verificacion.query.all()
-        return render_template('lista_actividades.html', actividades=actividades)
+        return render_template('acta_verificacion/lista.html', actividades=actividades)
     except Exception as e:
         flash(_("Error al listar actividades: {}").format(e), "error")
-        return redirect(url_for('acta_verificacion.lista_actividades'))
+        return redirect(url_for('equipo.lista'))
     
     
-@acta_verificacion.route('/editar-actividad/<actividad_id>', methods=['GET', 'POST'])
+@acta_verificacion.route('/editar/<actividad_id>', methods=['GET', 'POST'])
 @acceso_requerido(roles=["Administrador"])
 @login_required
-def editar_actividad(actividad_id):
+def editar(actividad_id):
     actividad = Actividad_verificacion.query.get_or_404(actividad_id)
     form = Edit_Acta_Verificacion(obj=actividad)
     
@@ -173,21 +173,21 @@ def editar_actividad(actividad_id):
             except: pass
 
             flash("Actividad actualizada exitosamente", "success")
-            return redirect(url_for('acta_verificacion.lista_actividades'))
+            return redirect(url_for('acta_verificacion.lista'))
 
         except Exception as e:
             db.session.rollback()
             flash(f"Error al actualizar: {e}", "error")
-            return redirect(url_for('acta_verificacion.editar_actividad', actividad_id=actividad_id))
+            return redirect(url_for('acta_verificacion.editar', actividad_id=actividad_id))
     else:
         print(form.errors)
         
-    return render_template('editar_actividad.html', form=form, actividad=actividad, labels=labels)
+    return render_template('acta_verificacion/editar.html', form=form, actividad=actividad, labels=labels)
 
-@acta_verificacion.route('/eliminar-actividad/<actividad_id>', methods=['GET','POST'])
+@acta_verificacion.route('/eliminar/<actividad_id>', methods=['GET','POST'])
 @acceso_requerido(roles=["Administrador"])
 @login_required
-def eliminar_actividad(actividad_id):
+def eliminar(actividad_id):
    actividad = Actividad_verificacion.query.get_or_404(actividad_id)
    try:
        if actividad:              
@@ -201,4 +201,4 @@ def eliminar_actividad(actividad_id):
         db.session.rollback()
         flash(_("Error al eliminar la actividad: {}").format(e), "error")
    
-   return redirect(url_for('acta_verificacion.lista_actividades'))
+   return redirect(url_for('acta_verificacion.lista'))

@@ -1,0 +1,71 @@
+{% extends "base_admin.html" %} {% block head %} {{ super() }} {% endblock %}
+{% block title %} Lista de Usuarios {% endblock %} {% block content %} {% block
+menu %} {{ super() }} {% endblock %} 
+{% for categoria, mensaje in get_flashed_messages(with_categories=true) %}
+<script class="flash-mensajes" data-icon="{{ categoria }}">{{ mensaje }}</script>
+{% endfor %}
+<div class="container-fluid">
+  <div class="row">
+    <div class="col">
+        <h1>Lista de Usuarios</h1>
+        <div "btn-toolbar mt-4" role="toolbar" aria-label="Toolbar with button
+        groups">
+        <div class="btn-group me-2 mb-2" role="group" aria-label="First group">
+          <a
+            href="{{ url_for('usuario.crear') }}"
+            class="btn btn-primary"
+            >Crear Usuario</a
+          >
+        </div>
+        <div class="btn-group me-2 mb-2" role="group" aria-label="First group">
+          <a
+            href="{{ url_for('representante.lista') }}"
+            class="btn btn-success"
+            >Representantes</a
+          >
+        </div>
+      </div>
+      <div class="table-responsive mt-4">
+        <table
+          id="equiposTable"
+          class="display responsive nowrap table table-striped table-bordered"
+          style="width: 100%"
+        >
+          <thead class="table-dark">
+            <tr>
+              <th>Nombre de Usuario</th>
+              <th>Correo</th>
+              <th>Rol</th>
+              <th>Estado</th>
+              <th>Actualizar</th>
+              <th>Eliminar</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for usuario in usuarios %}
+            <tr>
+              <td>{{usuario.userName}}</td>
+              <td>{{usuario.email}}</td>
+              <td>{{usuario.rol.value}}</td>
+              <td>{{usuario.estado.value}}</td>
+              <td>
+                <a
+                  href="{{ url_for('usuario.restablecer', usuario_id=usuario.id) }}"
+                  class="btn btn-primary"
+                  >Restablecer</a
+                >
+              </td>
+              <td>
+                {% if usuario.userName != 'admin' %}
+                <a href="{{ url_for('usuario.eliminar', usuario_id=usuario.id) }}" class="btn btn-danger">Eliminar</a>
+                {% endif %}
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %} {% block scripts %} {{ super() }} {% endblock %}

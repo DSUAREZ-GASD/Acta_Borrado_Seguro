@@ -147,7 +147,11 @@
   </tr>
   <tr>
     <td class="bg-gray bold">Examinador:</td>
-    <td colspan="3" class="text-center">{{ objeto.examinador_rel }}</td>
+    <td colspan="3" class="text-center">
+        {% if objeto.examinador_rel %}
+            {{ objeto.examinador_rel.nombre }} {{ objeto.examinador_rel.apellido }}
+        {% endif %}
+    </td>
   </tr>
   <tr>
     <td class="bg-gray bold">Fecha y Hora de Finalización:</td>
