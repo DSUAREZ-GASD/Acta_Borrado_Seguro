@@ -1,15 +1,12 @@
 from flask import render_template, redirect, flash, url_for
 from flask_login import login_required, current_user
-from werkzeug.utils import secure_filename
 from flask_babel import _ # type: ignore
-import os
-import uuid
 from . import equipos
 from app import db
 from app.auth.routes import acceso_requerido
 from app.models import Equipo
 from .forms import NuevoEquipo, EditEquipoForm
-from PIL import Image as PILImage, ImageOps
+from app.utils import guardar_imagen_estandarizada, limpiar_imagenes_huerfanas
 
 # Diccionario de labels para imagenes de equipo de los formularios
 labels = {
@@ -22,35 +19,6 @@ labels = {
     6: "Foto inicio del borrado",
     7: "Foto finalización del borrado",
 }
-
-STANDARD_SIZE = (1280, 720)
-
-def guardar_imagen_estandarizada(file_storage, upload_folder='app/static/img'):
-    if not (file_storage and hasattr(file_storage, 'filename') and file_storage.filename):
-        return None
-    
-    temp_filename = f"{uuid.uuid4()}.jpg" 
-    file_path = os.path.join(upload_folder, temp_filename)
-    os.makedirs(os.path.dirname(file_path), exist_ok=True)
-
-    try:
-        img = PILImage.open(file_storage)
-
-        if img.mode in ('RGBA', 'LA', 'P'):
-            img = img.convert('RGB')
-
-        img = ImageOps.exif_transpose(img)
-        
-        img_estandarizada = ImageOps.contain(img, STANDARD_SIZE, PILImage.Resampling.LANCZOS)
-
-        img_estandarizada.save(file_path, quality=90, optimize=True)
-        
-        return temp_filename
-
-    except Exception as e:
-        print(f"Error procesando imagen: {e}")
-        return None
-
 
 # Ruta para crear un equipo
 @equipos.route('/crear', methods=["GET", "POST"])
@@ -176,24 +144,3 @@ def eliminar(equipo_id):
         flash(_("Error al eliminar el equipo: {}").format(e), "error")
    
    return redirect(url_for('equipo.lista_equipos'))
-   
-
-# Eliminación de imagenes huerfanas
-def limpiar_imagenes_huerfanas():
-    img_d_ruta = 'app/static/img'
-     # Obtener todas las imágenes asociadas a los registros en la base de datos
-    imagenes_en_bd = Equipo.query.with_entities(Equipo.imagenes).all()
-     # Crear un conjunto de todas las imágenes en la base de datos
-    imagenes_en_bd_set = set()
-    for imagenes in imagenes_en_bd:
-        # Asumiendo que imagenes esta en una lista 
-        imagenes_en_bd_set.update(imagenes[0])
-    # Listar todas las imágenes en el directorio    
-    for img in os.listdir(img_d_ruta):
-        if img not in imagenes_en_bd_set:
-            try:
-                os.remove(os.path.join(img_d_ruta, img))
-                print(f"Imagenes huerfanas eliminadas: {img}")
-            except Exception as e:
-                print(f"Error al eliminar la imagen {img}:", e)
-                

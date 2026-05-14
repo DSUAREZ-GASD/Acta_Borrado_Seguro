@@ -1,4 +1,4 @@
-{% extends "base_admin.html" %} {% block head %} {{ super() }} {% endblock %}
+{% extends "layouts/admin.html" %} {% block head %} {{ super() }} {% endblock %}
 {% block title %} Lista de Representantes {% endblock %} {% block content %}
 {% for categoria, mensaje in get_flashed_messages(with_categories=true) %}
 <script class="flash-mensajes" data-icon="{{ categoria }}">{{ mensaje }}</script>

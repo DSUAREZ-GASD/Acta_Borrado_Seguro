@@ -1,4 +1,4 @@
-{% extends "form_base.html" %}
+{% extends "layouts/form.html" %}
 {% block title %}Editar Acta de Verificación{% endblock %}
 {% block form_content %}
 {% for categoria, mensaje in get_flashed_messages(with_categories=true) %}
@@ -145,7 +145,7 @@
                 <div class="form-group form-group-imagen">
                     {% if actividad.evidencias and i < actividad.evidencias|length %}
                         <p>Foto actual {{ i+1 }}:</p>
-                        <img src="{{ url_for('static', filename='img/' + actividad.evidencias[i]) }}" alt="Imagen actual" class="img-fluid" width="100" height="100">
+                        <img src="{{ url_for('static', filename='uploads/verificaciones/' + actividad.evidencias[i]) }}" alt="Imagen actual" class="img-fluid" width="100" height="100">
                     {% else %}
                         <p>Foto nueva {{ i+1 }}:</p>
                     {% endif %}

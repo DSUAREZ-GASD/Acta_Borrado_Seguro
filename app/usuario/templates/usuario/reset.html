@@ -1,4 +1,4 @@
-{% extends "form_base.html" %} {% block title %} Editar Usuario {% endblock %}
+{% extends "layouts/form.html" %} {% block title %} Editar Usuario {% endblock %}
 {% for categoria, mensaje in get_flashed_messages(with_categories=true) %}
 <script class="flash-mensajes" data-icon="{{ categoria }}">
   {

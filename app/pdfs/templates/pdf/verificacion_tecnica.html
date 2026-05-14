@@ -271,7 +271,7 @@
       <div class="text-center" style="width: 100%">
         {% if rep.firma %}
         <img
-          src="{{ url_for('static', filename='firmas/' + rep.firma, _external=True) }}"
+          src="{{ url_for('static', filename='uploads/firmas/' + rep.firma, _external=True) }}"
           class="signature-image"
         />
         {% else %}
@@ -307,7 +307,7 @@
         <div class="photo-box">
           {% if objeto.evidencias and objeto.evidencias|length > i %}
           <img
-            src="{{ url_for('static', filename='img/' + objeto.evidencias[i], _external=True) }}"
+            src="{{ url_for('static', filename='uploads/verificaciones/' + objeto.evidencias[i], _external=True) }}"
           />
           {% else %}
           <div

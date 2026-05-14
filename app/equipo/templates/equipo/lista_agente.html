@@ -1,4 +1,4 @@
-{% extends "base_agente.html" %} 
+{% extends "layouts/agente.html" %} 
 {% block head %}
 {{ super() }}
 {% endblock %}
@@ -6,9 +6,6 @@
 Lista de equipos agente
 {% endblock %}
 {% block content %}
-{% block menu %}
-{{ super() }}
-{% endblock %}
 {% for categoria, mensaje in get_flashed_messages(with_categories=true) %}
 <script class="flash-mensajes" data-icon="{{ categoria }}">{{ mensaje }}</script>
 {% endfor %}
