@@ -5,15 +5,16 @@ from werkzeug.security import generate_password_hash,check_password_hash;
 from app import db
 from sqlalchemy.ext.mutable import MutableList
 from sqlalchemy.dialects.mysql import JSON
-from enum import Enum 
-
+from enum import Enum
 # Modelos
 # Columnas de atributos enumerados
 class Rol(Enum):
     ADMINISTRADOR = "Administrador"
-    AGENTE = "Agente"
+    AGENTE_OPERADOR = "Agente_1"   # Sube imágenes y edita datos sin reemplazar
+    AGENTE_SUPERVISOR = "Agente_2" # Sube, edita y reemplaza imágenes
+    AGENTE_AUDITOR = "Agente_3"    # Edita datos, hashes, logs y genera PDFs
 
-class Roles(Enum):
+class EntidadRepresentante(Enum):
     REGISTRADURIA = "Registraduria"
     AUDITORIA = "Auditoria"
     PROCURADURIA = "Procuraduria"
@@ -31,6 +32,46 @@ class Estado_usuario(Enum):
 class Proceso(Enum):
     CONGRESO = "CONGRESO"
     
+
+MATRIZ_PERMISOS = {
+    Rol.ADMINISTRADOR: {
+        "subir_imagenes": True,
+        "reemplazar_imagenes": True,
+        "eliminar_imagenes": True,
+        "escribir_datos": True,
+        "ver_hash_y_logs": True,
+        "generar_pdf": True,
+        "gestionar_roles": True
+    },
+    Rol.AGENTE_OPERADOR: { # Agente 1
+        "subir_imagenes": True,
+        "reemplazar_imagenes": False,
+        "eliminar_imagenes": False,
+        "escribir_datos": True,
+        "ver_hash_y_logs": False,
+        "generar_pdf": False,
+        "gestionar_roles": False
+    },
+    Rol.AGENTE_SUPERVISOR: { # Agente 2
+        "subir_imagenes": True,
+        "reemplazar_imagenes": True,
+        "eliminar_imagenes": False,
+        "escribir_datos": True,
+        "ver_hash_y_logs": False,
+        "generar_pdf": False,
+        "gestionar_roles": False
+    },
+    Rol.AGENTE_AUDITOR: { # Agente 3
+        "subir_imagenes": False,
+        "reemplazar_imagenes": False,
+        "eliminar_imagenes": False,
+        "escribir_datos": True,
+        "ver_hash_y_logs": True,
+        "generar_pdf": True,
+        "gestionar_roles": False
+    }
+}
+    
     
 # Modelo de usuario  
 class Usuario(UserMixin, db.Model):
@@ -40,11 +81,16 @@ class Usuario(UserMixin, db.Model):
     apellido = db.Column(db.String(150), nullable=False)
     userName = db.Column(db.String(100), unique=True, nullable=False)
     email = db.Column(db.String(120), unique=True, nullable=False)
-    rol = db.Column(db.Enum(Rol), default=Rol.AGENTE)
+    # Modifica la línea de 'rol' en tu clase Usuario:
+    rol = db.Column(db.Enum(Rol, values_callable=lambda x: [e.value for e in x]), default=Rol.AGENTE_OPERADOR)
     password = db.Column(db.String(512), nullable=False)
     estado = db.Column(db.Enum(Estado_usuario), default=Estado_usuario.ACTIVO)
     created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
+
+    def tiene_permiso(self, capacidad):
+        permisos_rol = MATRIZ_PERMISOS.get(self.rol, {})
+        return permisos_rol.get(capacidad, False)
 
     def set_password(self, password):
         self.password = generate_password_hash(password)
@@ -200,7 +246,7 @@ class Representante(db.Model):
     __tablename__ = "representante"
     id = db.Column(db.Integer, primary_key=True)
     nombre = db.Column(db.String(150))
-    rol = db.Column(db.Enum(Roles))
+    rol = db.Column(db.Enum(EntidadRepresentante))
     firma = db.Column(db.String(100))
     created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
@@ -217,4 +263,3 @@ class ActaConfig(db.Model):
     
     def __repr__(self):
         return f'<ActaConfig {self.tipo_acta} - {self.campo_sistema}>'
-    

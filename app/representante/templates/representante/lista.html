@@ -7,7 +7,7 @@
   <div class="row">
     <div class="col">
       <h1>Lista de Representantes</h1>
-      <div "btn-toolbar mt-4" role="toolbar" aria-label="Toolbar with button
+      <div class="btn-toolbar mt-4" role="toolbar" aria-label="Toolbar with button
         groups">
         <div class="btn-group me-2 mb-2" role="group" aria-label="First group">
           <a href="{{ url_for('usuario.lista') }}" class="btn btn-success">Volver a la lista de usuarios</a>
@@ -34,7 +34,7 @@
             <td>{{ representante.rol.value }}</td>
             <td>
               <img
-                src="{{ url_for('static', filename='firmas/' + representante.firma) }}"
+                src="{{ url_for('static', filename='uploads/firmas/' + representante.firma) }}"
                 width="100px"
                 height="75px"
               />

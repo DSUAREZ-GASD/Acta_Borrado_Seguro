@@ -2,7 +2,7 @@
 {% block title %}
 Editar Representante
 {% endblock %}
-{% block form_content %}
+{% block content %}
 {% for categoria, mensaje in get_flashed_messages(with_categories=true) %}
 <script class="flash-mensajes" data-icon="{{ categoria }}">{{ mensaje }}</script>
 {% endfor %}
@@ -32,7 +32,7 @@ Editar Representante
     <div class="mb-3">
         <p>Imagen actual:</p>
         {% if representante.firma %}
-        <img src="{{ url_for('static', filename='firmas/' + representante.firma)}}" alt="Imagen actual" class="img-fluid" width="150" height="100"/>
+        <img src="{{ url_for('static', filename='uploads/firmas/' + representante.firma)}}" alt="Imagen actual" class="img-fluid" width="150" height="100"/>
         {% else %}
         <p>No hay Firma</p>
         {% endif %}

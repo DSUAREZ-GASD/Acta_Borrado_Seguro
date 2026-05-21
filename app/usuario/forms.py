@@ -6,7 +6,9 @@ from enum import Enum
 
 # Columnas de atributos enumerados
 class Rol(Enum):
-    AGENTE = "Agente"
+    AGENTE_OPERADOR = "Agente_1" 
+    AGENTE_SUPERVISOR = "Agente_2"
+    AGENTE_AUDITOR = "Agente_3"
     ADMINISTRADOR = "Administrador"
     
 class EstadoUsuario(Enum):
@@ -31,9 +33,7 @@ class FormRegistrarUsuario(FlaskForm):
                                     Email(message=_("Por favor ingresa un correo válido")),
                                     Regexp(r'^[\w\.-]+@grupoasd\.com$', message=_("El correo debe ser de la compañía '@grupoasd.com'"))])
     
-     rol = SelectField(_("Rol del Usuario:"),
-        choices=[(rol.name, rol.value) for rol in Rol],
-        validators=[InputRequired(message=_("Por favor ingresa el rol del usuario"))])
+     rol = SelectField('Rol', choices=[(r.value, r.value) for r in Rol])
     
      password = PasswordField(_("Contraseña de usuario:"),
         validators=[Optional()])
@@ -59,9 +59,7 @@ class FormRestablecerUsuario(FlaskForm):
                                     Email(message=_("Por favor ingresa un correo válido")),
                                     Regexp(r'^[\w\.-]+@grupoasd\.com$', message=_("El correo debe ser de la compañía '@grupoasd.com'"))])
     
-    rol = SelectField(_("Rol del Usuario:"),
-        choices=[(rol.name, rol.value) for rol in Rol],
-        validators=[InputRequired(message=_("Por favor ingresa el rol del usuario"))])
+    rol = SelectField('Rol', choices=[(r.value, r.value) for r in Rol])
      
     estado = SelectField("Estado del Usuario:",
                          choices=[(estado.name, estado.value) for estado in EstadoUsuario],

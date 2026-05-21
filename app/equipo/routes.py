@@ -20,12 +20,20 @@ labels = {
     7: "Foto finalización del borrado",
 }
 
-# Ruta para crear un equipo
+# ==========================================
+# RUTA: CREAR EQUIPO
+# ==========================================
 @equipos.route('/crear', methods=["GET", "POST"])
-@acceso_requerido(roles=["Administrador", "Agente"])
+# Permitimos la entrada a Admins, Operadores (Agente 1) y Supervisores (Agente 2)
+@acceso_requerido(roles=["Administrador", "Agente_1", "Agente_2"])
 @login_required
 def crear():
     form = NuevoEquipo()
+    
+    if not current_user.tiene_permiso("subir_imagenes"):
+        flash(_("Tu perfil no cuenta con permisos para registrar nuevos equipos."), "error")
+        return redirect(url_for('auth.login'))
+    
     if form.validate_on_submit():
         try:
             equipo = Equipo()
@@ -51,7 +59,9 @@ def crear():
             
     return render_template('equipo/crear.html', form=form, labels=labels)
 
-# Ruta para listar los equipos por administrador
+# ==========================================
+# RUTA: LISTAR EQUIPOS (ADMINISTRADOR)
+# ==========================================
 @equipos.route('/lista')
 @acceso_requerido(roles=["Administrador"])
 @login_required
@@ -63,9 +73,11 @@ def lista_equipos():
         flash(_("Error al listar equipos: {}").format(e), "error")
         return redirect(url_for('auth.login'))
 
-# Ruta para listar los equipos por agente
+# ==========================================
+# RUTA: LISTAR EQUIPOS (AGENTES OPERATIVOS)
+# ==========================================
 @equipos.route('/lista-agente')
-@acceso_requerido(roles=["Agente"])
+@acceso_requerido(roles=["Agente_1", "Agente_2"])
 @login_required
 def lista_equipos_agente():
     try:
@@ -74,10 +86,26 @@ def lista_equipos_agente():
     except Exception as e:
         flash(_("Error al listar equipos {}").format(e), "error")
         return redirect(url_for('auth.login'))
+    
+# ==========================================
+# RUTA: LISTAR EQUIPOS (AGENTES AUDITORES)
+# ==========================================
+@equipos.route('/lista-auditor')
+@acceso_requerido(roles=["Agente_3"])
+@login_required
+def lista_equipos_auditor():
+    try:
+        lista_de_equipos = Equipo.query.all()
+        return render_template('equipo/lista_auditor.html', equipos=lista_de_equipos)
+    except Exception as e:
+        flash(_("Error al listar equipos {}").format(e), "error")
+        return redirect(url_for('auth.login'))
 
-# Ruta para actualizar un equipo
+# ==========================================
+# RUTA: EDITAR / REEMPLAZAR IMÁGENES
+# ==========================================
 @equipos.route('/editar/<equipo_id>', methods=['GET', 'POST'])
-@acceso_requerido(roles=["Administrador", "Agente"])
+@acceso_requerido(roles=["Administrador", "Agente_1", "Agente_2"])
 @login_required
 def editar(equipo_id):
     equipo = Equipo.query.get_or_404(equipo_id)
@@ -89,19 +117,33 @@ def editar(equipo_id):
 
     if form.validate_on_submit():
         try:
-            # Respaldamos las fotos actuales antes de poblar el objeto
             fotos_previas = equipo.imagenes or []
+            
+            # --- COMPROBACIÓN DE MATRIZ DE PERMISOS ---
+            # Evaluamos si el usuario intenta subir o modificar archivos existentes
+            for i, campo_imagen in enumerate(form.imagenes):
+                if campo_imagen.data: # El usuario cargó un archivo en este slot
+                    
+                    # Caso A: El slot ya tenía foto (Es un REEMPLAZO)
+                    if i < len(fotos_previas) and fotos_previas[i]:
+                        if not current_user.tiene_permiso("reemplazar_imagenes"):
+                            flash(_("Tu perfil (Agente 1) no tiene autorización para reemplazar imágenes existentes."), "error")
+                            return redirect(url_for('equipo.editar', equipo_id=equipo_id))
+                    # Caso B: El slot estaba vacío (Es una SUBIDA NUEVA)
+                    else:
+                        if not current_user.tiene_permiso("subir_imagenes"):
+                            flash(_("No tienes permisos para añadir imágenes."), "error")
+                            return redirect(url_for('equipo.editar', equipo_id=equipo_id))
+            # Si pasa las validaciones de la matriz, procedemos con el guardado
             form.populate_obj(equipo)
             
             nuevas_imagenes = []
             for i, campo_imagen in enumerate(form.imagenes):
-                # Si se subió un archivo nuevo, lo guardamos
                 nombre_nuevo = guardar_imagen_estandarizada(campo_imagen.data)
                 
                 if nombre_nuevo:
                     nuevas_imagenes.append(nombre_nuevo)
                 elif i < len(fotos_previas):
-                    # Si no hay archivo nuevo, mantenemos la que estaba en esa posición
                     nuevas_imagenes.append(fotos_previas[i])
 
             equipo.imagenes = nuevas_imagenes
@@ -110,7 +152,6 @@ def editar(equipo_id):
             
             db.session.commit()
             
-            # Limpieza silenciosa
             try: limpiar_imagenes_huerfanas() 
             except: pass
 
@@ -121,11 +162,14 @@ def editar(equipo_id):
         except Exception as e:
             db.session.rollback()
             flash(f"Error al actualizar: {e}", "error")
-            return redirect(url_for('equipos.editar', equipo_id=equipo_id))
+            return redirect(url_for('equipo.editar', equipo_id=equipo_id))
         
     return render_template('equipo/editar.html', form=form, equipo=equipo, labels=labels)
 
-    
+
+# ==========================================
+# RUTA: ELIMINAR EQUIPO
+# ==========================================
 @equipos.route('/eliminar/<equipo_id>', methods=['GET','POST'])
 @acceso_requerido(roles=["Administrador"])
 @login_required

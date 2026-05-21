@@ -4,7 +4,7 @@ from flask_babel import gettext as _# type: ignore
 from . import usuarios
 from app import db
 from app.auth.routes import acceso_requerido
-from app.models import Usuario,Equipo, Estado_usuario
+from app.models import Usuario,Equipo, Estado_usuario, Rol
 from .forms import FormRegistrarUsuario, FormRestablecerUsuario, FormPerfil, FormNuevaClave
 
 # Diccionario para almacenar y reiniciar los intentos fallidos de inicio de sesión
@@ -22,6 +22,9 @@ def crear():
     if form_registrar.validate_on_submit():
         try:
             form_registrar.populate_obj(usuario)
+            
+            string_rol_seleccionado = form_registrar.rol.data
+            usuario.rol = next(e for e in Rol if e.value == string_rol_seleccionado)
             # Se establece la contraseña por defecto para nuevos usuarios
             usuario.set_password(default_password)
             db.session.add(usuario)
@@ -61,6 +64,10 @@ def restablecer(usuario_id):
     if form_restablecer.validate_on_submit():
         try:
             form_restablecer.populate_obj(usuario)
+            
+            string_rol_seleccionado = form_restablecer.rol.data
+            usuario.rol = next(e for e in Rol if e.value == string_rol_seleccionado)
+            
             if usuario.estado == Estado_usuario.INACTIVO:
                 # Reiniciar contador de intentos fallidos
                 intentos_fallidos[usuario.userName] = {'intentos': 0, 'ultimo_intento': None}
@@ -102,7 +109,7 @@ def eliminar(usuario_id):
  
 # Ruta para editar el perfil de un usuario logueado
 @usuarios.route('/perfil/<usuario_id>', methods=['GET','POST'])
-@acceso_requerido(roles=["Agente"])
+@acceso_requerido(roles=["Administrador", "Agente_1", "Agente_2", "Agente_3"])
 @login_required
 def perfil(usuario_id):
     usuario = Usuario.query.get_or_404(usuario_id) 
@@ -149,7 +156,7 @@ def perfil(usuario_id):
     
 # Ruta para cambiar la contraseña de un usuario logueado
 @usuarios.route('/cambiar-clave/<usuario_id>', methods=['GET','POST'])
-@acceso_requerido(roles=["Administrador","Agente"])
+@acceso_requerido(roles=["Administrador","Agente_1", "Agente_2", "Agente_3"])
 @login_required
 def cambiar_clave(usuario_id):
     usuario = Usuario.query.get_or_404(usuario_id)

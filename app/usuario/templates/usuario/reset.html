@@ -1,4 +1,5 @@
 {% extends "layouts/form.html" %} {% block title %} Editar Usuario {% endblock %}
+{% block content %}
 {% for categoria, mensaje in get_flashed_messages(with_categories=true) %}
 <script class="flash-mensajes" data-icon="{{ categoria }}">
   {
@@ -7,7 +8,7 @@
     }
   }
 </script>
-{% endfor %} {% block form_content %}
+{% endfor %} 
 <form
   action=""
   class="login"

@@ -4,7 +4,7 @@ from wtforms import StringField, SubmitField, SelectField#Tipos de datos d formu
 from flask_wtf.file import FileField, FileRequired,FileAllowed #Tipos de archivos que se van a cargar
 from wtforms.validators import InputRequired, Optional, Length, Regexp #Validaciones de formulario
 
-class Roles(Enum):
+class EntidadRepresentante(Enum):
     REGISTRADURIA = "Registraduria"
     AUDITORIA = "Auditoria"
     PROCURADURIA = "Procuraduria"
@@ -16,7 +16,7 @@ class representanteForm():
                         validators=[InputRequired(message="por favor ingresa un nombre de represetante"),
                                     Length(max=50, message="El nombre del equipo no debe exceder los 50 caracteres")])
     rol = SelectField("Rol del Usuario:",
-                       choices=[(rol.name, rol.value)for rol in Roles],
+                       choices=[(rol.name, rol.value)for rol in EntidadRepresentante],
                        validators= [InputRequired(message="por favor ingresa el rol del represetante")])
     firma =  FileField("Imagen de producto", validators=[
                             FileRequired(message="Debes ingresar un archivo"),

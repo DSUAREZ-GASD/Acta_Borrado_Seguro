@@ -65,19 +65,43 @@ def crear_app():
 
 def init_admin_user():
     from .models import Usuario, Rol, Estado_usuario
-    admin_user = Usuario.query.filter_by(userName='admin').first()
-    if not admin_user:
-        admin_user = Usuario(
-            nombre="Administrador",
-            apellido="Sistema",
-            userName='admin', 
-            email='admin@grupoasd.com', 
-            rol=Rol.ADMINISTRADOR, 
-            estado=Estado_usuario.ACTIVO, 
-            password=generate_password_hash('GrupoASD123*')
-        )
-        db.session.add(admin_user)
-        db.session.commit()
+    
+    default_password = "GrupoASD123*"
+    email_admin = "admin@grupoasd.com"
+    
+    try:
+        # Verificamos si existe por username O por email único para evitar colisiones
+        admin_user = Usuario.query.filter(
+            (Usuario.userName == 'admin') | (Usuario.email == email_admin)
+        ).first()
+        
+        if not admin_user:
+            print("Iniciando creación del usuario administrador por defecto...")
+            
+            admin_user = Usuario(
+                nombre="Administrador",
+                apellido="Sistema",
+                userName='admin', 
+                email=email_admin, 
+                rol=Rol.ADMINISTRADOR, 
+                estado=Estado_usuario.ACTIVO
+            )
+            # Usamos el método nativo de tu modelo en lugar de importar la función cruda
+            admin_user.set_password(default_password)
+            
+            db.session.add(admin_user)
+            db.session.commit()
+            print("Usuario administrador creado con éxito.")
+        else:
+            # Pailsafe de desarrollo: Nos aseguramos de que tenga asignado el Enum correcto
+            if admin_user.rol != Rol.ADMINISTRADOR:
+                admin_user.rol = Rol.ADMINISTRADOR
+                db.session.commit()
+                print("Rol del administrador sincronizado correctamente.")
+                
+    except Exception as e:
+        db.session.rollback()
+        print(f"⚠️ Alerta no crítica en init_admin_user: {e}")
 
 def asegurar_directorios(app):
     path_tmp = os.path.join(app.root_path, 'static', 'tmp')

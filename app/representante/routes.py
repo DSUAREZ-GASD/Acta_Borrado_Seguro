@@ -27,7 +27,7 @@ def crear():
             db.session.commit()
             
             file = form.firma.data
-            file_path = os.path.join('app','static','firmas', representante.firma)
+            file_path = os.path.join('app','static','uploads','firmas', representante.firma)
             file.save(file_path)
             flash(_("Registro de representante exitoso"), "success")
             return redirect(url_for('representante.lista'))
@@ -68,7 +68,7 @@ def editar(representante_id):
             
             if form_edit.firma.data and hasattr(form_edit.firma.data, 'filename'):
                 filename = secure_filename(form_edit.firma.data.filename)  
-                ruta_path = os.path.join('app','static','firmas', filename)
+                ruta_path = os.path.join('app','static','uploads','firmas', filename)
                 form_edit.firma.data.save(ruta_path)
                 representante.firma = filename
             else:
@@ -105,7 +105,7 @@ def eliminar(representante_id):
     
 # Eliminación de firmas huerfanas   
 def limpiar_firmas():
-    ruta_firma = os.path.join('app','static','firmas')
+    ruta_firma = os.path.join('app','static','uploads','firmas')
     firmas_en_bd = {firma for (firma,) in Representante.query.with_entities(Representante.firma).all()}
      
     for fir in os.listdir(ruta_firma):
