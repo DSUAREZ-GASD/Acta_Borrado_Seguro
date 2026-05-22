@@ -42,7 +42,7 @@ def crear():
             
             # Procesar imágenes: Filtra solo las que tienen datos
             equipo.imagenes = [
-                guardar_imagen_estandarizada(f.data) 
+                guardar_imagen_estandarizada(f.data, subfolder='equipos') 
                 for f in form.imagenes if f.data
             ]
 
@@ -102,7 +102,7 @@ def lista_equipos_auditor():
         return redirect(url_for('auth.login'))
 
 # ==========================================
-# RUTA: EDITAR / REEMPLAZAR IMÁGENES
+# RUTA: EDITAR / REEMPLAZAR IMÁGENES Y DATOS
 # ==========================================
 @equipos.route('/editar/<equipo_id>', methods=['GET', 'POST'])
 @acceso_requerido(roles=["Administrador", "Agente_1", "Agente_2"])
@@ -111,51 +111,68 @@ def editar(equipo_id):
     equipo = Equipo.query.get_or_404(equipo_id)
     form = EditEquipoForm(obj=equipo)
 
-    # Rellenar entradas vacías para el formulario
+    # Aseguramos que el FieldList de WTForms siempre tenga exactamente 8 entradas en memoria
     while len(form.imagenes.entries) < form.imagenes.max_entries:
         form.imagenes.append_entry()
 
     if form.validate_on_submit():
         try:
-            fotos_previas = equipo.imagenes or []
-            
-            # --- COMPROBACIÓN DE MATRIZ DE PERMISOS ---
-            # Evaluamos si el usuario intenta subir o modificar archivos existentes
-            for i, campo_imagen in enumerate(form.imagenes):
-                if campo_imagen.data: # El usuario cargó un archivo en este slot
-                    
-                    # Caso A: El slot ya tenía foto (Es un REEMPLAZO)
-                    if i < len(fotos_previas) and fotos_previas[i]:
-                        if not current_user.tiene_permiso("reemplazar_imagenes"):
-                            flash(_("Tu perfil (Agente 1) no tiene autorización para reemplazar imágenes existentes."), "error")
-                            return redirect(url_for('equipo.editar', equipo_id=equipo_id))
-                    # Caso B: El slot estaba vacío (Es una SUBIDA NUEVA)
-                    else:
-                        if not current_user.tiene_permiso("subir_imagenes"):
-                            flash(_("No tienes permisos para añadir imágenes."), "error")
-                            return redirect(url_for('equipo.editar', equipo_id=equipo_id))
-            # Si pasa las validaciones de la matriz, procedemos con el guardado
-            form.populate_obj(equipo)
+            # Aseguramos que fotos_previas sea una lista de 8 elementos (rellenando con None si es más corta)
+            fotos_previas = equipo.imagenes if equipo.imagenes else []
+            while len(fotos_previas) < 8:
+                fotos_previas.append(None)
             
             nuevas_imagenes = []
-            for i, campo_imagen in enumerate(form.imagenes):
-                nombre_nuevo = guardar_imagen_estandarizada(campo_imagen.data)
+            
+            # --- VALIDACIÓN Y RECONSTRUCCIÓN EN UN SOLO PASO EN BASE A LA REALIDAD DE LA BD ---
+            for i in range(8):
+                campo_imagen = form.imagenes[i]
+                foto_antigua = fotos_previas[i]
                 
-                if nombre_nuevo:
+                # Intentamos procesar el archivo si el usuario subió algo en este slot
+                # (WTForms a veces llena campo_imagen.data con un objeto de archivo vacío, por eso validamos el filename)
+                tiene_archivo_nuevo = campo_imagen.data and hasattr(campo_imagen.data, 'filename') and campo_imagen.data.filename != ''
+                
+                if tiene_archivo_nuevo:
+                    # CASO A: El slot YA tenía una foto registrada en la Base de Datos (Es un REEMPLAZO)
+                    if foto_antigua:
+                        if not current_user.tiene_permiso("reemplazar_imagenes"):
+                            flash(_(f"Acción denegada: Tu perfil (Agente 1) no puede reemplazar la foto del slot {i+1}."), "error")
+                            return redirect(url_for('equipo.editar', equipo_id=equipo_id))
+                    
+                    # CASO B: El slot estaba vacío (None) en la Base de Datos (Es una SUBIDA NUEVA)
+                    else:
+                        if not current_user.tiene_permiso("subir_imagenes"):
+                            flash(_("Acción denegada: No tienes permisos para añadir nuevas imágenes."), "error")
+                            return redirect(url_for('equipo.editar', equipo_id=equipo_id))
+                    
+                    # Si pasa los permisos correspondientes, guardamos el archivo físico
+                    nombre_nuevo = guardar_imagen_estandarizada(campo_imagen.data, subfolder='equipos')
                     nuevas_imagenes.append(nombre_nuevo)
-                elif i < len(fotos_previas):
-                    nuevas_imagenes.append(fotos_previas[i])
+                
+                else:
+                    # El usuario NO subió ningún archivo nuevo en este slot específico
+                    # Si ya había una foto antes, la conservamos intacta sin importar lo que diga WTForms
+                    if foto_antigua:
+                        nuevas_imagenes.append(foto_antigua)
+                    else:
+                        nuevas_imagenes.append(None)
 
+            # Sincronizamos la lista de 8 elementos en la base de datos
             equipo.imagenes = nuevas_imagenes
+            
+            # --- ACTUALIZACIÓN DE DATOS DE TEXTO ---
+            equipo.nombre = form.nombre.data
+            # equipo.serial = form.serial.data (Mapea aquí tus otros inputs de texto)
+
             equipo.usuario_id = current_user.id
             equipo.actualizar_estado()
             
             db.session.commit()
-            
-            try: limpiar_imagenes_huerfanas() 
+            try: limpiar_imagenes_huerfanas()
             except: pass
 
-            flash("Equipo actualizado exitosamente", "success")
+            flash(_("Equipo actualizado con éxito"), "success")
             dest = 'equipo.lista_equipos' if current_user.rol.value == "Administrador" else 'equipo.lista_equipos_agente'
             return redirect(url_for(dest))
 

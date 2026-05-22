@@ -18,7 +18,7 @@ labels = {
 }
 
 @acta_verificacion.route('/crear', methods=["GET", "POST"])
-@acceso_requerido(roles=["Administrador"])
+@acceso_requerido(roles=["Administrador", "Agente_3"])
 @login_required
 def crear():
     form = Nueva_Acta_Verificacion()
@@ -37,7 +37,7 @@ def crear():
             
             # Procesar imágenes: Filtra solo las que tienen datos
             lista_evidencias = [
-                guardar_imagen_estandarizada(f.data) 
+                guardar_imagen_estandarizada(f.data, subfolder='verificaciones') 
                 for f in form.evidencias if f.data
             ]
             
@@ -62,7 +62,7 @@ def crear():
 
 # Ruta para listar los equipos por administrador
 @acta_verificacion.route('/lista')
-@acceso_requerido(roles=["Administrador"])
+@acceso_requerido(roles=["Administrador", "Agente_3"])
 @login_required
 def lista():
     try:
@@ -74,7 +74,7 @@ def lista():
     
     
 @acta_verificacion.route('/editar/<actividad_id>', methods=['GET', 'POST'])
-@acceso_requerido(roles=["Administrador"])
+@acceso_requerido(roles=["Administrador", "Agente_3"])
 @login_required
 def editar(actividad_id):
     actividad = Actividad_verificacion.query.get_or_404(actividad_id)
@@ -104,7 +104,7 @@ def editar(actividad_id):
             nuevas_evidencias = []
             for i, campo_evidencia in enumerate(form.evidencias):
                 # Si se subió un archivo nuevo, lo guardamos
-                nombre_nuevo = guardar_imagen_estandarizada(campo_evidencia.data)
+                nombre_nuevo = guardar_imagen_estandarizada(campo_evidencia.data, subfolder='verificaciones')
                 
                 if nombre_nuevo:
                     nuevas_evidencias.append(nombre_nuevo)

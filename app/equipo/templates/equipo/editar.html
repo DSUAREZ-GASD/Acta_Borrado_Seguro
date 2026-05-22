@@ -152,21 +152,50 @@
         {% endfor %}
     </div>
     <h3 class="text-center my-4 titulo-responsivo">Imágenes del Equipo</h3>
-            {% for i in range(8) %}
-                <div class="form-group form-group-imagen">
-                    {% if equipo.imagenes and i < equipo.imagenes|length %}
-                        <p>Foto actual {{ i+1 }}:</p>
-                        <img src="{{ url_for('static', filename='uploads/equipos/' + equipo.imagenes[i]) }}" alt="Imagen actual" class="img-fluid" width="100" height="100">
-                    {% else %}
-                        <p>Foto nueva {{ i+1 }}:</p>
-                    {% endif %}
-                    <label for="{{ form.imagenes[i].id }}">{{ labels[i] }}</label>
-                    {{ form.imagenes[i ](class="form-control form-control-sm") }}
-                    {% for error in form.imagenes[i].errors %}
-                        <div class="text-danger">{{ error }}</div>
-                    {% endfor %}
+    {% for i in range(8) %}
+        <div class="form-group form-group-imagen mb-3 border p-3 rounded shadow-sm bg-white">
+            <label class="d-block mb-2"><strong>{{ labels[i] }}</strong></label>
+ 
+            {# Ahora que el JSON es posicional, comprobar la foto es directo y exacto por su índice #}
+            {% set tiene_foto = false %}
+            {% if equipo.imagenes and equipo.imagenes[i] %}
+                {% set tiene_foto = true %}
+            {% endif %}
+
+            {% if tiene_foto %}
+                {# CASO A: EL SLOT TIENE FOTO GUARDADA #}
+                <p class="text-muted small mb-1"><i class="bi bi-shield-check text-success"></i> Evidencia custodiada:</p>
+                <div class="mb-2">
+                    <img src="{{ url_for('static', filename='uploads/equipos/' + equipo.imagenes[i]) }}" alt="Imagen actual" class="img-fluid rounded border shadow-sm" width="110" height="110">
                 </div>
+                
+                {% if not current_user.tiene_permiso('reemplazar_imagenes') %}
+                    <div class="alert alert-secondary py-1 px-2 small mb-0">
+                        <i class="bi bi-lock-fill"></i> Esta foto ya fue registrada y está protegida contra modificaciones.
+                    </div>
+                    <div class="d-none">
+                        {{ form.imagenes[i](class="form-control") }}
+                    </div>
+                {% else %}
+                    <p class="text-warning small mb-1">Reemplazar imagen actual:</p>
+                    {{ form.imagenes[i](class="form-control form-control-sm") }}
+                {% endif %}
+
+            {% else %}
+                {# CASO B: EL SLOT TIENE UN 'NONE' (Está vacío, el Agente 1 puede subir aquí) #}
+                <div class="p-2 bg-light rounded border border-dashed">
+                    <p class="text-primary small mb-2"><i class="bi bi-plus-circle-fill"></i> Slot disponible para nueva evidencia:</p>
+                    {{ form.imagenes[i](class="form-control form-control-sm") }}
+                </div>
+            {% endif %}
+            
+            {# Mapeo de errores de validación de WTForms para este archivo #}
+            {% for error in form.imagenes[i].errors %}
+                <div class="text-danger small mt-1">{{ error }}</div>
             {% endfor %}
+        </div>
+    {% endfor %}
+
     <div class="form-group-button mb-3">
         {{ form.submit(class="btn btn-primary") }}
     </div>

@@ -142,16 +142,18 @@ class Equipo(db.Model):
     # Relaciones con usuario
     usuario = db.relationship('Usuario', backref=db.backref('equipo', lazy=True))
         
-    # Método para actualizar el estado automáticamente
+   # Método para actualizar el estado automáticamente (Corregido para JSON posicional)
     def actualizar_estado(self):
         lista_imagenes = self.imagenes if self.imagenes else []
-        cantidad = len(lista_imagenes)
         
-        if cantidad >= 8:
+        # Contamos solo los slots que tienen un nombre de archivo real (ignorando los None o vacíos)
+        cantidad_reales = sum(1 for img in lista_imagenes if img is not None and img != "")
+        
+        if cantidad_reales >= 8:
             self.estado = EstadoEnum.FINALIZADO
             if not self.fecha_hora_fin:
                 self.fecha_hora_fin = datetime.now()
-        elif cantidad > 0:
+        elif cantidad_reales > 0:
             self.estado = EstadoEnum.EN_PROCESO
             if not self.fecha_hora_inicio:
                 self.fecha_hora_inicio = datetime.now()

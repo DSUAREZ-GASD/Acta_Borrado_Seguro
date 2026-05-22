@@ -16,7 +16,14 @@
                     <a class="nav-link" href="{{ url_for('usuario.perfil', usuario_id=current_user.id) }}">Mi Perfil</a>
                 </li>
             </ul>
-            <div class="d-flex">
+            <div class="d-flex align-items-center">
+                {# Etiqueta dinámica de control para identificar el nivel operacional de Grupo ASD #}
+                {% if current_user.rol.value == "Agente_2" %}
+                    <span class="badge bg-warning text-dark me-3">Supervisor (Agente 2)</span>
+                {% else %}
+                    <span class="badge bg-secondary text-white me-3">Operador (Agente 1)</span>
+                {% endif %}
+                
                 <a class="btn btn-outline-danger btn-sm" href="{{ url_for('auth.logout') }}">
                     Cerrar sesión
                 </a>
