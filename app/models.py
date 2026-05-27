@@ -21,9 +21,13 @@ class EntidadRepresentante(Enum):
     CONTRATISTA = "Contratista"
     
 class EstadoEnum(Enum):
-    REGISTRADO = "Registrado"
-    EN_PROCESO = "En proceso"
-    FINALIZADO = "Finalizado"
+    REGISTRADO = "REGISTRADO"
+    GESTION_ADMINISTRADOR = "GESTIÓN ADMINISTRADOR"  # Rama izquierda: Equipo es Maestro
+    PENDIENTE_HASH = "PENDIENTE HASH"                # Esperando validación de firmas digitales
+    PENDIENTE_LOG = "PENDIENTE LOG"                  # Esperando el reporte obligatorio de borrado
+    PENDIENTE_FASE_2 = "PENDIENTE FASE 2"            # Esperando completitud de fotos (caja equipo/fin copia)
+    EN_PROCESO = "EN PROCESO"
+    FINALIZADO = "FINALIZADO"
 
 class Estado_usuario(Enum):
     ACTIVO = "Activo"
@@ -62,8 +66,8 @@ MATRIZ_PERMISOS = {
         "gestionar_roles": False
     },
     Rol.AGENTE_AUDITOR: { # Agente 3
-        "subir_imagenes": False,
-        "reemplazar_imagenes": False,
+        "subir_imagenes": True,
+        "reemplazar_imagenes": True,
         "eliminar_imagenes": False,
         "escribir_datos": True,
         "ver_hash_y_logs": True,
@@ -107,15 +111,15 @@ def user_loader(id):
  
  
 # Modelo de Equipo
+# Modelo de Equipo
 class Equipo(db.Model):
     __tablename__ = "equipo"
     asd_id = db.Column(db.Integer, primary_key=True)
     nombre = db.Column(db.String(100), nullable=False)
-    # Campo ENUM para el estado
     estado = db.Column(db.Enum(EstadoEnum), default=EstadoEnum.REGISTRADO)
     direccion = db.Column(db.String(255), nullable=True)
     comision = db.Column(db.String(100), nullable=True)
-    cod_comision = db.Column(db.Numeric(10, 0), nullable=True)# identificador de la comision por jal o consulta
+    cod_comision = db.Column(db.Numeric(10, 0), nullable=True)
     capacidad = db.Column(db.String(100), nullable=True)
     municipio = db.Column(db.String(100), nullable=True)
     departamento = db.Column(db.String(100), nullable=True)
@@ -130,8 +134,8 @@ class Equipo(db.Model):
     dd_capacidad_bk = db.Column(db.String(100), nullable=True)
     sha_1 = db.Column(db.String(100), nullable=True)
     md5 = db.Column(db.String(100), nullable=True)
-    proceso = db.Column(db.Enum(Proceso), default=Proceso.CONGRESO)# cambiar campo por jal o consulta proceso
-    observacion = db.Column(db.Text,nullable=True)
+    proceso = db.Column(db.Enum(Proceso), default=Proceso.CONGRESO)
+    observacion = db.Column(db.Text, nullable=True)
     fecha_hora_inicio = db.Column(db.DateTime, nullable=True)
     fecha_hora_fin = db.Column(db.DateTime, nullable=True)
     imagenes = db.Column(MutableList.as_mutable(JSON))
@@ -139,31 +143,34 @@ class Equipo(db.Model):
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
     usuario_id = db.Column(db.Integer, db.ForeignKey('usuario.id', name='fk_usuario_id'), nullable=False)
     
+    # ---------------------------------------------------------
+    # NUEVOS CAMPOS DE CONTROL DE FLUJO (Paso 1)
+    # ---------------------------------------------------------
+    es_maestro = db.Column(db.Boolean, default=False, nullable=False)
+    es_verificacion = db.Column(db.Boolean, default=False, nullable=False)
+    replica_ejecutada = db.Column(db.Boolean, default=False, nullable=False) # Evita duplicación infinita en el Paso 4
+    
     # Relaciones con usuario
     usuario = db.relationship('Usuario', backref=db.backref('equipo', lazy=True))
         
-   # Método para actualizar el estado automáticamente (Corregido para JSON posicional)
+    # Método para actualizar el estado automáticamente (Integrado con el Flujo Dinámico)
     def actualizar_estado(self):
-        lista_imagenes = self.imagenes if self.imagenes else []
+        # ... Tu lógica para normalizar el nombre (ILE3-XXX) ...
+
+        # Importación perezosa
+        from app.utils.evaluador_flujo import evaluar_estado_equipo
         
-        # Contamos solo los slots que tienen un nombre de archivo real (ignorando los None o vacíos)
-        cantidad_reales = sum(1 for img in lista_imagenes if img is not None and img != "")
+        # OJO AQUÍ: Desempaquetamos la tupla en dos variables independientes
+        nuevo_estado, _msg = evaluar_estado_equipo(self)
         
-        if cantidad_reales >= 8:
-            self.estado = EstadoEnum.FINALIZADO
-            if not self.fecha_hora_fin:
-                self.fecha_hora_fin = datetime.now()
-        elif cantidad_reales > 0:
-            self.estado = EstadoEnum.EN_PROCESO
-            if not self.fecha_hora_inicio:
-                self.fecha_hora_inicio = datetime.now()
-        else:
-            self.estado = EstadoEnum.REGISTRADO
-            
-        if self.nombre:
-            numero = str(self.nombre).replace("ILE3-", "")
-            if numero.isdigit():
-                self.nombre = f"ILE3-{numero.zfill(3)}"
+        # Asignamos ÚNICAMENTE el Enum limpio a la columna de la base de datos
+        self.estado = nuevo_estado
+
+        # Control de marcas de tiempo automáticas
+        if self.estado == EstadoEnum.FINALIZADO and not self.fecha_hora_fin:
+            self.fecha_hora_fin = datetime.now()
+        elif self.estado in [EstadoEnum.EN_PROCESO, EstadoEnum.PENDIENTE_HASH, EstadoEnum.PENDIENTE_LOG, EstadoEnum.PENDIENTE_FASE_2] and not self.fecha_hora_inicio:
+            self.fecha_hora_inicio = datetime.now()
     
 # Modelo de Actividad_verificacion
 class Actividad_verificacion(db.Model):
@@ -174,6 +181,7 @@ class Actividad_verificacion(db.Model):
     estado = db.Column(db.Enum(EstadoEnum), default=EstadoEnum.REGISTRADO)
     
     # Datos técnicos (pueden ser diferentes a los del equipo original si se encuentra algo distinto)
+    observacion = db.Column(db.Text, nullable=True)
     direccion = db.Column(db.String(255), nullable=True)
     comision = db.Column(db.String(100), nullable=True)
     cod_comision = db.Column(db.Numeric(10, 0), nullable=True)
@@ -220,28 +228,25 @@ class Actividad_verificacion(db.Model):
     )
 
     def actualizar_estado(self):
-        # Aseguramos que evidencias no sea None para evitar errores de len()
-        lista_evidencias = self.evidencias if self.evidencias else []
-        cantidad = len(lista_evidencias)
-        
-        if cantidad >= 5:
-            self.estado = EstadoEnum.FINALIZADO
-            if not self.fecha_hora_fin:
-                self.fecha_hora_fin = datetime.now()
-        elif cantidad > 0:
-            self.estado = EstadoEnum.EN_PROCESO
-            if not self.fecha_hora_inicio:
-                self.fecha_hora_inicio = datetime.now()
-        else:
-            self.estado = EstadoEnum.REGISTRADO
-            
-        # Normalización del nombre del acta (ej: VER-ILE3-001)
+        # 1. Normalización del nombre del acta (ej: VER-ILE3-001)
         if self.nombre:
-            # Quitamos cualquier prefijo previo para normalizar
-            numero = "".join(filter(str.isdigit, self.nombre))
+            numero = "".join(filter(str.isdigit, str(self.nombre)))
             if numero:
                 self.nombre = f"VER-ILE3-{numero.zfill(3)}"
-    
+
+        # 2. Consumo de la Máquina de Estados Pasiva
+        from app.utils.evaluador_flujo import evaluar_estado_verificacion
+        nuevo_estado, _mensaje = evaluar_estado_verificacion(self)
+        
+        # Asignamos estrictamente el Enum para que MySQL no trunque los datos
+        self.estado = nuevo_estado
+        
+        # 3. Gestión automática de marcas de tiempo lógicas
+        from datetime import datetime
+        if self.estado == EstadoEnum.FINALIZADO and not self.fecha_hora_fin:
+            self.fecha_hora_fin = datetime.now()
+        elif self.estado in [EstadoEnum.EN_PROCESO, EstadoEnum.PENDIENTE_HASH, EstadoEnum.PENDIENTE_LOG, EstadoEnum.PENDIENTE_FASE_2] and not self.fecha_hora_inicio:
+            self.fecha_hora_inicio = datetime.now()
     
 # Modelo de Representante
 class Representante(db.Model):

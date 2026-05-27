@@ -1,5 +1,5 @@
 from flask_wtf import FlaskForm
-from wtforms import IntegerField, SelectField, StringField,TextAreaField, SubmitField, FieldList #Tipos de datos d formulario
+from wtforms import IntegerField, SelectField, StringField, BooleanField, SubmitField, FieldList, TextAreaField
 from flask_wtf.file import FileField,FileAllowed #Tipos de archivos que se van a cargar
 from wtforms.validators import InputRequired, Optional, Length #Validaciones de formulario
 from wtforms_alchemy import QuerySelectField
@@ -91,6 +91,10 @@ class Actividad_Form():
     proceso = SelectField(_("Proceso:"),
                           choices=[(proceso.name, proceso.name) for proceso in Proceso],
                           validators=[InputRequired()])
+    
+    observacion = TextAreaField("Observaciones adicionales:", validators=[Optional()])
+    confirmar_log = BooleanField("¿Reporte de Log verificado y correcto?")
+    
     examinador_select = QuerySelectField(
         'Examinador',
         query_factory=get_usuarios_choices,
@@ -102,13 +106,13 @@ class Actividad_Form():
     evidencias = FieldList(FileField("Imagen de equipo", validators=[
                             Optional(),
                             FileAllowed(['jpg', 'png', 'webp', 'jpeg'], message='Solo se admiten imágenes')]), 
-                         min_entries=5, max_entries=5)
+                         min_entries=7, max_entries=7)
     
 #Definir el formulario de registro de actividades y el formulario de edición de actividades, ambos heredan de Actividad_Form para reutilizar los campos comunes.
 class Nueva_Acta_Verificacion(FlaskForm, Actividad_Form):
     
-    submit = SubmitField("Registrar Verificación")
+    submit = SubmitField("Registrar Actividad")
     
 class Edit_Acta_Verificacion(FlaskForm, Actividad_Form):
     
-    submit = SubmitField("Actualizar Verificación")
+    submit = SubmitField("Actualizar Actividad")

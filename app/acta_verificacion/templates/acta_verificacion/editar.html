@@ -140,22 +140,36 @@
    {% endfor %}
     </div>
 
-    <h3 class="text-center my-4 titulo-responsivo">Imágenes de Evidencias</h3>
-            {% for i in range(5) %}
-                <div class="form-group form-group-imagen">
-                    {% if actividad.evidencias and i < actividad.evidencias|length %}
-                        <p>Foto actual {{ i+1 }}:</p>
-                        <img src="{{ url_for('static', filename='uploads/verificaciones/' + actividad.evidencias[i]) }}" alt="Imagen actual" class="img-fluid" width="100" height="100">
+    <div class="form-group mb-3 p-3 border rounded shadow-sm bg-light">
+    <div class="form-check form-switch"> 
+            {# form.confirmar_log ya sabe si debe renderizarse marcado o no gracias al backend #}
+            {{ form.confirmar_log(class="form-check-input", id="confirmar_log_cb") }}
+            <label for="confirmar_log_cb" class="form-check-label fw-bold">
+                {{ form.confirmar_log.label.text }}
+            </label>
+        </div>
+        {% for error in form.confirmar_log.errors %}
+            <div class="text-danger small mt-1">{{ error }}</div>
+        {% endfor %}
+    </div>
+
+        <h3 class="text-center my-4 titulo-responsivo">Modificar Evidencias Fotográficas</h3>
+        {% for i in range(7) %}
+            <div class="form-group form-group-imagen mb-3 border p-3 rounded shadow-sm bg-white">
+                <label class="d-block mb-2"><strong>{{ labels[i] }}</strong></label>
+                <div class="mb-2">
+                    {# 1. Corregido 'actividad_verificacion' a 'actividad' #}
+                    {# 2. Corregido len(...) por el filtro nativo '| length' de Jinja #}
+                    {% if actividad.evidencias and i < (actividad.evidencias | length) and actividad.evidencias[i] %}
+                        <img src="{{ url_for('static', filename='uploads/verificaciones/' + actividad.evidencias[i]) }}" alt="Imagen actual" class="img-fluid rounded border shadow-sm" width="110" height="110">
                     {% else %}
-                        <p>Foto nueva {{ i+1 }}:</p>
+                        <div class="alert alert-secondary py-1 px-2 small mb-0"><i class="bi bi-lock-fill"></i> Sin evidencia cargada</div>
                     {% endif %}
-                    <label for="{{ form.evidencias[i].id }}">{{ labels[i] }}</label>
-                    {{ form.evidencias[i](class="form-control form-control-sm") }}
-                    {% for error in form.evidencias[i].errors %}
-                        <div class="text-danger">{{ error }}</div>
-                    {% endfor %}
                 </div>
-            {% endfor %}
+                {{ form.evidencias[i](class="form-control form-control-sm") }}
+            </div>
+        {% endfor %}
+
     <div class="form-group-button mb-3">
         {{ form.submit(class="btn btn-primary") }}
     </div>

@@ -61,9 +61,15 @@ Lista de equipos
                 >
               </td>
               <td>
-                <a href="{{ url_for('pdf.crear_pdf', tipo='equipo', obj_id=equipo.asd_id) }}" class="btn btn-success">
-                    Generar PDF
-                </a>
+                {% if equipo.estado.value == 'FINALIZADO' or equipo.estado.value == 'GESTION_ADMINISTRADOR' %}
+                    <a href="{{ url_for('pdf.crear_pdf', tipo='equipo', obj_id=equipo.asd_id) }}" class="btn btn-sm btn-success">
+                        <i class="bi bi-file-earmark-pdf-fill"></i> Generar PDF
+                    </a>
+                {% else %}
+                    <button class="btn btn-sm btn-secondary" disabled data-bs-toggle="tooltip" title="Bloqueado hasta completar las 8 imágenes, Hash y Log">
+                        <i class="bi bi-lock-fill"></i> PDF Bloqueado
+                    </button>
+                {% endif %}
               </td>
               <td>
                 <a

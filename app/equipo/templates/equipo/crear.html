@@ -16,6 +16,34 @@
                 <div class="text-danger">{{ error }}</div>
         {% endfor %}
       </div>
+
+        <div class="form-group form-group-imagen">
+            <label for="{{ form.es_maestro.id }}" class="form-label">{{ form.es_maestro.label }}</label>
+            {{ form.es_maestro(class="form-control form-control-sm") }}
+            {% for error in form.es_maestro.errors %}
+                <div class="text-danger">{{ error }}</div>
+            {% endfor %}
+        </div>
+
+        <div class="form-group form-group-imagen">
+            <label for="{{ form.es_verificacion.id }}" class="form-label">{{ form.es_verificacion.label }}</label>
+            {{ form.es_verificacion(class="form-control form-control-sm") }}
+            {% for error in form.es_verificacion.errors %}
+                <div class="text-danger">{{ error }}</div>
+            {% endfor %}
+        </div>
+
+      <div class="form-group mb-3">
+            <label for="{{ form.proceso.id }}" class="form-label">{{ form.proceso.label }}</label>
+            <select id="{{ form.proceso.id }}" name="{{ form.proceso.name }}" class="form-control">
+                {% for value, label in form.proceso.choices %}
+                    <option value="{{ value }}">{{ label }}</option>
+                {% endfor %}
+            </select>
+            {% for error in form.proceso.errors %}
+                <div class="text-danger">{{ error }}</div>
+            {% endfor %}
+        </div>
       <div class="form-group mb-3">
         <label for="{{ form.comision.id }}" class="form-label">{{ form.comision.label }}</label>
         {{ form.comision(class="form-control") }}
@@ -153,6 +181,14 @@
            {% endfor %}
        </div>
 
+       <div class="form-group mb-3">
+           <label for="{{ form.confirmar_log.id }}" class="form-label">{{ form.confirmar_log.label }}</label>
+           {{ form.confirmar_log(class="form-check-input") }}
+           {% for error in form.confirmar_log.errors %}
+                <div class="text-danger">{{ error }}</div>
+           {% endfor %}
+       </div>
+
        <div class="form-group mb-3 form-observacion">
            <label for="{{ form.observacion.id }}" class="form-label">{{ form.observacion.label }}</label>
            {{ form.observacion(class="form-control", rows=3) }}
@@ -160,6 +196,8 @@
                 <div class="text-danger">{{ error }}</div>
            {% endfor %}
        </div>
+
+        <h3 class="text-center my-4 titulo-responsivo">Imágenes del Equipo</h3>
       {% for i in range(8) %}
         <div class="form-group form-group-imagen">
             <label for="{{ form.imagenes[i].id }}">{{ labels[i] }}</label>

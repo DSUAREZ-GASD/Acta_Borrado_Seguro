@@ -4,9 +4,10 @@ from flask_babel import _ # type: ignore
 from . import acta_verificacion
 from app import db
 from app.auth.routes import acceso_requerido
-from app.models import Actividad_verificacion
+from app.models import Actividad_verificacion, EstadoEnum
 from .forms import Nueva_Acta_Verificacion, Edit_Acta_Verificacion
 from app.utils import guardar_imagen_estandarizada, limpiar_imagenes_huerfanas
+from app.utils.evaluador_flujo import evaluar_estado_verificacion
 
 
 labels = {
@@ -15,10 +16,12 @@ labels = {
     2: "3. Carpeta C:/ELE_ESCRUTINIOS_LOCALES_EVENTO",
     3: "4. Carpeta C:/SoftwareBaseCongresoConsulta",
     4: "5. Carpeta C:/LICENCIAS_ASD",
+    5: "6. Carpeta para segunda vuelta 1",
+    6: "7. Carpeta para segunda vuelta 2"
 }
 
 @acta_verificacion.route('/crear', methods=["GET", "POST"])
-@acceso_requerido(roles=["Administrador", "Agente_3"])
+@acceso_requerido(roles=["Administrador"])
 @login_required
 def crear():
     form = Nueva_Acta_Verificacion()
@@ -26,36 +29,50 @@ def crear():
         try:
             actividad = Actividad_verificacion()
             
+            es_log_valido = form.confirmar_log.data
+            del form['confirmar_log']
+            
             form.populate_obj(actividad)
             
-            if form.examinador_select.data:
-                actividad.examinador_id = form.examinador_select.data.id
-            else:
-                actividad.examinador_id = None
-                
+            # Forzamos la escritura de la nota si se marcó el checkbox
+            if es_log_valido:
+                nota_log = "[LOG VERIFICADO Y VALIDADO CON ÉXITO]"
+                actividad.observacion = f"{form.observacion.data or ''} - {nota_log}".strip(" - ")
+            
+            actividad.examinador_id = form.examinador_select.data.id if form.examinador_select.data else None
             actividad.usuario_id = current_user.id
             
-            # Procesar imágenes: Filtra solo las que tienen datos
-            lista_evidencias = [
-                guardar_imagen_estandarizada(f.data, subfolder='verificaciones') 
-                for f in form.evidencias if f.data
-            ]
+            # --- BLINDAJE POSICIONAL DE 7 IMÁGENES ---
+            lista_imagenes = []
+            for i in range(7):
+                campo_imagen = form.evidencias[i] if i < len(form.evidencias.entries) else None
+                if campo_imagen and campo_imagen.data and hasattr(campo_imagen.data, 'filename') and campo_imagen.data.filename != '':
+                    nombre_foto = guardar_imagen_estandarizada(campo_imagen.data, subfolder='verificaciones')
+                    lista_imagenes.append(nombre_foto)
+                else:
+                    lista_imagenes.append(None)
+            actividad.evidencias = lista_imagenes
             
-            actividad.evidencias = [img for img in lista_evidencias if img is not None]
-            
+            # --- SOLUCIÓN: DELEGACIÓN ÚNICA AL MODELO ---
+            # El modelo ejecutará el evaluador internamente conservando los cambios de observacion
             actividad.actualizar_estado()
 
             db.session.add(actividad)
             db.session.commit()
             
-            flash(_("Registro de actividad exitoso"), "success")
-            return redirect(url_for('acta_verificacion.lista_actividades'))
+            # Mensajes Flash dinámicos basados en la resolución del modelo
+            if actividad.estado in [EstadoEnum.PENDIENTE_HASH, EstadoEnum.PENDIENTE_LOG]:
+                flash("Acta guardada pero incompleta: Requiere HASH y validación de LOG.", "warning")
+            elif actividad.estado == EstadoEnum.FINALIZADO:
+                flash("Verificación completada con éxito.", "success")
+            else:
+                flash("Acta registrada correctamente.", "info")
+                
+            return redirect(url_for('acta_verificacion.lista'))
             
         except Exception as e:
             db.session.rollback()
-            flash(_(f"Error al registrar actividad: {e}"), "error")
-    else:
-        print(form.errors)
+            flash(f"Error al registrar actividad: {e}", "error")
             
     return render_template('acta_verificacion/crear.html', form=form, labels=labels)
 
@@ -72,9 +89,8 @@ def lista():
         flash(_("Error al listar actividades: {}").format(e), "error")
         return redirect(url_for('equipo.lista'))
     
-    
 @acta_verificacion.route('/editar/<actividad_id>', methods=['GET', 'POST'])
-@acceso_requerido(roles=["Administrador", "Agente_3"])
+@acceso_requerido(roles=["Administrador"])
 @login_required
 def editar(actividad_id):
     actividad = Actividad_verificacion.query.get_or_404(actividad_id)
@@ -82,55 +98,70 @@ def editar(actividad_id):
     
     if request.method == 'GET':
         form.examinador_select.data = actividad.examinador_rel
+        
+        nota_log = "[LOG VERIFICADO Y VALIDADO CON ÉXITO]"
+        if actividad.observacion and nota_log in actividad.observacion:
+            form.confirmar_log.data = True  # Esto marcará automáticamente el checkbox en el HTML
+        else:
+            form.confirmar_log.data = False
 
-    # Rellenar entradas vacías para el formulario
-    while len(form.evidencias.entries) < form.evidencias.max_entries:
+    while len(form.evidencias.entries) < 7:
         form.evidencias.append_entry()
 
     if form.validate_on_submit():
-        
         try:
-            # Respaldamos las fotos actuales antes de poblar el objeto
-            fotos_previas = actividad.evidencias or []
+            fotos_previas = actividad.evidencias if actividad.evidencias else [None] * 7
+            
+            es_log_valido = form.confirmar_log.data
+            del form['confirmar_log']
+            
             form.populate_obj(actividad)
             
-            if form.examinador_select.data:
-                actividad.examinador_id = form.examinador_select.data.id
-            else:
-                actividad.examinador_id = None
-                
+            # Forzamos y blindamos el String en la edición
+            if es_log_valido:
+                nota_log = "[LOG VERIFICADO Y VALIDADO CON ÉXITO]"
+                if not actividad.observacion or nota_log not in actividad.observacion:
+                    actividad.observacion = f"{actividad.observacion or ''} {nota_log}".strip()
             
+            actividad.examinador_id = form.examinador_select.data.id if form.examinador_select.data else None
+            actividad.usuario_id = current_user.id
             
+            # --- RECONSTRUCCIÓN POSICIONAL PARA 7 IMÁGENES ---
             nuevas_evidencias = []
-            for i, campo_evidencia in enumerate(form.evidencias):
-                # Si se subió un archivo nuevo, lo guardamos
-                nombre_nuevo = guardar_imagen_estandarizada(campo_evidencia.data, subfolder='verificaciones')
+            for i in range(7):
+                campo_imagen = form.evidencias[i]
+                foto_antigua = fotos_previas[i] if i < len(fotos_previas) else None
+                tiene_archivo_nuevo = campo_imagen.data and hasattr(campo_imagen.data, 'filename') and campo_imagen.data.filename != ''
                 
-                if nombre_nuevo:
+                if tiene_archivo_nuevo:
+                    nombre_nuevo = guardar_imagen_estandarizada(campo_imagen.data, subfolder='verificaciones')
                     nuevas_evidencias.append(nombre_nuevo)
-                elif i < len(fotos_previas):
-                    # Si no hay archivo nuevo, mantenemos la que estaba en esa posición
-                    nuevas_evidencias.append(fotos_previas[i])
+                else:
+                    nuevas_evidencias.append(foto_antigua)
 
             actividad.evidencias = nuevas_evidencias
-            actividad.usuario_id = current_user.id
+            
+            # --- SOLUCIÓN: DELEGACIÓN ÚNICA AL MODELO ---
             actividad.actualizar_estado()
             
             db.session.commit()
             
-            # Limpieza silenciosa
             try: limpiar_imagenes_huerfanas() 
             except: pass
 
-            flash("Actividad actualizada exitosamente", "success")
+            if actividad.estado in [EstadoEnum.PENDIENTE_HASH, EstadoEnum.PENDIENTE_LOG]:
+                flash("Acta actualizada. Sigue pendiente el cumplimiento de HASH o LOG.", "warning")
+            elif actividad.estado == EstadoEnum.FINALIZADO:
+                flash("Acta de verificación finalizada con éxito.", "success")
+            else:
+                flash("Cambios aplicados correctamente.", "info")
+
             return redirect(url_for('acta_verificacion.lista'))
 
         except Exception as e:
             db.session.rollback()
             flash(f"Error al actualizar: {e}", "error")
             return redirect(url_for('acta_verificacion.editar', actividad_id=actividad_id))
-    else:
-        print(form.errors)
         
     return render_template('acta_verificacion/editar.html', form=form, actividad=actividad, labels=labels)
 

@@ -1,5 +1,5 @@
-{% extends "layouts/form.html" %} {% block title %} Crear Acta de Verificación {%
-endblock %} {% block content %} {% for categoria, mensaje in
+{% extends "layouts/form.html" %} {% block title %} Crear Acta de Verificación
+{% endblock %} {% block content %} {% for categoria, mensaje in
 get_flashed_messages(with_categories=true) %}
 <script class="flash-mensajes" data-icon="{{ categoria }}">
   {
@@ -188,16 +188,27 @@ get_flashed_messages(with_categories=true) %}
     <div class="text-danger">{{ error }}</div>
     {% endfor %}
   </div>
-  <h3 class="text-center my-4 titulo-responsivo">Imágenes de Evidencias</h3>
-  {% for i in range(5) %}
-  <div class="form-group form-group-imagen">
-    <label for="{{ form.evidencias[i].id }}">{{ labels[i] }}</label>
-    {{ form.evidencias[i](class="form-control form-control-sm") }} {% for error
-    in form.evidencias[i].errors %}
-    <div class="text-danger">{{ error }}</div>
-    {% endfor %}
+
+  <div class="form-group mb-3">
+      <label for="{{ form.confirmar_log.id }}" class="form-label">{{ form.confirmar_log.label }}</label>
+      {{ form.confirmar_log(class="form-check-input") }}
+      {% for error in form.confirmar_log.errors %}
+          <div class="text-danger">{{ error }}</div>
+      {% endfor %}
   </div>
-  {% endfor %}
+
+
+    <h3 class="text-center my-4 titulo-responsivo">Evidencias Fotográficas Requeridas</h3>
+    {% for i in range(7) %}
+        <div class="form-group form-group-imagen">
+            <label for="{{ form.evidencias[i].id }}">{{ labels[i] }}</label>
+            {{ form.evidencias[i](class="form-control form-control-sm") }}
+            {% for error in form.evidencias[i].errors %}
+                <div class="text-danger">{{ error }}</div>
+            {% endfor %}
+        </div>
+    {% endfor %}
+
 
   <div class="form-group-button mb-3">
     {{ form.submit(class="btn btn-primary") }}

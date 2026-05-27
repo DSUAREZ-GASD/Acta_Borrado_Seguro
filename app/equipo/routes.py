@@ -1,12 +1,13 @@
-from flask import render_template, redirect, flash, url_for
+from flask import render_template, redirect, flash, url_for, request
 from flask_login import login_required, current_user
 from flask_babel import _ # type: ignore
 from . import equipos
 from app import db
 from app.auth.routes import acceso_requerido
-from app.models import Equipo
+from app.models import Equipo, EstadoEnum
 from .forms import NuevoEquipo, EditEquipoForm
-from app.utils import guardar_imagen_estandarizada, limpiar_imagenes_huerfanas
+# Al principio de app/equipo/routes.py remplaza las tres líneas de utilidades por esta sola:
+from app.utils import guardar_imagen_estandarizada, evaluar_estado_equipo, ejecutar_replica_a_verificacion, limpiar_imagenes_huerfanas
 
 # Diccionario de labels para imagenes de equipo de los formularios
 labels = {
@@ -24,11 +25,10 @@ labels = {
 # RUTA: CREAR EQUIPO
 # ==========================================
 @equipos.route('/crear', methods=["GET", "POST"])
-# Permitimos la entrada a Admins, Operadores (Agente 1) y Supervisores (Agente 2)
-@acceso_requerido(roles=["Administrador", "Agente_1", "Agente_2"])
+@acceso_requerido(roles=["Administrador", "Agente_1", "Agente_2", "Agente_3"])
 @login_required
 def crear():
-    form = NuevoEquipo()
+    form = NuevoEquipo() 
     
     if not current_user.tiene_permiso("subir_imagenes"):
         flash(_("Tu perfil no cuenta con permisos para registrar nuevos equipos."), "error")
@@ -40,16 +40,54 @@ def crear():
             form.populate_obj(equipo)
             equipo.usuario_id = current_user.id
             
-            # Procesar imágenes: Filtra solo las que tienen datos
-            equipo.imagenes = [
-                guardar_imagen_estandarizada(f.data, subfolder='equipos') 
-                for f in form.imagenes if f.data
-            ]
+            # Capturamos los booleanos del formulario
+            equipo.es_maestro = form.es_maestro.data
+            equipo.es_verificacion = form.es_verificacion.data
+            
+            # --- INTERCEPTOR DE LOG PASIVO ---
+            # Si en tu formulario añadiste el checkbox 'confirmar_log', estampa la marca de forma segura
+            if hasattr(form, 'confirmar_log') and form.confirmar_log.data:
+                nota_log = "[LOG VERIFICADO Y VALIDADO CON ÉXITO]"
+                if equipo.observacion:
+                    equipo.observacion = f"{equipo.observacion} - {nota_log}"
+                else:
+                    equipo.observacion = nota_log
+            
+            # --- BLINDAJE POSICIONAL DE 8 IMÁGENES ---
+            lista_imagenes = []
+            for i in range(8):
+                campo_imagen = form.imagenes[i] if i < len(form.imagenes.entries) else None
+                if campo_imagen and campo_imagen.data and hasattr(campo_imagen.data, 'filename') and campo_imagen.data.filename != '':
+                    nombre_foto = guardar_imagen_estandarizada(campo_imagen.data, subfolder='equipos')
+                    lista_imagenes.append(nombre_foto)
+                else:
+                    lista_imagenes.append(None)
+            equipo.imagenes = lista_imagenes
 
+            # --- MÁQUINA DE ESTADOS PASIVA (EVALUADOR) ---
+            # Evaluamos pasivamente el estado según el diagrama (Retorna tupla: Enum, Mensaje)
+            nuevo_estado, mensaje_flujo = evaluar_estado_equipo(equipo)
+            
+            # Sincronizamos pasándole únicamente el Enum limpio
+            equipo.estado = nuevo_estado
+            equipo.actualizar_estado()  
+
+            # --- DISPARADOR DE RÉPLICA CONTROLADO POR ESTADO ---
+            if equipo.es_verificacion and equipo.estado not in [EstadoEnum.PENDIENTE_HASH, EstadoEnum.PENDIENTE_LOG] and not equipo.replica_ejecutada:
+                ejecutar_replica_a_verificacion(equipo)
+
+            # Persistencia de datos libre de excepciones de negocio
             db.session.add(equipo)
             db.session.commit()
             
-            flash(_("Registro de equipo exitoso"), "success")
+            # Alertas visuales informativas según el hito del diagrama alcanzado
+            if equipo.estado in [EstadoEnum.PENDIENTE_HASH, EstadoEnum.PENDIENTE_LOG]:
+                flash(_(mensaje_flujo), "warning")  # Amarillo: Guardado exitoso pero faltan datos
+            elif equipo.estado == EstadoEnum.FINALIZADO:
+                flash(_(mensaje_flujo), "success")  # Verde: Flujo completado de inicio a fin
+            else:
+                flash(_(mensaje_flujo), "info")     # Azul: Registro inicializado o pendiente de fase 2
+
             dest = 'equipo.lista_equipos' if current_user.rol.value == "Administrador" else 'equipo.lista_equipos_agente'
             return redirect(url_for(dest))
             
@@ -105,80 +143,82 @@ def lista_equipos_auditor():
 # RUTA: EDITAR / REEMPLAZAR IMÁGENES Y DATOS
 # ==========================================
 @equipos.route('/editar/<equipo_id>', methods=['GET', 'POST'])
-@acceso_requerido(roles=["Administrador", "Agente_1", "Agente_2"])
+@acceso_requerido(roles=["Administrador", "Agente_1", "Agente_2", "Agente_3"])
 @login_required
 def editar(equipo_id):
     equipo = Equipo.query.get_or_404(equipo_id)
     form = EditEquipoForm(obj=equipo)
+    
+    if request.method == 'GET':
+        # Validamos si la nota de éxito ya existe en la base de datos
+        nota_log = "[LOG VERIFICADO Y VALIDADO CON ÉXITO]"
+        if equipo.observacion and nota_log in equipo.observacion:
+            form.confirmar_log.data = True  # Esto marcará automáticamente el checkbox en el HTML
+        else:
+            form.confirmar_log.data = False
 
-    # Aseguramos que el FieldList de WTForms siempre tenga exactamente 8 entradas en memoria
     while len(form.imagenes.entries) < form.imagenes.max_entries:
         form.imagenes.append_entry()
 
     if form.validate_on_submit():
         try:
-            # Aseguramos que fotos_previas sea una lista de 8 elementos (rellenando con None si es más corta)
-            fotos_previas = equipo.imagenes if equipo.imagenes else []
-            while len(fotos_previas) < 8:
-                fotos_previas.append(None)
-            
+            form.populate_obj(equipo)
+            equipo.es_maestro = form.es_maestro.data
+            equipo.es_verificacion = form.es_verificacion.data
+
+            # --- INTERCEPTOR DE LOG PASIVO EN EDICIÓN ---
+            if hasattr(form, 'confirmar_log') and form.confirmar_log.data:
+                nota_log = "[LOG VERIFICADO Y VALIDADO CON ÉXITO]"
+                if not equipo.observacion or nota_log not in equipo.observacion:
+                    equipo.observacion = f"{equipo.observacion or ''} {nota_log}".strip()
+
+            # --- RECONSTRUCCIÓN POSICIONAL DE LAS IMÁGENES ---
+            fotos_previas = equipo.imagenes if equipo.imagenes else [None] * 8
             nuevas_imagenes = []
             
-            # --- VALIDACIÓN Y RECONSTRUCCIÓN EN UN SOLO PASO EN BASE A LA REALIDAD DE LA BD ---
             for i in range(8):
                 campo_imagen = form.imagenes[i]
-                foto_antigua = fotos_previas[i]
-                
-                # Intentamos procesar el archivo si el usuario subió algo en este slot
-                # (WTForms a veces llena campo_imagen.data con un objeto de archivo vacío, por eso validamos el filename)
+                foto_antigua = fotos_previas[i] if i < len(fotos_previas) else None
                 tiene_archivo_nuevo = campo_imagen.data and hasattr(campo_imagen.data, 'filename') and campo_imagen.data.filename != ''
                 
                 if tiene_archivo_nuevo:
-                    # CASO A: El slot YA tenía una foto registrada en la Base de Datos (Es un REEMPLAZO)
-                    if foto_antigua:
-                        if not current_user.tiene_permiso("reemplazar_imagenes"):
-                            flash(_(f"Acción denegada: Tu perfil (Agente 1) no puede reemplazar la foto del slot {i+1}."), "error")
-                            return redirect(url_for('equipo.editar', equipo_id=equipo_id))
-                    
-                    # CASO B: El slot estaba vacío (None) en la Base de Datos (Es una SUBIDA NUEVA)
-                    else:
-                        if not current_user.tiene_permiso("subir_imagenes"):
-                            flash(_("Acción denegada: No tienes permisos para añadir nuevas imágenes."), "error")
-                            return redirect(url_for('equipo.editar', equipo_id=equipo_id))
-                    
-                    # Si pasa los permisos correspondientes, guardamos el archivo físico
+                    if equipo.es_maestro and i in [6, 7]:
+                        flash(_("Acción bloqueada: Los equipos maestros no permiten imágenes de borrado."), "error")
+                        return redirect(url_for('equipo.editar', equipo_id=equipo_id))
+                        
                     nombre_nuevo = guardar_imagen_estandarizada(campo_imagen.data, subfolder='equipos')
                     nuevas_imagenes.append(nombre_nuevo)
-                
                 else:
-                    # El usuario NO subió ningún archivo nuevo en este slot específico
-                    # Si ya había una foto antes, la conservamos intacta sin importar lo que diga WTForms
-                    if foto_antigua:
-                        nuevas_imagenes.append(foto_antigua)
-                    else:
-                        nuevas_imagenes.append(None)
-
-            # Sincronizamos la lista de 8 elementos en la base de datos
+                    nuevas_imagenes.append(foto_antigua)
+            
             equipo.imagenes = nuevas_imagenes
-            
-            # --- ACTUALIZACIÓN DE DATOS DE TEXTO ---
-            equipo.nombre = form.nombre.data
-            # equipo.serial = form.serial.data (Mapea aquí tus otros inputs de texto)
 
-            equipo.usuario_id = current_user.id
-            equipo.actualizar_estado()
+            # --- MÁQUINA DE ESTADOS PASIVA (EVALUADOR) ---
+            nuevo_estado, mensaje_flujo = evaluar_estado_equipo(equipo)
             
+            # Sincronizamos pasándole únicamente el Enum limpio
+            equipo.estado = nuevo_estado
+            equipo.actualizar_estado()  
+
+            # --- DISPARADOR DE RÉPLICA CONTROLADO POR ESTADO ---
+            if equipo.es_verificacion and equipo.estado not in [EstadoEnum.PENDIENTE_HASH, EstadoEnum.PENDIENTE_LOG] and not equipo.replica_ejecutada:
+                ejecutar_replica_a_verificacion(equipo)
+
             db.session.commit()
-            try: limpiar_imagenes_huerfanas()
-            except: pass
+            
+            if equipo.estado in [EstadoEnum.PENDIENTE_HASH, EstadoEnum.PENDIENTE_LOG]:
+                flash(_(mensaje_flujo), "warning")
+            elif equipo.estado == EstadoEnum.FINALIZADO:
+                flash(_(mensaje_flujo), "success")
+            else:
+                flash(_(mensaje_flujo), "info")
 
-            flash(_("Equipo actualizado con éxito"), "success")
             dest = 'equipo.lista_equipos' if current_user.rol.value == "Administrador" else 'equipo.lista_equipos_agente'
             return redirect(url_for(dest))
 
         except Exception as e:
             db.session.rollback()
-            flash(f"Error al actualizar: {e}", "error")
+            flash(f"Error de consistencia: {e}", "error")
             return redirect(url_for('equipo.editar', equipo_id=equipo_id))
         
     return render_template('equipo/editar.html', form=form, equipo=equipo, labels=labels)

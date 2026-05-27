@@ -301,9 +301,8 @@
     <td colspan="4" style="padding: 10px">
       <div class="photo-grid">
         {% set labels = [ "1.	Proceso de Montado imagen de Copia de seguridad", "2. Contenido Unidad C:/",
-        "3. Carpeta C:/ELE_ESCRUTINIOS_LOCALES_EVENTO", "4. Carpeta C:/SoftwareBaseCongresoConsulta", "5. Carpeta C:/LICENCIAS_ASD"] %} 
-        {% for i in range(5)
-        %}
+        "3. Carpeta C:/ELE_ESCRUTINIOS_LOCALES_EVENTO", "4. Carpeta C:/SoftwareBaseCongresoConsulta", "5. Carpeta C:/LICENCIAS_ASD", "6. Carpeta para segunda vuelta 1", "7. Carpeta para segunda vuelta 2" ] %} 
+        {% for i in range(7) %}
         <div class="photo-box">
           {% if objeto.evidencias and objeto.evidencias|length > i %}
           <img
