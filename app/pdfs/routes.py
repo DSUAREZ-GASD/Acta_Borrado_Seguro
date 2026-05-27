@@ -7,6 +7,7 @@ import os
 import io
 import re
 from flask_babel import _
+from app.auth.routes import acceso_requerido
 
 def borrar_archivo(ruta):
     try:
@@ -23,6 +24,7 @@ def limpiar_nombre(nombre):
     return nombre
 
 @pdf.route('/crear_pdf/<string:tipo>/<int:obj_id>')
+@acceso_requerido(roles=["Administrador", "Agente_3"])
 @login_required
 def crear_pdf(tipo, obj_id):
     from app.models import Equipo, Actividad_verificacion, Representante, ActaConfig
@@ -50,7 +52,7 @@ def crear_pdf(tipo, obj_id):
     
     # 4. Generar físicamente el PDF
     # Pasamos config_campos para que el template sepa qué columnas renderizar
-    ruta_pdf = generar_pdf(nombre_archivo, objeto, representantes, config_campos)
+    ruta_pdf = generar_pdf(nombre_archivo, objeto, representantes, config_campos, tipo_config)
     
     # 5. Programar el borrado del archivo después de enviarlo
     @after_this_request
@@ -61,6 +63,7 @@ def crear_pdf(tipo, obj_id):
     return send_file(ruta_pdf, as_attachment=True, download_name=nombre_archivo)
 
 @pdf.route('/generar_todos_pdfs', methods=['POST'])
+@acceso_requerido(roles=["Administrador", "Agente_3"])
 @login_required
 def generar_todos_pdfs():
     from app.models import Equipo, Representante, ActaConfig

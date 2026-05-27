@@ -1,9 +1,9 @@
 from flask import Blueprint
 
-acta_verificacion = Blueprint(
-    "acta_verificacion",
+representantes = Blueprint(
+    "representante",
     __name__,
-    url_prefix="/acta-verificacion",
+    url_prefix="/representantes",
     template_folder="templates",
     static_folder="static",
 )

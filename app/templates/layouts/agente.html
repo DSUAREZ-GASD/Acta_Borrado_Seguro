@@ -1,0 +1,18 @@
+{% extends "layouts/base.html" %}
+
+{% block menu %}
+    {# Si el usuario es el Auditor (Agente 3), le pintamos su barra de herramientas dedicada #}
+    {% if current_user.rol.value == "Agente_3" %}
+        {% include "partials/_navbar_auditor.html" %}
+    {% else %}
+        {# El Agente 1 y Agente 2 continúan con el menú operativo clásico #}
+        {% include "partials/_navbar_agente.html" %}
+    {% endif %}
+{% endblock %}
+
+{% block content %}
+    <div class="container mt-4 mb-5">
+        {# Aquí caerá el contenido de las vistas del agente (lista_agente o lista_auditor) #}
+        {% block agente_content %}{% endblock %}
+    </div>
+{% endblock %}
