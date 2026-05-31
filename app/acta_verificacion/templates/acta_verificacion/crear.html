@@ -1,13 +1,7 @@
 {% extends "layouts/form.html" %} {% block title %} Crear Acta de Verificación
-{% endblock %} {% block content %} {% for categoria, mensaje in
-get_flashed_messages(with_categories=true) %}
-<script class="flash-mensajes" data-icon="{{ categoria }}">
-  {
-    {
-      mensaje;
-    }
-  }
-</script>
+{% endblock %} {% block content %} 
+{% for categoria, mensaje in get_flashed_messages(with_categories=true) %}
+<script class="flash-mensajes" data-icon="{{ categoria }}">{{ mensaje }}</script>
 {% endfor %}
 <form
   action=""
@@ -17,7 +11,7 @@ get_flashed_messages(with_categories=true) %}
   enctype="multipart/form-data"
 >
   {{ form.hidden_tag() }}
-  <h2 class="text-center my-4 titulo-responsivo">Crear Equipo</h2>
+  <h2 class="text-center my-4 titulo-responsivo">Crear Acta de Verificación</h2>
   <div class="form-group mb-3">
     <label for="{{ form.nombre.id }}" class="form-label"
       >{{ form.nombre.label }}</label

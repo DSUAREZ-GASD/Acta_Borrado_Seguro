@@ -3,11 +3,10 @@ from flask_login import login_required, current_user
 from flask_babel import _ # type: ignore
 from . import acta_verificacion
 from app import db
-from app.auth.routes import acceso_requerido
 from app.models import Actividad_verificacion, EstadoEnum
 from .forms import Nueva_Acta_Verificacion, Edit_Acta_Verificacion
-from app.utils import guardar_imagen_estandarizada, limpiar_imagenes_huerfanas
-from app.utils.evaluador_flujo import evaluar_estado_verificacion
+from app.utils import guardar_imagen_estandarizada, limpiar_imagenes_huerfanas, acceso_requerido
+
 
 
 labels = {

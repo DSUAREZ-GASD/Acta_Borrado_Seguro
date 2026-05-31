@@ -3,11 +3,10 @@ from flask_login import login_required, current_user
 from flask_babel import _ # type: ignore
 from . import equipos
 from app import db
-from app.auth.routes import acceso_requerido
 from app.models import Equipo, EstadoEnum
 from .forms import NuevoEquipo, EditEquipoForm
 # Al principio de app/equipo/routes.py remplaza las tres líneas de utilidades por esta sola:
-from app.utils import guardar_imagen_estandarizada, evaluar_estado_equipo, ejecutar_replica_a_verificacion, limpiar_imagenes_huerfanas
+from app.utils import guardar_imagen_estandarizada, evaluar_estado_equipo, ejecutar_replica_a_verificacion, limpiar_imagenes_huerfanas, acceso_requerido
 
 # Diccionario de labels para imagenes de equipo de los formularios
 labels = {
@@ -87,8 +86,16 @@ def crear():
                 flash(_(mensaje_flujo), "success")  # Verde: Flujo completado de inicio a fin
             else:
                 flash(_(mensaje_flujo), "info")     # Azul: Registro inicializado o pendiente de fase 2
+                
+            rol_actual = current_user.rol.value
 
-            dest = 'equipo.lista_equipos' if current_user.rol.value == "Administrador" else 'equipo.lista_equipos_agente'
+            if rol_actual == "Administrador":
+                dest = 'equipo.lista_equipos'
+            elif rol_actual == "Agente_3":
+                dest = 'equipo.lista_equipos_auditor'  # <-- Redirección correcta para el Agente 3
+            else:
+                dest = 'equipo.lista_equipos_agente'   # Opciones para Agente_1 y Agente_2
+                
             return redirect(url_for(dest))
             
         except Exception as e:
@@ -213,7 +220,15 @@ def editar(equipo_id):
             else:
                 flash(_(mensaje_flujo), "info")
 
-            dest = 'equipo.lista_equipos' if current_user.rol.value == "Administrador" else 'equipo.lista_equipos_agente'
+            rol_actual = current_user.rol.value
+
+            if rol_actual == "Administrador":
+                dest = 'equipo.lista_equipos'
+            elif rol_actual == "Agente_3":
+                dest = 'equipo.lista_equipos_auditor'  # <-- Redirección correcta para el Agente 3
+            else:
+                dest = 'equipo.lista_equipos_agente'   # Opciones para Agente_1 y Agente_2
+                
             return redirect(url_for(dest))
 
         except Exception as e:

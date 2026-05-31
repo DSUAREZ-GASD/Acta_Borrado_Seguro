@@ -2,7 +2,7 @@
 {% block title %}Editar Equipo{% endblock %}
 {% block content %}
 {% for categoria, mensaje in get_flashed_messages(with_categories=true) %}
-            <script class="flash-mensajes" data-icon="{{ categoria }}">{{ mensaje }}</script>
+<script class="flash-mensajes" data-icon="{{ categoria }}">{{ mensaje }}</script>
 {% endfor %}
 <form method="POST" class="formularios" enctype="multipart/form-data">
     {{ form.hidden_tag() }}
