@@ -37,14 +37,14 @@ class EquipoForm:
     )
     es_maestro = SelectField(
         "¿El equipo es Maestro?",
-        choices=[(False, "No"), (True, "Sí")],
+        choices=[('False', 'No'), ('True', 'Sí')],
         coerce=lambda x: x == "True" or x is True,
         validators=[InputRequired()],
     )
 
     es_verificacion = SelectField(
         "¿Es equipo de verificación?",
-        choices=[(False, "No"), (True, "Sí")],
+        choices=[('False', 'No'), ('True', 'Sí')],
         coerce=lambda x: x == "True" or x is True,
         validators=[InputRequired()],
     )

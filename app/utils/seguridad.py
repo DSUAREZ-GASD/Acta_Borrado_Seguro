@@ -53,3 +53,19 @@ def registrar_intento_fallido(usuario):
 def reiniciar_intentos_usuario(username):
     if username in intentos_fallidos:
         intentos_fallidos[username] = {'intentos': 0, 'ultimo_intento': None}
+        
+def usuario_debe_bloquear_maestro(usuario, equipo):
+    """
+    Retorna True si el equipo es maestro y el usuario NO es Administrador.
+    Si retorna True, significa que los campos críticos deben estar protegidos.
+    """
+    # Si el equipo no está marcado como maestro, nadie se bloquea
+    if not equipo.es_maestro:
+        return False
+        
+    # Si el equipo es maestro pero el usuario es Administrador, tiene libre acceso
+    if usuario.rol.value == "Administrador":
+        return False
+        
+    # En cualquier otro caso (Agente_1, Agente_2, Agente_3), se deben bloquear los campos
+    return True

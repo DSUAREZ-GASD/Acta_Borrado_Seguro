@@ -156,6 +156,10 @@ class Equipo(db.Model):
     # Método para actualizar el estado automáticamente (Integrado con el Flujo Dinámico)
     def actualizar_estado(self):
         # ... Tu lógica para normalizar el nombre (ILE3-XXX) ...
+        if self.nombre:
+            numero = "".join(filter(str.isdigit, str(self.nombre)))
+            if numero:
+                self.nombre = f"ILE3-{numero.zfill(3)}"
 
         # Importación perezosa
         from app.utils.evaluador_flujo import evaluar_estado_equipo
