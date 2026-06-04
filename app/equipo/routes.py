@@ -3,11 +3,10 @@ from flask_login import login_required, current_user
 from flask_babel import _ # type: ignore
 from . import equipos
 from app import db
-from app.auth.routes import acceso_requerido
 from app.models import Equipo, EstadoEnum
 from .forms import NuevoEquipo, EditEquipoForm
 # Al principio de app/equipo/routes.py remplaza las tres líneas de utilidades por esta sola:
-from app.utils import guardar_imagen_estandarizada, evaluar_estado_equipo, ejecutar_replica_a_verificacion, limpiar_imagenes_huerfanas
+from app.utils import guardar_imagen_estandarizada, evaluar_estado_equipo, ejecutar_replica_a_verificacion, limpiar_imagenes_huerfanas, acceso_requerido, usuario_debe_bloquear_maestro
 
 # Diccionario de labels para imagenes de equipo de los formularios
 labels = {
@@ -87,8 +86,16 @@ def crear():
                 flash(_(mensaje_flujo), "success")  # Verde: Flujo completado de inicio a fin
             else:
                 flash(_(mensaje_flujo), "info")     # Azul: Registro inicializado o pendiente de fase 2
+                
+            rol_actual = current_user.rol.value
 
-            dest = 'equipo.lista_equipos' if current_user.rol.value == "Administrador" else 'equipo.lista_equipos_agente'
+            if rol_actual == "Administrador":
+                dest = 'equipo.lista_equipos'
+            elif rol_actual == "Agente_3":
+                dest = 'equipo.lista_equipos_auditor'  # <-- Redirección correcta para el Agente 3
+            else:
+                dest = 'equipo.lista_equipos_agente'   # Opciones para Agente_1 y Agente_2
+                
             return redirect(url_for(dest))
             
         except Exception as e:
@@ -149,22 +156,54 @@ def editar(equipo_id):
     equipo = Equipo.query.get_or_404(equipo_id)
     form = EditEquipoForm(obj=equipo)
     
+    # 1. Conservar estados de checkboxes en GET
     if request.method == 'GET':
-        # Validamos si la nota de éxito ya existe en la base de datos
         nota_log = "[LOG VERIFICADO Y VALIDADO CON ÉXITO]"
         if equipo.observacion and nota_log in equipo.observacion:
-            form.confirmar_log.data = True  # Esto marcará automáticamente el checkbox en el HTML
+            form.confirmar_log.data = True
         else:
             form.confirmar_log.data = False
+            
+    # 2. Determinar si se bloquea por Regla de Equipo Maestro
+    bloquear_campos = usuario_debe_bloquear_maestro(current_user, equipo)
+
+    # 3. SOLUCIÓN PREGUNTA 1: Bloqueo masivo automático para el HTML
+    campos_a_bloquear = [
+        'es_maestro', 'es_verificacion', 'direccion', 'comision', 'cod_comision',
+        'capacidad', 'municipio', 'departamento', 'equipo_marca', 'equipo_modelo',
+        'equipo_serial', 'dd_marca', 'dd_modelo', 'dd_serial', 'sha_1', 'md5', 'proceso'
+    ]
+    if bloquear_campos:
+        for nombre_campo in campos_a_bloquear:
+            if nombre_campo in form:
+                form[nombre_campo].render_kw = {'readonly': True, 'class': 'form-control bg-light'}
 
     while len(form.imagenes.entries) < form.imagenes.max_entries:
         form.imagenes.append_entry()
 
     if form.validate_on_submit():
         try:
+            # Guardamos los valores originales de respaldo ANTES de poblar el objeto
+            respaldo_serial = equipo.equipo_serial
+            respaldo_maestro = equipo.es_maestro
+            respaldo_verificacion = equipo.es_verificacion
+            # ... Guarda de respaldo solo los críticos reales si lo deseas, o los sobreescribimos así:
+            
+            estado_anterior = equipo.estado.value if hasattr(equipo.estado, 'value') else equipo.estado
+            
+            # Poblamos el objeto con lo que viene de la web
             form.populate_obj(equipo)
-            equipo.es_maestro = form.es_maestro.data
-            equipo.es_verificacion = form.es_verificacion.data
+            
+            # 4. SOLUCIÓN CRÍTICA BACKEND: Si está bloqueado, forzamos los valores originales de la BD
+            if bloquear_campos:
+                equipo.es_maestro = respaldo_maestro
+                equipo.es_verificacion = respaldo_verificacion
+                # Si el programador de Grupo ASD detecta fraude en inputs ocultos, revertimos directo a las propiedades del objeto:
+                # equipo.equipo_serial = respaldo_serial
+            else:
+                # Si es administrador y los modificó en el form, aseguramos la persistencia
+                equipo.es_maestro = form.es_maestro.data
+                equipo.es_verificacion = form.es_verificacion.data
 
             # --- INTERCEPTOR DE LOG PASIVO EN EDICIÓN ---
             if hasattr(form, 'confirmar_log') and form.confirmar_log.data:
@@ -195,8 +234,6 @@ def editar(equipo_id):
 
             # --- MÁQUINA DE ESTADOS PASIVA (EVALUADOR) ---
             nuevo_estado, mensaje_flujo = evaluar_estado_equipo(equipo)
-            
-            # Sincronizamos pasándole únicamente el Enum limpio
             equipo.estado = nuevo_estado
             equipo.actualizar_estado()  
 
@@ -213,7 +250,14 @@ def editar(equipo_id):
             else:
                 flash(_(mensaje_flujo), "info")
 
-            dest = 'equipo.lista_equipos' if current_user.rol.value == "Administrador" else 'equipo.lista_equipos_agente'
+            rol_actual = current_user.rol.value
+            if rol_actual == "Administrador":
+                dest = 'equipo.lista_equipos'
+            elif rol_actual == "Agente_3":
+                dest = 'equipo.lista_equipos_auditor'
+            else:
+                dest = 'equipo.lista_equipos_agente'
+                
             return redirect(url_for(dest))
 
         except Exception as e:
@@ -221,7 +265,7 @@ def editar(equipo_id):
             flash(f"Error de consistencia: {e}", "error")
             return redirect(url_for('equipo.editar', equipo_id=equipo_id))
         
-    return render_template('equipo/editar.html', form=form, equipo=equipo, labels=labels)
+    return render_template('equipo/editar.html', form=form, equipo=equipo, labels=labels, bloquear_campos=bloquear_campos)
 
 
 # ==========================================

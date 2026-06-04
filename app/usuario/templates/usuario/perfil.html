@@ -1,13 +1,7 @@
 {% extends "layouts/form.html" %} {% block title %} Perfil Usuario {% endblock %}
-{% block content %} {% for categoria, mensaje in
-get_flashed_messages(with_categories=true) %}
-<script class="flash-mensajes" data-icon="{{ categoria }}">
-  {
-    {
-      mensaje;
-    }
-  }
-</script>
+{% block content %} 
+{% for categoria, mensaje in get_flashed_messages(with_categories=true) %}
+<script class="flash-mensajes" data-icon="{{ categoria }}">{{ mensaje }}</script>
 {% endfor %}
 <form
   action=""

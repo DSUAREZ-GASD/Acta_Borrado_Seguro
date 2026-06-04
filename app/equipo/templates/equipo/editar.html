@@ -1,22 +1,35 @@
 {% extends "layouts/form.html" %}
 {% block title %}Editar Equipo{% endblock %}
+{% macro render_input_seguro(campo, es_bloqueado, es_select=False) %}
+    {% if es_bloqueado %}
+        {% if es_select %}
+            {{ campo(class="form-control bg-light text-muted", disabled=True) }}
+        {% else %}
+            {{ campo(class="form-control bg-light text-muted", readonly=True) }}
+        {% endif %}
+    {% else %}
+        {{ campo(class="form-control") }}
+    {% endif %}
+{% endmacro %}
 {% block content %}
 {% for categoria, mensaje in get_flashed_messages(with_categories=true) %}
-            <script class="flash-mensajes" data-icon="{{ categoria }}">{{ mensaje }}</script>
+<script class="flash-mensajes" data-icon="{{ categoria }}">{{ mensaje }}</script>
 {% endfor %}
 <form method="POST" class="formularios" enctype="multipart/form-data">
     {{ form.hidden_tag() }}
     <h2 class="text-center my-4 titulo-responsivo">Editar Equipo</h2>
+
     <div class="form-group mb-3">
-        <label for="{{ form.nombre.asd_id }}" class="form-label">{{ form.nombre.label }}</label>
-        {{ form.nombre(class="form-control", size=32) }}
+        <label for="{{ form.nombre.id }}" class="form-label">{{ form.nombre.label }}</label>
+        {{ render_input_seguro(form.nombre, bloquear_campos) }}
         {% for error in form.nombre.errors %}
-                <div class="text-danger">{{ error }}</div>
+            <div class="text-danger">{{ error }}</div>
         {% endfor %}
     </div>
+
     <div class="form-group mb-3">
         <label for="{{ form.es_maestro.id }}" class="form-label">{{ form.es_maestro.label }}</label>
-        {{ form.es_maestro(class="form-control form-control-sm") }}
+        {{ render_input_seguro(form.es_maestro, bloquear_campos, es_select=True) }}
         {% for error in form.es_maestro.errors %}
             <div class="text-danger">{{ error }}</div>
         {% endfor %}
@@ -24,211 +37,245 @@
 
     <div class="form-group mb-3">
         <label for="{{ form.es_verificacion.id }}" class="form-label">{{ form.es_verificacion.label }}</label>
-        {{ form.es_verificacion(class="form-control form-control-sm") }}
+        {{ render_input_seguro(form.es_verificacion, bloquear_campos) }}
         {% for error in form.es_verificacion.errors %}
             <div class="text-danger">{{ error }}</div>
         {% endfor %}
     </div>
 
     <div class="form-group mb-3">
-        <label for="{{ form.comision.asd_id }}" class="form-label">{{ form.comision.label }}</label>
-        {{ form.comision(class="form-control") }}
+        <label for="{{ form.comision.id }}" class="form-label">{{ form.comision.label }}</label>
+        {{ render_input_seguro(form.comision, bloquear_campos) }}
         {% for error in form.comision.errors %}
-                <div class="text-danger">{{ error }}</div>
+            <div class="text-danger">{{ error }}</div>
         {% endfor %}        
     </div>
+
     <div class="form-group mb-3">
-        <label for="{{ form.cod_comision.asd_id }}" class="form-label">{{ form.cod_comision.label }}</label>
-        {{ form.cod_comision(class="form-control") }}
+        <label for="{{ form.cod_comision.id }}" class="form-label">{{ form.cod_comision.label }}</label>
+        {{ render_input_seguro(form.cod_comision, bloquear_campos) }}
         {% for error in form.cod_comision.errors %}
-                <div class="text-danger">{{ error }}</div>
+            <div class="text-danger">{{ error }}</div>
         {% endfor %}
-      </div>
+    </div>
+
     <div class="form-group mb-3">
-        <label for="{{ form.direccion.asd_id }}" class="form-label">{{ form.direccion.label }}</label>
-        {{ form.direccion(class="form-control") }}
+        <label for="{{ form.direccion.id }}" class="form-label">{{ form.direccion.label }}</label>
+        {{ render_input_seguro(form.direccion, bloquear_campos) }}
         {% for error in form.direccion.errors %}
-                <div class="text-danger">{{ error }}</div>
+            <div class="text-danger">{{ error }}</div>
         {% endfor %}
-      </div>
+    </div>
+
     <div class="form-group mb-3">
-        <label for="{{ form.municipio.asd_id }}" class="form-label">{{ form.municipio.label }}</label>
-        {{ form.municipio(class="form-control") }}
+        <label for="{{ form.municipio.id }}" class="form-label">{{ form.municipio.label }}</label>
+        {{ render_input_seguro(form.municipio, bloquear_campos) }}
         {% for error in form.municipio.errors %}
-                <div class="text-danger">{{ error }}</div>
+            <div class="text-danger">{{ error }}</div>
         {% endfor %}
     </div>
+
     <div class="form-group mb-3">
-        <label for="{{ form.departamento.asd_id }}" class="form-label">{{ form.departamento.label }}</label>
-        {{ form.departamento(class="form-control") }}
+        <label for="{{ form.departamento.id }}" class="form-label">{{ form.departamento.label }}</label>
+        {{ render_input_seguro(form.departamento, bloquear_campos) }}
         {% for error in form.departamento.errors %}
-                <div class="text-danger">{{ error }}</div>
+            <div class="text-danger">{{ error }}</div>
         {% endfor %}
     </div>
+
     <div class="form-group mb-3">
-        <label for="{{ form.equipo_marca.asd_id }}" class="form-label">{{ form.equipo_marca.label }}</label>
-        {{ form.equipo_marca(class="form-control") }}
+        <label for="{{ form.equipo_marca.id }}" class="form-label">{{ form.equipo_marca.label }}</label>
+        {{ render_input_seguro(form.equipo_marca, bloquear_campos) }}
         {% for error in form.equipo_marca.errors %}
-                <div class="text-danger">{{ error }}</div>
+            <div class="text-danger">{{ error }}</div>
         {% endfor %}
     </div>
+
     <div class="form-group mb-3">
-        <label for="{{ form.equipo_modelo.asd_id }}" class="form-label">{{ form.equipo_modelo.label }}</label>
-        {{ form.equipo_modelo(class="form-control") }}
+        <label for="{{ form.equipo_modelo.id }}" class="form-label">{{ form.equipo_modelo.label }}</label>
+        {{ render_input_seguro(form.equipo_modelo, bloquear_campos) }}
         {% for error in form.equipo_modelo.errors %}
-                <div class="text-danger">{{ error }}</div>
+            <div class="text-danger">{{ error }}</div>
         {% endfor %}
     </div>
+
     <div class="form-group mb-3">
-        <label for="{{ form.equipo_serial.asd_id }}" class="form-label">{{ form.equipo_serial.label }}</label>
-        {{ form.equipo_serial(class="form-control") }}
+        <label for="{{ form.equipo_serial.id }}" class="form-label">{{ form.equipo_serial.label }}</label>
+        {{ render_input_seguro(form.equipo_serial, bloquear_campos) }}
         {% for error in form.equipo_serial.errors %}
-                <div class="text-danger">{{ error }}</div>
+            <div class="text-danger">{{ error }}</div>
         {% endfor %}
     </div>
+
     <div class="form-group mb-3">
-        <label for="{{ form.dd_marca.asd_id }}" class="form-label">{{ form.dd_marca.label }}</label>
-        {{ form.dd_marca(class="form-control") }}
+        <label for="{{ form.dd_marca.id }}" class="form-label">{{ form.dd_marca.label }}</label>
+        {{ render_input_seguro(form.dd_marca, bloquear_campos) }}
         {% for error in form.dd_marca.errors %}
-                <div class="text-danger">{{ error }}</div>
+            <div class="text-danger">{{ error }}</div>
         {% endfor %}
     </div>
+
     <div class="form-group mb-3">
-        <label for="{{ form.dd_modelo.asd_id }}" class="form-label">{{ form.dd_modelo.label }}</label>
-        {{ form.dd_modelo(class="form-control") }}
+        <label for="{{ form.dd_modelo.id }}" class="form-label">{{ form.dd_modelo.label }}</label>
+        {{ render_input_seguro(form.dd_modelo, bloquear_campos) }}
         {% for error in form.dd_modelo.errors %}
-                <div class="text-danger">{{ error }}</div>
+            <div class="text-danger">{{ error }}</div>
         {% endfor %}
     </div>
+
     <div class="form-group mb-3">
-        <label for="{{ form.capacidad.asd_id }}" class="form-label">{{ form.capacidad.label }}</label>
-        {{ form.capacidad(class="form-control") }}
+        <label for="{{ form.capacidad.id }}" class="form-label">{{ form.capacidad.label }}</label>
+        {{ render_input_seguro(form.capacidad, bloquear_campos) }}
         {% for error in form.capacidad.errors %}
-                <div class="text-danger">{{ error }}</div>
+            <div class="text-danger">{{ error }}</div>
         {% endfor %}
     </div>
+
     <div class="form-group mb-3">
-        <label for="{{ form.dd_serial.asd_id }}" class="form-label">{{ form.dd_serial.label }}</label>
-        {{ form.dd_serial(class="form-control") }}
+        <label for="{{ form.dd_serial.id }}" class="form-label">{{ form.dd_serial.label }}</label>
+        {{ render_input_seguro(form.dd_serial, bloquear_campos) }}
         {% for error in form.dd_serial.errors %}
-                <div class="text-danger">{{ error }}</div>
+            <div class="text-danger">{{ error }}</div>
         {% endfor %}
     </div>
+
     <div class="form-group mb-3">
-        <label for="{{ form.sha_1.asd_id }}" class="form-label">{{ form.sha_1.label }}</label>
-        {{ form.sha_1(class="form-control", rows=3) }}
+        <label for="{{ form.sha_1.id }}" class="form-label">{{ form.sha_1.label }}</label>
+        {{ render_input_seguro(form.sha_1, bloquear_campos) }}
         {% for error in form.sha_1.errors %}
-                <div class="text-danger">{{ error }}</div>
+            <div class="text-danger">{{ error }}</div>
         {% endfor %}
     </div>
+
     <div class="form-group mb-3">
-        <label for="{{ form.md5.asd_id }}" class="form-label">{{ form.md5.label }}</label>
-        {{ form.md5(class="form-control", rows=3) }}
+        <label for="{{ form.md5.id }}" class="form-label">{{ form.md5.label }}</label>
+        {{ render_input_seguro(form.md5, bloquear_campos) }}
         {% for error in form.md5.errors %}
-                <div class="text-danger">{{ error }}</div>
+            <div class="text-danger">{{ error }}</div>
         {% endfor %}
     </div>
+
     <div class="form-group mb-3">
         <label for="{{ form.proceso.id }}" class="form-label">{{ form.proceso.label }}</label>
-        <select id="{{ form.proceso.id }}" name="{{ form.proceso.name }}" class="form-control">
-            {% for value, label in form.proceso.choices %}
-                <option value="{{ value }}" {% if value == equipo.proceso.name %}selected{% endif %}>{{ label }}</option>
-            {% endfor %}
-        </select>
+        {# Renderizado directo de WTForms para heredar el bloqueo automatizado #}
+        {{ render_input_seguro(form.proceso, bloquear_campos) }}
         {% for error in form.proceso.errors %}
-         <div class="text-danger">{{ error }}</div>
-   {% endfor %}
+             <div class="text-danger">{{ error }}</div>
+        {% endfor %}
     </div>
+
     <div class="form-group mb-3">
-        <label for="{{ form.dd_marca_bk.asd_id }}" class="form-label">{{ form.dd_marca_bk.label }}</label>
-        {{ form.dd_marca_bk(class="form-control") }}
+        <label for="{{ form.dd_marca_bk.id }}" class="form-label">{{ form.dd_marca_bk.label }}</label>
+        {{ render_input_seguro(form.dd_marca_bk, bloquear_campos) }}
         {% for error in form.dd_marca_bk.errors %}
-                <div class="text-danger">{{ error }}</div>
+            <div class="text-danger">{{ error }}</div>
         {% endfor %}
     </div>
+
     <div class="form-group mb-3">
-        <label for="{{ form.dd_serial_bk.asd_id }}" class="form-label">{{ form.dd_serial_bk.label }}</label>
-        {{ form.dd_serial_bk(class="form-control") }}
+        <label for="{{ form.dd_serial_bk.id }}" class="form-label">{{ form.dd_serial_bk.label }}</label>
+        {{ render_input_seguro(form.dd_serial_bk, bloquear_campos) }}
         {% for error in form.dd_serial_bk.errors %}
-                <div class="text-danger">{{ error }}</div>
+            <div class="text-danger">{{ error }}</div>
         {% endfor %}
     </div>
+
     <div class="form-group mb-3">
-        <label for="{{ form.dd_capacidad_bk.asd_id }}" class="form-label">{{ form.dd_capacidad_bk.label }}</label>
-        {{ form.dd_capacidad_bk(class="form-control") }}
+        <label for="{{ form.dd_capacidad_bk.id }}" class="form-label">{{ form.dd_capacidad_bk.label }}</label>
+        {{ render_input_seguro(form.dd_capacidad_bk, bloquear_campos) }}
         {% for error in form.dd_capacidad_bk.errors %}
-                <div class="text-danger">{{ error }}</div>
+            <div class="text-danger">{{ error }}</div>
         {% endfor %}
     </div>
+
     <div class="form-group mb-3 p-3 border rounded shadow-sm bg-light">
     <div class="form-check form-switch"> 
-            {# form.confirmar_log ya sabe si debe renderizarse marcado o no gracias al backend #}
-            {{ form.confirmar_log(class="form-check-input", id="confirmar_log_cb") }}
-            <label for="confirmar_log_cb" class="form-check-label fw-bold">
+            {# Si bloquear_campos es True, inyectamos disabled=True de forma directa #}
+            {% if bloquear_campos %}
+                {{ form.confirmar_log(class="form-check-input", id="confirmar_log_cb", disabled=True) }}
+            {% else %}
+                {{ form.confirmar_log(class="form-check-input", id="confirmar_log_cb") }}
+            {% endif %}
+            
+            <label for="confirmar_log_cb" class="form-check-label fw-bold {% if bloquear_campos %}text-muted{% endif %}">
                 {{ form.confirmar_log.label.text }}
+                {% if bloquear_campos %} <span class="badge bg-secondary ms-1">Protegido</span>{% endif %}
             </label>
         </div>
         {% for error in form.confirmar_log.errors %}
             <div class="text-danger small mt-1">{{ error }}</div>
         {% endfor %}
     </div>
+
     <div class="form-group mb-3 form-observacion">
-        <label for="{{ form.observacion.asd_id }}" class="form-label">{{ form.observacion.label }}</label>
-        {{ form.observacion(class="form-control", rows=3) }}
+        <label for="{{ form.observacion.id }}" class="form-label">{{ form.observacion.label }}</label>
+        {{ render_input_seguro(form.observacion, bloquear_campos) }}
         {% for error in form.observacion.errors %}
-                <div class="text-danger">{{ error }}</div>
+            <div class="text-danger">{{ error }}</div>
         {% endfor %}
     </div>
+
     <h3 class="text-center my-4 titulo-responsivo">Imágenes del Equipo</h3>
     {% for i in range(8) %}
+        {# Mantenemos la clase contenedora que Alert.js rastrea obligatoriamente #}
         <div class="form-group form-group-imagen mb-3 border p-3 rounded shadow-sm bg-white">
             <label class="d-block mb-2"><strong>{{ labels[i] }}</strong></label>
 
-            {# --- FILTRO REGLA DE ORO: SI ES MAESTRO Y SON SLOTS DE BORRADO --- #}
-            {% if equipo.es_maestro and (i == 6 or i == 7) %}
+            {# --- CORRECCIÓN CRÍTICA: SOLO SE SIENTEN BLOQUEADOS SI bloquear_campos ES TRUE --- #}
+            {% if bloquear_campos and equipo.es_maestro and (i == 6 or i == 7) %}
                 <div class="alert alert-danger py-2 px-3 small mb-0 mt-2">
                     <i class="bi bi-slash-circle-fill"></i> <strong>Bloqueado por Flujo:</strong> Las imágenes de inicio y fin de borrado no aplican para Equipos Maestros (Gestión de Administrador).
                 </div>
                 <div class="d-none">
-                    {{ form.imagenes[i](class="form-control") }}
+                    {{ form.imagenes[i](class="form-control", disabled=True) }}
                 </div>
 
             {% else %}
-                {# --- FLUJO ESTÁNDAR DE PERFILES Y AGENTES --- #}
+                {# --- COMPORTAMIENTO PARA ADMINISTRADORES O SLOTS PERMITIDOS --- #}
                 {% set tiene_foto = false %}
                 {% if equipo.imagenes and equipo.imagenes[i] %}
                     {% set tiene_foto = true %}
                 {% endif %}
 
                 {% if tiene_foto %}
-                    {# CASO A: EL SLOT TIENE FOTO GUARDADA #}
                     <p class="text-muted small mb-1"><i class="bi bi-shield-check text-success"></i> Evidencia custodiada:</p>
                     <div class="mb-2">
+                        {# La etiqueta <img> le confirma a Alert.js que este slot tiene datos previos #}
                         <img src="{{ url_for('static', filename='uploads/equipos/' + equipo.imagenes[i]) }}" alt="Imagen actual" class="img-fluid rounded border shadow-sm" width="110" height="110">
                     </div>
                     
-                    {% if not current_user.tiene_permiso('reemplazar_imagenes') %}
+                    {% if bloquear_campos or not current_user.tiene_permiso('reemplazar_imagenes') %}
                         <div class="alert alert-secondary py-1 px-2 small mb-0">
-                            <i class="bi bi-lock-fill"></i> Esta foto ya fue registrada y está protegida contra modificaciones.
+                            <i class="bi bi-lock-fill"></i> {% if bloquear_campos %}Propiedad protegida por regla de Equipo Maestro.{% else %}Esta foto ya fue registrada y está protegida contra modificaciones.{% endif %}
                         </div>
                         <div class="d-none">
-                            {{ form.imagenes[i](class="form-control") }}
+                            {{ form.imagenes[i](class="form-control", disabled=True) }}
                         </div>
                     {% else %}
                         <p class="text-warning small mb-1"><i class="bi bi-pencil-square"></i> Reemplazar imagen actual:</p>
-                        {{ form.imagenes[i](class="form-control form-control-sm") }}
+                        {# AGREGADO: data-tiene-foto="true" para doble validación en JS #}
+                        {{ form.imagenes[i](class="form-control form-control-sm", **{'data-tiene-foto': 'true'}) }}
                     {% endif %}
 
                 {% else %}
-                    {# CASO B: EL SLOT ESTÁ VACÍO (None o cadena vacía) #}
-                    <div class="p-2 bg-light rounded border border-dashed">
-                        <p class="text-primary small mb-2"><i class="bi bi-plus-circle-fill"></i> Slot disponible para nueva evidencia:</p>
-                        {{ form.imagenes[i](class="form-control form-control-sm") }}
-                    </div>
+                    {# CASO: SLOT DISPONIBLE #}
+                    {% if bloquear_campos %}
+                        <div class="p-2 bg-light rounded border border-dashed text-muted small">
+                            <i class="bi bi-lock-fill"></i> No se permite adjuntar nueva evidencia en modo de protección maestro.
+                        </div>
+                        <div class="d-none">
+                            {{ form.imagenes[i](class="form-control", disabled=True) }}
+                        </div>
+                    {% else %}
+                        <div class="p-2 bg-light rounded border border-dashed">
+                            <p class="text-primary small mb-2"><i class="bi bi-plus-circle-fill"></i> Slot disponible para nueva evidencia:</p>
+                            {# Aquí NO lleva el atributo data-tiene-foto, permitiendo carga directa #}
+                            {{ form.imagenes[i](class="form-control form-control-sm") }}
+                        </div>
+                    {% endif %}
                 {% endif %}
             {% endif %}
             
-            {# Mapeo de errores de validación de WTForms para este archivo #}
             {% for error in form.imagenes[i].errors %}
                 <div class="text-danger small mt-1">{{ error }}</div>
             {% endfor %}

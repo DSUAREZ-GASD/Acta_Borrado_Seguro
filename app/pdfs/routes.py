@@ -7,7 +7,7 @@ import os
 import io
 import re
 from flask_babel import _
-from app.auth.routes import acceso_requerido
+from app.utils import acceso_requerido
 
 def borrar_archivo(ruta):
     try:

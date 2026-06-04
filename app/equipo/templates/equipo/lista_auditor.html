@@ -1,13 +1,7 @@
 {% extends "layouts/agente.html" %} {% block head %} {{ super() }} {% endblock
 %} {% block title %} Lista de equipos agente {% endblock %} {% block content %}
 {% for categoria, mensaje in get_flashed_messages(with_categories=true) %}
-<script class="flash-mensajes" data-icon="{{ categoria }}">
-  {
-    {
-      mensaje;
-    }
-  }
-</script>
+<script class="flash-mensajes" data-icon="{{ categoria }}">{{ mensaje }}</script>
 {% endfor %}
 <div class="container-fluid">
   <div class="row">
@@ -58,7 +52,7 @@
               </td>
               <td>
                 {% if equipo.estado.value == 'FINALIZADO' or equipo.estado.value == 'GESTION_ADMINISTRADOR' %}
-                    <a href="{{ url_for('equipo.generar_pdf', equipo_id=equipo.asd_id) }}" class="btn btn-sm btn-success">
+                    <a href="{{ url_for('pdf.crear_pdf', tipo='equipo', obj_id=equipo.asd_id) }}" class="btn btn-sm btn-success">
                         <i class="bi bi-file-earmark-pdf-fill"></i> Generar PDF
                     </a>
                 {% else %}
