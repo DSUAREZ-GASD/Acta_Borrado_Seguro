@@ -8,8 +8,8 @@
   <tr>
     <td width="20%" class="text-center">
       <img
-        src="{{ url_for('static', filename='img_static/logo_rnec.png', _external=True) }}"
-        style="width: 80px"
+        src="{{ url_for('static', filename='assets/img/logo_rnec.png', _external=True) }}"
+        style="width: 100px height: auto;"
       />
     </td>
     <td colspan="3" class="estilo-pequeno">
@@ -80,46 +80,46 @@
   </tr>
   <tr>
     <td class="bg-gray bold">Escrutinio/Comisión:</td>
-    <td colspan="3" class="text-center">{{ objeto.comision }}</td>
+    <td colspan="3" class="text-center">{{ objeto.equipo.comision }}</td>
   </tr>
   <tr>
     <td class="bg-gray bold">Municipio:</td>
-    <td colspan="3" class="text-center">{{ objeto.municipio }}</td>
+    <td colspan="3" class="text-center">{{ objeto.equipo.municipio }}</td>
   </tr>
   <tr>
     <td class="bg-gray bold">Departamento:</td>
-    <td colspan="3" class="text-center">{{ objeto.departamento }}</td>
+    <td colspan="3" class="text-center">{{ objeto.equipo.departamento }}</td>
   </tr>
   <tr>
-    <td colspan="2" class="bg-gray bold text-center">EQUIPO</td>
     <td colspan="2" class="bg-gray bold text-center">DISCO DURO</td>
+    <td colspan="2" class="bg-gray bold text-center">EQUIPO</td>
   </tr>
 
   <tr>
     <td class="bg-gray bold">Marca:</td>
-    <td class="text-center">{{ objeto.equipo_marca }}</td>
+    <td class="text-center">{{ objeto.equipo.dd_marca }}</td>
     <td class="bg-gray bold">Marca:</td>
-    <td class="text-center">{{ objeto.dd_marca }}</td>
+    <td class="text-center">{{ objeto.equipo.marca }}</td>
   </tr>
 
   <tr>
+   <td class="bg-gray bold">Modelo:</td>
+    <td class="text-center">{{ objeto.equipo.dd_modelo }}</td>
     <td class="bg-gray bold">Modelo:</td>
-    <td class="text-center">{{ objeto.equipo_modelo }}</td>
-    <td class="bg-gray bold">Modelo:</td>
-    <td class="text-center">{{ objeto.dd_modelo }}</td>
+    <td class="text-center">{{ objeto.equipo.equipo_modelo }}</td>
   </tr>
 
   <tr>
-    <td class="bg-gray bold">Serial:</td>
-    <td class="text-center">{{ objeto.equipo_serial }}</td>
     <td class="bg-gray bold">Capacidad:</td>
-    <td class="text-center">{{ objeto.capacidad }}</td>
+    <td class="text-center">{{ objeto.equipo.capacidad }}</td>
+    <td class="bg-gray bold">Serial:</td>
+    <td class="text-center">{{ objeto.equipo.equipo_serial }}</td>
   </tr>
 
   <tr>
-    <td colspan="2" class="bg-gray border-left-only"></td>
     <td class="bg-gray bold">Serial DD:</td>
-    <td class="text-center">{{ objeto.dd_serial }}</td>
+    <td class="text-center">{{ objeto.equipo.dd_serial }}</td>
+    <td colspan="2" class="bg-gray border-left-only"></td>
   </tr>
   <tr>
     <td colspan="4" class="bg-gray estilo-grande">
@@ -148,8 +148,8 @@
   <tr>
     <td class="bg-gray bold">Examinador:</td>
     <td colspan="3" class="text-center">
-        {% if objeto.examinador_rel %}
-            {{ objeto.examinador_rel.nombre }} {{ objeto.examinador_rel.apellido }}
+        {% if objeto.equipo.usuario %}
+            {{ objeto.equipo.usuario.nombre }} {{ objeto.equipo.usuario.apellido }}
         {% endif %}
     </td>
   </tr>
@@ -167,15 +167,15 @@
   </tr>
   <tr>
     <td class="bg-gray bold">Nombre:</td>
-    <td colspan="3" class="text-center">{{ objeto.nombre }}</td>
+    <td colspan="3" class="text-center">{{ objeto.equipo.nombre }}</td>
   </tr>
   <tr>
     <td class="bg-gray bold">HASH (SHA-1):</td>
-    <td colspan="3" class="text-center">{{ objeto.sha_1 }}</td>
+    <td colspan="3" class="text-center">{{ objeto.equipo.sha_1 }}</td>
   </tr>
   <tr>
     <td class="bg-gray bold">HASH (MD5):</td>
-    <td colspan="3" class="text-center">{{ objeto.md5 }}</td>
+    <td colspan="3" class="text-center">{{ objeto.equipo.md5 }}</td>
   </tr>
   <!-- FIRMAS -->
   <tr>

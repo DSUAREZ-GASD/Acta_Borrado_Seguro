@@ -1,0 +1,131 @@
+{% extends "layouts/form.html" %}
+{% block title %}Gestionar Evidencias de Verificación{% endblock %}
+{% block content %}
+
+{% for categoria, mensaje in get_flashed_messages(with_categories=true) %}
+<script class="flash-mensajes" data-icon="{{ categoria }}">{{ mensaje }}</script>
+{% endfor %}
+
+<div class="container py-4">
+    <div class="card border-secondary shadow-sm mb-4">
+        <div class="card-header bg-dark text-white d-flex justify-content-between align-middle py-2.5">
+            <h5 class="card-title mb-0 small text-uppercase fw-bold text-tracking">
+                <i class="bi bi-info-circle-fill text-info"></i> Especificaciones del Dispositivo Asociado
+            </h5>
+            <span class="badge bg-primary px-2.5">Lectura Institucional</span>
+        </div>
+        <div class="card-body bg-light small">
+            <div class="row g-3">
+                <div class="col-md-4">
+                    <span class="text-muted d-block">Nombre de Equipo:</span>
+                    <strong class="text-dark">{{ actividad.equipo.nombre }}</strong>
+                </div>
+                <div class="col-md-4">
+                    <span class="text-muted d-block">Serial de Hardware:</span>
+                    <code class="text-dark fw-bold">{{ actividad.equipo.equipo_serial }}</code>
+                </div>
+                <div class="col-md-4">
+                    <span class="text-muted d-block">Código Comisión / Municipio:</span>
+                    <strong class="text-dark">{{ actividad.equipo.cod_comision }} - {{ actividad.equipo.municipio }} ({{ actividad.equipo.departamento }})</strong>
+                </div>
+                
+                <div class="col-md-4">
+                    <span class="text-muted d-block">Marca / Modelo de Equipo:</span>
+                    <span class="text-dark">{{ actividad.equipo.equipo_marca }} / {{ actividad.equipo.equipo_modelo }}</span>
+                </div>
+                <div class="col-md-4">
+                    <span class="text-muted d-block">Disco Duro / Capacidad:</span>
+                    <span class="text-dark">{{ actividad.equipo.dd_serial }} ({{ actividad.equipo.capacidad }})</span>
+                </div>
+                <div class="col-md-4">
+                    <span class="text-muted d-block">Flujo Institucional / Proceso:</span>
+                    <span class="badge bg-white text-dark border">{{ actividad.equipo.proceso }}</span>
+                </div>
+
+                <div class="col-12 border-top pt-2 mt-2">
+                    <div class="row">
+                        <div class="col-md-6 mb-2 mb-md-0">
+                            <span class="text-muted d-block">Firma Criptográfica (SHA-1 / MD5):</span>
+                            {% if actividad.equipo.sha_1 or actividad.equipo.md5 %}
+                                <div class="bg-white p-2 rounded border border-dashed text-xs">
+                                    {% if actividad.equipo.sha_1 %}<div><b>SHA-1:</b> <code>{{ actividad.equipo.sha_1 }}</code></div>{% endif %}
+                                    {% if actividad.equipo.md5 %}<div><b>MD5:</b> <code>{{ actividad.equipo.md5 }}</code></div>{% endif %}
+                                </div>
+                            {% else %}
+                                <span class="text-danger fw-bold"><i class="bi bi-x-circle-fill"></i> HASH NO REGISTRADO EN EL EQUIPO</span>
+                            {% endif %}
+                        </div>
+                        <div class="col-md-6">
+                            <span class="text-muted d-block">Estado de Validación de Log (Bitácora):</span>
+                            {% if actividad.equipo.observacion and "[LOG VERIFICADO Y VALIDADO CON ÉXITO]" in actividad.equipo.observacion %}
+                                <div class="alert alert-success py-1.5 px-3 mb-0 small">
+                                    <i class="bi bi-check-circle-fill"></i> <b>[LOG VERIFICADO Y VALIDADO CON ÉXITO]</b>
+                                </div>
+                            {% else %}
+                                <div class="alert alert-warning py-1.5 px-3 mb-0 small">
+                                    <i class="bi bi-exclamation-triangle-fill"></i> Validación de Log Pendiente en el Módulo de Equipos.
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <form method="POST" class="formularios" enctype="multipart/form-data">
+        {{ form.hidden_tag() }}
+        
+        <div class="text-center mb-4">
+            <h2 class="titulo-responsivo text-dark fw-bold mb-1">Custodia de Evidencias Fotográficas</h2>
+            <p class="text-muted small">Carga obligatoria indexada para las carpetas y entornos del sistema de escrutinios locales.</p>
+        </div>
+        
+        {% for i in range(7) %}
+            <div class="form-group form-group-imagen mb-3 border p-3 rounded shadow-sm bg-white">
+                <label class="d-block mb-2 text-secondary">
+                    <strong>{{ labels[i] }}</strong>
+                </label>
+                
+                {# --- EVALUACIÓN POSICIONAL DE IMAGEN PREVIA EN ARREGLO JSON --- #}
+                {% set tiene_foto = false %}
+                {% if actividad.evidencias and i < (actividad.evidencias | length) and actividad.evidencias[i] %}
+                    {% set tiene_foto = true %}
+                {% endif %}
+
+                {% if tiene_foto %}
+                    <p class="text-muted small mb-1"><i class="bi bi-shield-check text-success"></i> Evidencia resguardada en servidor:</p>
+                    <div class="mb-2">
+                        <img src="{{ url_for('static', filename='uploads/verificaciones/' + actividad.evidencias[i]) }}" 
+                             alt="Imagen actual de verificación" 
+                             class="img-fluid rounded border shadow-sm img-thumbnail" 
+                             style="max-height: 120px; object-fit: cover;">
+                    </div>
+                    
+                    <p class="text-warning small mb-1"><i class="bi bi-arrow-left-right"></i> Reemplazar imagen actual:</p>
+                    {# Inyección de data-tiene-foto para activar las advertencias de confirmación del script Alert.js #}
+                    {{ form.evidencias[i](class="form-control form-control-sm", **{'data-tiene-foto': 'true'}) }}
+
+                {% else %}
+                    {# --- CASO: SLOT DISPONIBLE (FOTO VACÍA) --- #}
+                    <div class="p-2 bg-light rounded border border-dashed">
+                        <p class="text-primary small mb-2"><i class="bi bi-plus-circle-fill"></i> Slot listo para asignación:</p>
+                        {{ form.evidencias[i](class="form-control form-control-sm") }}
+                    </div>
+                {% endif %}
+                
+                {# Errores capturados por WTForms #}
+                {% for error in form.evidencias[i].errors %}
+                    <div class="text-danger small mt-1"><i class="bi bi-x-octagon"></i> {{ error }}</div>
+                {% endfor %}
+            </div>
+        {% endfor %}
+
+        <div class="form-group-button mt-4 text-end">
+            <a href="{{ url_for('acta_verificacion.lista') }}" class="btn btn-light border px-4 me-2">Regresar al Listado</a>
+            {{ form.submit(class="btn btn-primary px-4 shadow") }}
+        </div>
+    </form>
+</div>
+
+{% endblock %}

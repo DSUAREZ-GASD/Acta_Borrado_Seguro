@@ -1,118 +1,22 @@
 from flask_wtf import FlaskForm
-from wtforms import IntegerField, SelectField, StringField, BooleanField, SubmitField, FieldList, TextAreaField
-from flask_wtf.file import FileField,FileAllowed #Tipos de archivos que se van a cargar
-from wtforms.validators import InputRequired, Optional, Length #Validaciones de formulario
-from wtforms_alchemy import QuerySelectField
-from flask_babel import gettext as _
-from enum import Enum
-from app.models import Usuario
+from wtforms import SubmitField, FieldList
+from flask_wtf.file import FileField, FileAllowed
+from wtforms.validators import Optional
 
-def get_usuarios_choices():
-    """Función fábrica que devuelve la consulta de usuarios para el formulario"""
-    return Usuario.query.order_by(Usuario.nombre, Usuario.apellido).all()
-
-class Proceso(Enum):
-    CONGRESO = "CONGRESO"
-    
-class Actividad_Form():
-    nombre = StringField("Nombre del equipo:",
-                         validators=[
-                             InputRequired(message="Por favor ingresa un nombre de equipo"),
-                             Length(max=80, message="El nombre del equipo no debe exceder los 50 caracteres")
-                         ])
-    comision = StringField("Comisión:",
-                           validators=[
-                               InputRequired(message="Por favor ingresa una comisión"),
-                               Length(max=50, message="La comisión no debe exceder los 50 caracteres")
-                           ])
-    cod_comision = IntegerField("Código de comisión:",
-                                validators=[
-                                    InputRequired(message="Por favor ingresa un código de comisión")
-                                ])
-    direccion = StringField("Direccion:",
-                            validators=[
-                                InputRequired(message="Por favor ingresa un direccion"),
-                                Length(max=50, message="El direccion no debe exceder los 50 caracteres")
-                            ])
-    municipio = StringField("Municipio:",
-                            validators=[
-                                InputRequired(message="Por favor ingresa un municipio"),
-                                Length(max=50, message="El municipio no debe exceder los 50 caracteres")
-                            ])
-    departamento = StringField("Departamento:",
-                               validators=[
-                                   InputRequired(message="Por favor ingresa un departamento"),
-                                   Length(max=50, message="El departamento no debe exceder los 50 caracteres")
-                               ])
-    equipo_marca = StringField("Marca de equipo:",
-                               validators=[
-                                   InputRequired(message="Por favor ingresa una marca"),
-                                   Length(max=50, message="La marca no debe exceder los 50 caracteres")
-                               ])
-    equipo_modelo = StringField("Modelo de equipo:",
-                                validators=[
-                                    InputRequired(message="Por favor ingresa un modelo"),
-                                    Length(max=50, message="El modelo no debe exceder los 50 caracteres")
-                                ])
-    equipo_serial = StringField("Serial de equipo:",
-                                validators=[
-                                    InputRequired(message="Por favor ingresa un serial"),
-                                    Length(max=50, message="El serial no debe exceder los 50 caracteres")
-                                ])
-    dd_marca = StringField("Marca de disco duro:",
-                           validators=[
-                               Optional(),
-                               Length(max=50, message="La marca del disco duro no debe exceder los 50 caracteres")
-                           ])
-    dd_modelo = StringField("Modelo de disco duro:",
-                            validators=[
-                                Optional(),
-                                Length(max=50, message="El modelo del disco duro no debe exceder los 50 caracteres")
-                            ])
-    capacidad = StringField("Capacidad de disco:",
-                            validators=[
-                                InputRequired(message="Por favor ingresa una capacidad"),
-                                Length(max=50, message="La capacidad no debe exceder los 50 caracteres")
-                                ])
-    dd_serial = StringField("Serial de disco duro:",
-                            validators=[
-                                Optional(),
-                                Length(max=50, message="El serial del disco duro no debe exceder los 50 caracteres")
-                            ])
-    sha_1 = StringField("HASH (SHA-1):",
-                        validators=[
-                            Optional(),
-                            Length(max=50, message="El SHA-1 no debe exceder los 50 caracteres")
-                        ])
-    md5 = StringField("HASH (MD5):",
-                      validators=[
-                          Optional(),
-                          Length(max=50, message="El MD5 no debe exceder los 50 caracteres")])
-    proceso = SelectField(_("Proceso:"),
-                          choices=[(proceso.name, proceso.name) for proceso in Proceso],
-                          validators=[InputRequired()])
-    
-    observacion = TextAreaField("Observaciones adicionales:", validators=[Optional()])
-    confirmar_log = BooleanField("¿Reporte de Log verificado y correcto?")
-    
-    examinador_select = QuerySelectField(
-        'Examinador',
-        query_factory=get_usuarios_choices,
-        get_label=lambda u: f"{u.nombre} {u.apellido}", # El atributo de Usuario que quieres mostrar
-        allow_blank=True,
-        blank_text='Seleccione un examinador...'
+class GestionarEvidenciasForm(FlaskForm):
+    """
+    Formulario exclusivo para la carga y custodia de evidencias fotográficas.
+    Sustituye completamente a los formularios anteriores.
+    """
+    evidencias = FieldList(
+        FileField(
+            "Evidencia Fotográfica", 
+            validators=[
+                Optional(),
+                FileAllowed(['jpg', 'png', 'webp', 'jpeg'], message='Solo se admiten imágenes')
+            ]
+        ), 
+        min_entries=7, 
+        max_entries=7
     )
-                  
-    evidencias = FieldList(FileField("Imagen de equipo", validators=[
-                            Optional(),
-                            FileAllowed(['jpg', 'png', 'webp', 'jpeg'], message='Solo se admiten imágenes')]), 
-                         min_entries=7, max_entries=7)
-    
-#Definir el formulario de registro de actividades y el formulario de edición de actividades, ambos heredan de Actividad_Form para reutilizar los campos comunes.
-class Nueva_Acta_Verificacion(FlaskForm, Actividad_Form):
-    
-    submit = SubmitField("Registrar Actividad")
-    
-class Edit_Acta_Verificacion(FlaskForm, Actividad_Form):
-    
-    submit = SubmitField("Actualizar Actividad")
+    submit = SubmitField("Guardar Evidencias Fotográficas")

@@ -17,17 +17,29 @@
         {% endfor %}
       </div>
 
-        <div class="form-group form-group-imagen">
-            <label for="{{ form.es_maestro.id }}" class="form-label">{{ form.es_maestro.label }}</label>
+        <div class="form-group mb-3 p-2 rounded {% if es_agente_restringido %}bg-light text-muted{% endif %}">
+            <label for="{{ form.es_maestro.id }}" class="form-label fw-semibold">
+                {{ form.es_maestro.label }}
+                {% if es_agente_restringido %}<span class="badge bg-warning text-dark ms-1"><i class="bi bi-lock-fill"></i> Protegido</span>{% endif %}
+            </label>
             {{ form.es_maestro(class="form-control form-control-sm") }}
+            {% if es_agente_restringido %}
+                <div class="form-text text-muted small"><i class="bi bi-info-circle-fill"></i> Su rol no tiene permisos para inicializar equipos como Maestro.</div>
+            {% endif %}
             {% for error in form.es_maestro.errors %}
                 <div class="text-danger">{{ error }}</div>
             {% endfor %}
         </div>
 
-        <div class="form-group form-group-imagen">
-            <label for="{{ form.es_verificacion.id }}" class="form-label">{{ form.es_verificacion.label }}</label>
+        <div class="form-group mb-3 p-2 rounded {% if es_agente_restringido %}bg-light text-muted{% endif %}">
+            <label for="{{ form.es_verificacion.id }}" class="form-label fw-semibold">
+                {{ form.es_verificacion.label }}
+                {% if es_agente_restringido %}<span class="badge bg-warning text-dark ms-1"><i class="bi bi-lock-fill"></i> Protegido</span>{% endif %}
+            </label>
             {{ form.es_verificacion(class="form-control form-control-sm") }}
+            {% if es_agente_restringido %}
+                <div class="form-text text-muted small"><i class="bi bi-info-circle-fill"></i> Su rol no tiene permisos para inicializar equipos en estado de Verificación.</div>
+            {% endif %}
             {% for error in form.es_verificacion.errors %}
                 <div class="text-danger">{{ error }}</div>
             {% endfor %}
@@ -170,9 +182,13 @@
            {% endfor %}
        </div>
 
-       <div class="form-group mb-3 p-3 border rounded shadow-sm bg-light">
+       <div class="form-group mb-3 p-3 border rounded shadow-sm {% if es_agente_restringido %}bg-patched-disabled text-muted{% else %}bg-light{% endif %}"
+            {% if es_agente_restringido %}style="pointer-events: none; opacity: 0.85;"{% endif %}>
         <div class="form-check form-switch">
-            <label for="{{ form.confirmar_log.id }}" class="form-label fw-bold">{{ form.confirmar_log.label }}</label>
+            <label for="{{ form.confirmar_log.id }}" class="form-label fw-bold">
+                {{ form.confirmar_log.label.text }}
+                {% if es_agente_restringido %}<span class="badge bg-warning text-dark ms-1"><i class="bi bi-lock-fill"></i> Protegido</span>{% endif %}
+            </label>
             {{ form.confirmar_log(class="form-check-input", id="confirmar_log_cb") }}
             {% for error in form.confirmar_log.errors %}
                     <div class="text-danger">{{ error }}</div>

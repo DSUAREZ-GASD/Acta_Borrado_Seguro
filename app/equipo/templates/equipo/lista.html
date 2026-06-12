@@ -18,7 +18,7 @@ Lista de equipos
           <a href="{{ url_for('equipo.crear') }}" class="btn btn-primary">Crear equipo</a>
         </div>
         <div class="btn-group me-2 mb-2" role="group" aria-label="First group">
-          <form action="{{ url_for('pdf.generar_todos_pdfs') }}" method="POST">
+          <form action="{{ url_for('pdf.generar_todos_pdfs', tipo='equipo') }}" method="POST">
             <button type="submit" class="btn btn-success">
               Generar todas las actas
             </button>

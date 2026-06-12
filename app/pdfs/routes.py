@@ -29,32 +29,29 @@ def limpiar_nombre(nombre):
 def crear_pdf(tipo, obj_id):
     from app.models import Equipo, Actividad_verificacion, Representante, ActaConfig
     
-    # 1. Obtener representantes (Firmas)
     representantes = Representante.query.all()
     
-    # 2. Determinar modelo y tipo de configuración
     if tipo == 'equipo':
-        objeto = Equipo.query.filter_by(asd_id=obj_id).first_or_404()
+        objeto = Equipo.query.get_or_404(obj_id)  # Usa get_or_404 directo sobre PK
         tipo_config = 'borrado'
+        nombre_base = objeto.nombre
     elif tipo == 'verificacion':
-        objeto = Actividad_verificacion.query.filter_by(asd_id=obj_id).first_or_404()
+        objeto = Actividad_verificacion.query.get_or_404(obj_id)
         tipo_config = 'verificacion'
+        nombre_base = objeto.equipo.nombre if objeto.equipo else f"Acta_{objeto.id}"
     else:
         abort(404)
     
-    # 3. Obtener la configuración de campos que el Admin activó
     config_campos = ActaConfig.query.filter_by(
         tipo_acta=tipo_config, 
         es_visible=True
     ).order_by(ActaConfig.orden).all()
     
-    nombre_archivo = f"{limpiar_nombre(objeto.nombre)}.pdf"
+    nombre_archivo = f"Acta_{tipo_config}_{limpiar_nombre(nombre_base)}.pdf"
     
-    # 4. Generar físicamente el PDF
-    # Pasamos config_campos para que el template sepa qué columnas renderizar
+    # Generar el PDF
     ruta_pdf = generar_pdf(nombre_archivo, objeto, representantes, config_campos, tipo_config)
     
-    # 5. Programar el borrado del archivo después de enviarlo
     @after_this_request
     def remover_temporal(response):
         borrar_archivo(ruta_pdf)
@@ -62,41 +59,59 @@ def crear_pdf(tipo, obj_id):
 
     return send_file(ruta_pdf, as_attachment=True, download_name=nombre_archivo)
 
-@pdf.route('/generar_todos_pdfs', methods=['POST'])
+
+@pdf.route('/generar_todos_pdfs/<string:tipo>', methods=['POST'])
 @acceso_requerido(roles=["Administrador", "Agente_3"])
 @login_required
-def generar_todos_pdfs():
-    from app.models import Equipo, Representante, ActaConfig
+def generar_todos_pdfs(tipo):
+    """
+    Descarga masiva unificada en ZIP. Soporta tipo 'equipo' (borrado) o 'verificacion'.
+    """
+    from app.models import Equipo, Actividad_verificacion, Representante, ActaConfig
     
-    # Solo equipos con evidencias
-    equipos = Equipo.query.filter(Equipo.imagenes != None).all()
     representantes = Representante.query.all()
-    config_campos = ActaConfig.query.filter_by(tipo_acta='borrado', es_visible=True).all()
-
-    if not equipos:
-        flash("No hay equipos con evidencias para procesar", "info")
-        return redirect(url_for('equipos.lista_equipos'))
-
     buffer = io.BytesIO()
+    
+    if tipo == 'equipo':
+        # Equipos que tengan el campo imágenes con datos
+        elementos = Equipo.query.filter(Equipo.imagenes != None).all()
+        tipo_config = 'borrado'
+    elif tipo == 'verificacion':
+        # Actividades activas registradas en el sistema
+        elementos = Actividad_verificacion.query.filter_by(activo=True).all()
+        tipo_config = 'verificacion'
+    else:
+        abort(400, description="Tipo de lote inválido")
+
+    if not elementos:
+        flash("No se encontraron registros con evidencias para procesar este lote.", "info")
+        return redirect(url_for('acta_verificacion.lista') if tipo == 'verificacion' else url_for('equipo.lista'))
+
+    config_campos = ActaConfig.query.filter_by(tipo_acta=tipo_config, es_visible=True).order_by(ActaConfig.orden).all()
+
     with zipfile.ZipFile(buffer, 'w', zipfile.ZIP_DEFLATED) as zip_file:
-        for equipo in equipos:
+        for item in elementos:
             try:
-                nombre = f"{limpiar_nombre(equipo.nombre)}.pdf"
-                # Generamos el PDF temporal
-                ruta_temp = generar_pdf(nombre, equipo, representantes, config_campos)
+                if tipo_config == 'borrado':
+                    nombre_descarga = item.nombre
+                else:
+                    nombre_descarga = item.equipo.nombre if item.equipo else f"Acta_{item.id}"
                 
-                # Agregar al ZIP
-                zip_file.write(ruta_temp, arcname=nombre)
+                nombre_pdf = f"Acta_{tipo_config}_{limpiar_nombre(nombre_descarga)}.pdf"
                 
-                # Limpieza inmediata del temporal individual
+                # Generación física individual
+                ruta_temp = generar_pdf(nombre_pdf, item, representantes, config_campos, tipo_config)
+                
+                zip_file.write(ruta_temp, arcname=nombre_pdf)
                 borrar_archivo(ruta_temp)
+                
             except Exception as e:
-                print(f"Error procesando equipo {equipo.nombre}: {e}")
+                print(f"Error procesando lote en elemento ID {item.id}: {e}")
 
     buffer.seek(0)
     return send_file(
         buffer, 
         as_attachment=True, 
-        download_name='paquete_actas_borrado.zip', 
+        download_name=f'paquete_actas_{tipo_config}.zip', 
         mimetype='application/zip'
     )
