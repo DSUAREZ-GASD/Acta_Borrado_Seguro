@@ -1,19 +1,25 @@
-document.addEventListener('DOMContentLoaded', function() {
+document.addEventListener('DOMContentLoaded', async function() {
     // ==========================================
     // 1. MANEJO DE MENSAJES FLASH (Existente)
     // ==========================================
-    const flashMessages = document.querySelectorAll('.flash-mensajes');
-    flashMessages.forEach(function(mensaje) {
-        Swal.fire({
+    const flashMessages = Array.from(document.querySelectorAll('.flash-mensajes'));
+
+    const showFlashMessage = function(mensaje) {
+        return Swal.fire({
             icon: mensaje.dataset.icon || 'info',
             title: 'Notificación',
             text: mensaje.textContent,
             showConfirmButton: false,
-            timer: 3000
+            timer: 3000,
+            allowOutsideClick: false
         }).then(function() {
             mensaje.remove();
         });
-    });
+    };
+
+    for (const mensaje of flashMessages) {
+        await showFlashMessage(mensaje);
+    }
 
     // ==========================================
     // 2. ALERTA DE REEMPLAZO DE IMÁGENES (Nueva)
@@ -81,4 +87,47 @@ document.addEventListener('DOMContentLoaded', function() {
             });
         }
     });
+
+    // ==========================================
+    // 3. ALERTA AL DESACTIVAR EL EQUIPO DE VERIFICACIÓN
+    // ==========================================
+    const selectVerificacion = document.querySelector('select[name="es_verificacion"]');
+    if (selectVerificacion) {
+        let seleccionAnterior = selectVerificacion.value;
+
+        selectVerificacion.addEventListener('change', function(event) {
+            const valorActual = selectVerificacion.value;
+
+            if (seleccionAnterior === 'True' && valorActual === 'False') {
+                event.preventDefault();
+
+                Swal.fire({
+                    title: '¿Deseas desactivar el equipo de verificación?',
+                    text: 'Si eliges "No", el registro de actividad permanecerá en el sistema pero quedará inactivo y dejará de mostrarse en las listas de verificación.',
+                    icon: 'warning',
+                    showCancelButton: true,
+                    confirmButtonColor: '#3085d6',
+                    cancelButtonColor: '#d33',
+                    confirmButtonText: 'Sí, desactivar',
+                    cancelButtonText: 'No, conservar',
+                    allowOutsideClick: false
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        Swal.fire({
+                            icon: 'success',
+                            title: 'Configuración guardada',
+                            text: 'El equipo dejará de participar en el flujo de verificación.',
+                            timer: 1800,
+                            showConfirmButton: false
+                        });
+                        seleccionAnterior = valorActual;
+                    } else {
+                        selectVerificacion.value = 'True';
+                    }
+                });
+            } else {
+                seleccionAnterior = valorActual;
+            }
+        });
+    }
 });

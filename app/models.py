@@ -5,6 +5,7 @@ from werkzeug.security import generate_password_hash,check_password_hash;
 from app import db
 from sqlalchemy.ext.mutable import MutableList
 from sqlalchemy.dialects.mysql import JSON
+from sqlalchemy import event
 from enum import Enum
 # Modelos
 # Columnas de atributos enumerados
@@ -155,11 +156,40 @@ class Equipo(db.Model):
         
     # Método para actualizar el estado automáticamente (Integrado con el Flujo Dinámico)
     def actualizar_estado(self):
-        # ... Tu lógica para normalizar el nombre (ILE3-XXX) ...
+        """
+        Normaliza el nombre del equipo al formato ILE3-XXX.
+        
+        Garantiza idempotencia: ejecutar múltiples veces produce el mismo resultado.
+        Evita concatenación accidental de dígitos del prefijo con el número.
+        """
         if self.nombre:
-            numero = "".join(filter(str.isdigit, str(self.nombre)))
-            if numero:
-                self.nombre = f"ILE3-{numero.zfill(3)}"
+            import re
+            nombre_str = str(self.nombre).strip()
+            
+            # Validar si ya está en el formato correcto (ILE3-\d+)
+            if not re.match(r'^ILE3-\d+$', nombre_str):
+                # Necesita normalización
+                numero = None
+                
+                # Si ya contiene "ILE3", extraer solo el número que viene después
+                # Esto evita incluir el "3" del prefijo
+                if 'ILE3' in nombre_str.upper():
+                    # Buscar patrón: ILE3 seguido opcionalmente de espacios/guión y luego dígitos
+                    match = re.search(r'ILE3\s*-?\s*(\d+)', nombre_str.upper())
+                    if match:
+                        numero = match.group(1)
+                    else:
+                        # Fallback: si no hay patrón claro, extraer todos los dígitos
+                        numero = re.sub(r'\D', '', nombre_str)
+                else:
+                    # No contiene ILE3: extraer todos los dígitos (comportamiento original)
+                    numero = re.sub(r'\D', '', nombre_str)
+                
+                # Formatear el número con padding mínimo de 3 dígitos
+                if numero:
+                    # zfill garantiza mínimo 3 dígitos, mantiene números más largos
+                    numero = numero.zfill(3)
+                    self.nombre = f"ILE3-{numero}"
 
         # Importación perezosa
         from app.utils.evaluador_flujo import evaluar_estado_equipo
@@ -180,77 +210,133 @@ class Equipo(db.Model):
 class Actividad_verificacion(db.Model):
     __tablename__ = "actividad_verificacion"
     
-    asd_id = db.Column(db.Integer, primary_key=True)
-    nombre = db.Column(db.String(100), nullable=False)
-    estado = db.Column(db.Enum(EstadoEnum), default=EstadoEnum.REGISTRADO)
+    id = db.Column(db.Integer, primary_key=True, autoincrement=True, nullable=False)
     
-    # Datos técnicos (pueden ser diferentes a los del equipo original si se encuentra algo distinto)
-    observacion = db.Column(db.Text, nullable=True)
-    direccion = db.Column(db.String(255), nullable=True)
-    comision = db.Column(db.String(100), nullable=True)
-    cod_comision = db.Column(db.Numeric(10, 0), nullable=True)
-    capacidad = db.Column(db.String(100), nullable=True)
-    municipio = db.Column(db.String(100), nullable=True)
-    departamento = db.Column(db.String(100), nullable=True)
+    # -------------------------------------------------------------------------
+    # Tiempos Lógicos y Evidencias Fotográficas (Exclusivos del Acta)
+    # -------------------------------------------------------------------------
+    fecha_hora_inicio = db.Column(
+        db.DateTime, 
+        nullable=True, 
+        comment="Captura el momento exacto en que se sube la primera imagen al JSON."
+    )
+    fecha_hora_fin = db.Column(
+        db.DateTime, 
+        nullable=True, 
+        comment="Captura el momento exacto en que se completa el flujo (7/7 imágenes)."
+    )
     
-    # Información del hardware verificado
-    equipo_marca = db.Column(db.String(100), nullable=True)
-    equipo_modelo = db.Column(db.String(100), nullable=True)
-    equipo_serial = db.Column(db.String(100), nullable=True)
-    dd_marca = db.Column(db.String(100), nullable=True)
-    dd_modelo = db.Column(db.String(100), nullable=True)
-    dd_serial = db.Column(db.String(100), nullable=True)
+    # MutableList permite que SQLAlchemy detecte cambios internos al hacer appends o modificaciones por índice
+    evidencias = db.Column(MutableList.as_mutable(JSON), default=[None] * 7)
     
-    # Seguridad y proceso
-    sha_1 = db.Column(db.String(100), nullable=True)
-    md5 = db.Column(db.String(100), nullable=True)
-    proceso = db.Column(db.Enum(Proceso), default=Proceso.CONGRESO)
-    
-    # Tiempos y evidencias
-    fecha_hora_inicio = db.Column(db.DateTime, nullable=True)
-    fecha_hora_fin = db.Column(db.DateTime, nullable=True)
-    evidencias = db.Column(MutableList.as_mutable(JSON), default=[])
-    
-    # Auditoría
+    # -------------------------------------------------------------------------
+    # Auditoría Estándar del Sistema (Persistencia en Base de Datos)
+    # -------------------------------------------------------------------------
     created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
     
-    # Relaciones con usuario
-    examinador_id = db.Column(db.Integer, db.ForeignKey('usuario.id', name='fk_examinador_id'), nullable=True)
-    examinador_rel = db.relationship(
-        'Usuario', 
-        foreign_keys=[examinador_id], # <--- Indicar la llave específica
-        backref=db.backref('actividades_examinadas', lazy=True) # <--- Nombre único para el backref
-    )
+    # -------------------------------------------------------------------------
+    # Relación Unívoca con el Equipo (Single Source of Truth)
+    # -------------------------------------------------------------------------
+    # unique=True y uselist=False garantizan una relación estricta de 1 a 1 en el flujo
+    equipo_id = db.Column(db.Integer, db.ForeignKey('equipo.asd_id', name='fk_equipo_id'), nullable=False, unique=True)
     
-    # Relación con el usuario que verifica
-    usuario_id = db.Column(db.Integer, db.ForeignKey('usuario.id', name='fk_verificador_id'), nullable=False)
-    usuario = db.relationship(
-        'Usuario', 
-        foreign_keys=[usuario_id], # <--- Indicar la llave específica
-        backref=db.backref('actividades_creadas', lazy=True) # <--- Nombre único para el backref
+    equipo = db.relationship(
+        'Equipo', 
+        foreign_keys=[equipo_id],
+        backref=db.backref('actividad_asociada', uselist=False, lazy=True)
     )
 
-    def actualizar_estado(self):
-        # 1. Normalización del nombre del acta (ej: VER-ILE3-001)
-        if self.nombre:
-            numero = "".join(filter(str.isdigit, str(self.nombre)))
-            if numero:
-                self.nombre = f"VER-ILE3-{numero.zfill(3)}"
+    activo = db.Column(db.Boolean, default=True, nullable=False)
 
-        # 2. Consumo de la Máquina de Estados Pasiva
-        from app.utils.evaluador_flujo import evaluar_estado_verificacion
-        nuevo_estado, _mensaje = evaluar_estado_verificacion(self)
+    # -------------------------------------------------------------------------
+    # Propiedad Dinámica: Consumo del Estado
+    # -------------------------------------------------------------------------
+    @property
+    def estado(self):
+        """
+        Puente dinámico hacia el módulo de Equipos. Permite que WeasyPrint, el backend 
+        y las vistas lean 'actividad.estado' sin tener una columna duplicada en BD.
+        """
+        if self.equipo:
+            return self.equipo.estado
+        return EstadoEnum.REGISTRADO
+
+    # -------------------------------------------------------------------------
+    # Lógica Autónoma de Auditoría de Tiempos por Imágenes
+    # -------------------------------------------------------------------------
+    def registrar_tiempos_evidencias(self):
+        """
+        Analiza el estado posicional del arreglo JSON de imágenes para fijar 
+        las marcas de tiempo lógicas de la verificación.
+        """
+        lista_imgs = self.evidencias if self.evidencias else []
         
-        # Asignamos estrictamente el Enum para que MySQL no trunque los datos
-        self.estado = nuevo_estado
-        
-        # 3. Gestión automática de marcas de tiempo lógicas
-        from datetime import datetime
-        if self.estado == EstadoEnum.FINALIZADO and not self.fecha_hora_fin:
-            self.fecha_hora_fin = datetime.now()
-        elif self.estado in [EstadoEnum.EN_PROCESO, EstadoEnum.PENDIENTE_HASH, EstadoEnum.PENDIENTE_LOG, EstadoEnum.PENDIENTE_FASE_2] and not self.fecha_hora_inicio:
+        # Conteo real de imágenes cargadas (excluyendo vacíos y nulos)
+        cantidad_reales = sum(1 for img in lista_imgs if img is not None and str(img).strip() != "")
+
+        # HITO A: Detectar el inicio de la operación en laboratorio (Primera foto cargada)
+        if cantidad_reales > 0 and not self.fecha_hora_inicio:
             self.fecha_hora_inicio = datetime.now()
+
+        # HITO B: Detectar el cierre definitivo (Se completaron las 7 evidencias requeridas)
+        if cantidad_reales == 7 and not self.fecha_hora_fin:
+            self.fecha_hora_fin = datetime.now()
+            
+        # HITO C: Resiliencia/Retroceso (Si el Administrador remueve fotos, el fin se libera)
+        elif cantidad_reales < 7 and self.fecha_hora_fin:
+            self.fecha_hora_fin = None
+
+    def todas_evidencias_completas(self):
+        """
+        Verifica si las 7 imágenes/evidencias están completamente cargadas.
+        Retorna True solo si todos los 7 slots contienen datos válidos.
+        """
+        if not self.evidencias or len(self.evidencias) < 7:
+            return False
+        
+        # Contar imágenes válidas (no nulas y no vacías)
+        cantidad_validas = sum(1 for img in self.evidencias if img is not None and str(img).strip() != "")
+        
+        return cantidad_validas == 7
+
+    def puede_generar_pdf(self):
+        """
+        Determina si se puede generar el PDF basado en:
+        1. Que NO esté en estado PENDIENTE_HASH o PENDIENTE_LOG
+        2. Que las 7 imágenes estén completas
+        """
+        if not self.equipo:
+            return False
+        
+        # Verificar que NO esté en estados pendientes
+        estado_bloqueado = self.equipo.estado in [
+            EstadoEnum.PENDIENTE_HASH,
+            EstadoEnum.PENDIENTE_LOG
+        ]
+        
+        if estado_bloqueado:
+            return False
+        
+        # Verificar que todas las evidencias estén completas
+        return self.todas_evidencias_completas()
+
+    def __repr__(self):
+        return f"<Actividad_verificacion ID: {self.id} | Equipo_ID: {self.equipo_id} | Estado: {self.estado.value}>"
+
+
+# -------------------------------------------------------------------------
+# Escuchadores Automatizados (SQLAlchemy Listeners)
+# -------------------------------------------------------------------------
+@event.listens_for(Actividad_verificacion, 'before_insert')
+@event.listens_for(Actividad_verificacion, 'before_update')
+def ejecutar_auditoria_de_tiempos(mapper, connection, target):
+    """
+    Garantiza que el análisis de slots fotográficos se ejecute automáticamente 
+    siempre, justo antes de enviar los datos físicos a MySQL/PostgreSQL.
+    Evita tener que llamar el método manualmente en el controlador de rutas.
+    """
+    target.registrar_tiempos_evidencias()
     
 # Modelo de Representante
 class Representante(db.Model):

@@ -1,4 +1,4 @@
-{% extends "layouts/admin.html" %} 
+{% extends "layouts/agente.html" %} 
 {% block head %} 
 {{ super() }} 
 {% endblock %} 
@@ -37,7 +37,6 @@ Lista de equipos
               <th>Registrado por</th>
               <th>Actualizar</th>
               <th>Imprimir</th>
-              <th>Eliminar</th>
             </tr>
           </thead>
           <tbody>
@@ -66,14 +65,6 @@ Lista de equipos
                         <i class="bi bi-lock-fill"></i> PDF Bloqueado
                     </button>
                 {% endif %}
-              </td>
-
-              <td>
-                <a
-                  href="{{ url_for('acta_verificacion.eliminar', actividad_id=actividad.id) }}"
-                  class="btn btn-danger"
-                  >Eliminar</a
-                >
               </td>
             </tr>
             {% endfor %}
