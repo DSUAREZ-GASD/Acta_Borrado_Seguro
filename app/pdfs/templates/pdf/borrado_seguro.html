@@ -284,34 +284,56 @@
   </tr>
   {% endfor %}
   <tr>
-    <td colspan="4" class="bg-gray estilo-grande text-center">REGISTRO FOTOGRÁFICO</td>
-  </tr>
-  <tr>
-    <td colspan="4" style="padding: 10px;">
-      <div class="photo-grid">
-        {% set labels = [ 
-          "1. Foto de la caja del equipo", "2. Foto del equipo", 
-          "3. Foto serial del equipo", "4. Foto de la Identificación de la comisión", 
-          "5. Inicio generación imagen", "6. Fin generación imagen", 
-          "7. Inicio borrado", "8. Finalización borrado" 
-        ] %} 
-        
-        {% for i in range(8) %}
-        <div class="photo-box">
-          {% if objeto.imagenes and objeto.imagenes|length > i %}
-          <img src="{{ url_for('static', filename='uploads/equipos/' + objeto.imagenes[i], _external=True) }}" />
-          {% else %}
-          <div style="height: 150px; display: flex; align-items: center; justify-content: center; background: #f8f9fa; border: 1px dashed #ccc; font-size: 7pt;">
-            Foto no disponible
-          </div>
-          {% endif %}
-          <p class="estilo-pequeno" style="margin-top: 5px; text-align: center;">
-            <b>{{ labels[i] }}</b>
-          </p>
-        </div>
-        {% endfor %}
-      </div>
+    <td colspan="4" class="bg-gray estilo-grande text-center" style="padding: 6px 0; font-weight: bold;">
+      REGISTRO FOTOGRÁFICO
     </td>
   </tr>
+
+  {% set labels = [ 
+    "1. Foto de la caja del equipo", 
+    "2. Foto del equipo", 
+    "3. Foto serial del equipo", 
+    "4. Foto de la Identificación de la comisión", 
+    "5. Inicio generación imagen", 
+    "6. Fin generación imagen", 
+    "7. Inicio borrado", 
+    "8. Finalización borrado" 
+  ] %} 
+
+  {# Procesamos los 8 slots de 2 en 2 para garantizar saltos de página limpios en el motor PDF #}
+  {% for i in range(0, 8, 2) %}
+  <tr style="page-break-inside: avoid; break-inside: avoid;">
+    
+    {# --- COLUMNA IZQUIERDA --- #}
+    <td colspan="2" style="width: 50%; padding: 8px; vertical-align: top;">
+      <div class="contenedor-foto-pdf" style="text-align: center;">
+        {% if objeto.imagenes and objeto.imagenes|length > i and objeto.imagenes[i] %}
+          <img class="img-evidencia-pdf" src="{{ url_for('static', filename='uploads/equipos/' + objeto.imagenes[i], _external=True) }}" />
+        {% else %}
+          <div class="placeholder-foto-pdf">Foto no disponible</div>
+        {% endif %}
+        <p class="estilo-pequeno description-foto">
+          <b>{{ labels[i] }}</b>
+        </p>
+      </div>
+    </td>
+
+    {# --- COLUMNA DERECHA --- #}
+    <td colspan="2" style="width: 50%; padding: 8px; vertical-align: top;">
+      {% if i + 1 < 8 %}
+        <div class="contenedor-foto-pdf" style="text-align: center;">
+          {% if objeto.imagenes and objeto.imagenes|length > (i + 1) and objeto.imagenes[i + 1] %}
+            <img class="img-evidencia-pdf" src="{{ url_for('static', filename='uploads/equipos/' + objeto.imagenes[i + 1], _external=True) }}" />
+          {% else %}
+            <div class="placeholder-foto-pdf">Foto no disponible</div>
+          {% endif %}
+          <p class="estilo-pequeno description-foto">
+            <b>{{ labels[i + 1] }}</b>
+          </p>
+        </div>
+      {% endif %}
+    </td>
+  </tr>
+  {% endfor %}
 </table>
 {% endblock %}

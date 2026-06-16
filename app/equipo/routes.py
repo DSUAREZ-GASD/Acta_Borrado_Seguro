@@ -110,7 +110,13 @@ def crear():
             for i in range(8):
                 campo_imagen = form.imagenes[i] if i < len(form.imagenes.entries) else None
                 if campo_imagen and campo_imagen.data and hasattr(campo_imagen.data, 'filename') and campo_imagen.data.filename != '':
-                    nombre_foto = guardar_imagen_estandarizada(campo_imagen.data, subfolder='equipos')
+                    meta = {
+                        'departamento': equipo.departamento,
+                        'municipio': equipo.municipio,
+                        'comision': equipo.cod_comision or equipo.comision,
+                        'equipo': equipo.nombre,
+                    }
+                    nombre_foto = guardar_imagen_estandarizada(campo_imagen.data, subfolder='equipos', meta=meta, slot=i)
                     lista_imagenes.append(nombre_foto)
                 else:
                     lista_imagenes.append(None)
@@ -273,7 +279,13 @@ def editar(equipo_id):
                         flash(_("Acción bloqueada: Los equipos maestros no permiten imágenes de borrado."), "error")
                         return redirect(url_for('equipo.editar', equipo_id=equipo_id))
                         
-                    nombre_nuevo = guardar_imagen_estandarizada(campo_imagen.data, subfolder='equipos')
+                    meta = {
+                        'departamento': equipo.departamento,
+                        'municipio': equipo.municipio,
+                        'comision': equipo.cod_comision or equipo.comision,
+                        'equipo': equipo.nombre,
+                    }
+                    nombre_nuevo = guardar_imagen_estandarizada(campo_imagen.data, subfolder='equipos', meta=meta, slot=i)
                     nuevas_imagenes.append(nombre_nuevo)
                 else:
                     nuevas_imagenes.append(foto_antigua)
