@@ -59,7 +59,15 @@ def gestionar_evidencias(actividad_id):
             for i in range(7):
                 campo = form.evidencias[i]
                 if campo.data and hasattr(campo.data, 'filename') and campo.data.filename:
-                    nombre_archivo = guardar_imagen_estandarizada(campo.data, subfolder='verificaciones')
+                    meta = {}
+                    if actividad.equipo:
+                        meta = {
+                            'departamento': actividad.equipo.departamento,
+                            'municipio': actividad.equipo.municipio,
+                            'comision': actividad.equipo.cod_comision or actividad.equipo.comision,
+                            'equipo': actividad.equipo.nombre,
+                        }
+                    nombre_archivo = guardar_imagen_estandarizada(campo.data, subfolder='verificaciones', meta=meta, slot=i)
                     evidencias.append(nombre_archivo)
                 else:
                     anterior = actividad.evidencias[i] if actividad.evidencias and i < len(actividad.evidencias) else None
