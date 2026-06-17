@@ -23,7 +23,7 @@ def crear_app():
     
     login.init_app(app)
     login.login_view = 'auth.login'
-    login.login_message_category = 'warning' # Opcional: añade diseño Bootstrap a alertas de login
+    login.login_message_category = 'warning'
     
     # Configuración limpia de Babel
     app.config['BABEL_DEFAULT_LOCALE'] = 'es'
@@ -55,18 +55,13 @@ def crear_app():
     from .models import Usuario
     @login.user_loader
     def load_user(id):
-        # Permite que current_user funcione correctamente en toda la aplicación
         return Usuario.query.get(int(id))
 
     # 5. Contexto de aplicación
     with app.app_context():
-        from .models import (
-            Equipo, Usuario, Representante, Proceso, 
-            Estado_usuario, Rol, Actividad_verificacion, ActaConfig
-        )
-        db.create_all()
-        init_admin_user()
+        # IMPORTANTE: Eliminamos db.create_all() para no romper el flujo de Flask-Migrate
         asegurar_directorios(app)
+        init_admin_user()
 
     @app.route('/')
     def home():
@@ -81,7 +76,6 @@ def init_admin_user():
     email_admin = "admin@grupoasd.com"
     
     try:
-        # Verificamos si existe por username O por email único para evitar colisiones
         admin_user = Usuario.query.filter(
             (Usuario.userName == 'admin') | (Usuario.email == email_admin)
         ).first()
@@ -103,7 +97,6 @@ def init_admin_user():
             db.session.commit()
             print("Usuario administrador creado con éxito.")
         else:
-            # Pailsafe de desarrollo: Nos aseguramos de que tenga asignado el Enum correcto
             if admin_user.rol != Rol.ADMINISTRADOR:
                 admin_user.rol = Rol.ADMINISTRADOR
                 db.session.commit()
@@ -111,7 +104,8 @@ def init_admin_user():
                 
     except Exception as e:
         db.session.rollback()
-        print(f"⚠️ Alerta no crítica en init_admin_user: {e}")
+        # Mensaje suavizado si la tabla aún no existe en el primer despliegue
+        print(f"ℹ️ Nota: No se pudo verificar/crear el usuario administrador (es normal si las tablas aún no existen): {e}")
 
 def asegurar_directorios(app):
     path_tmp = os.path.join(app.root_path, 'static', 'tmp')

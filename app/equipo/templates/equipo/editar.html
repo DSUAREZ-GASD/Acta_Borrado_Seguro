@@ -1,7 +1,9 @@
 {% extends "layouts/form.html" %}
 {% block title %}Editar Equipo{% endblock %}
-{% macro render_input_seguro(campo, es_bloqueado, es_select=False) %}
-    {% if es_bloqueado %}
+{% macro render_input_seguro(campo, es_bloqueado, es_select=False, de_solo_lectura=False) %}
+    {# Combina bloqueo por regla de negocio y flag explícito de solo lectura #}
+    {% set bloqueado = es_bloqueado or de_solo_lectura %}
+    {% if bloqueado %}
         {% if es_select %}
             {{ campo(class="form-control bg-light text-muted", disabled=True) }}
         {% else %}
@@ -27,17 +29,30 @@
         {% endfor %}
     </div>
 
-    <div class="form-group mb-3">
-        <label for="{{ form.es_maestro.id }}" class="form-label">{{ form.es_maestro.label }}</label>
-        {{ render_input_seguro(form.es_maestro, bloquear_campos, es_select=True) }}
+    <div class="form-group mb-3 p-2 rounded {% if es_agente_restringido or bloquear_campos %}bg-light text-muted{% endif %}">
+        <label for="{{ form.es_maestro.id }}" class="form-label fw-semibold">
+            {{ form.es_maestro.label }}
+            {% if es_agente_restringido or bloquear_campos %}
+                <span class="badge bg-secondary ms-1"><i class="bi bi-lock-fill"></i> Protegido</span>
+            {% endif %}
+        </label>
+        {{ render_input_seguro(form.es_maestro, bloquear_campos, es_select=True, de_solo_lectura=es_agente_restringido) }}
         {% for error in form.es_maestro.errors %}
             <div class="text-danger">{{ error }}</div>
         {% endfor %}
     </div>
 
-    <div class="form-group mb-3">
-        <label for="{{ form.es_verificacion.id }}" class="form-label">{{ form.es_verificacion.label }}</label>
-        {{ render_input_seguro(form.es_verificacion, bloquear_campos) }}
+    <div class="form-group mb-3 p-2 rounded {% if es_agente_restringido or bloquear_campos %}bg-light text-muted{% endif %}">
+        <label for="{{ form.es_verificacion.id }}" class="form-label fw-semibold">
+            {{ form.es_verificacion.label }}
+            {% if es_agente_restringido or bloquear_campos %}
+                <span class="badge bg-secondary ms-1"><i class="bi bi-lock-fill"></i> Protegido</span>
+            {% endif %}
+        </label>
+        {{ render_input_seguro(form.es_verificacion, bloquear_campos, es_select=True, de_solo_lectura=es_agente_restringido) }}
+        <div class="form-text text-warning small mt-1">
+            Si cambias esta opción a "No", el registro de actividad quedará inactivo y dejará de mostrarse en las listas de verificación.
+        </div>
         {% for error in form.es_verificacion.errors %}
             <div class="text-danger">{{ error }}</div>
         {% endfor %}
@@ -188,23 +203,23 @@
         {% endfor %}
     </div>
 
-    <div class="form-group mb-3 p-3 border rounded shadow-sm bg-light">
-    <div class="form-check form-switch"> 
-            {# Si bloquear_campos es True, inyectamos disabled=True de forma directa #}
-            {% if bloquear_campos %}
+    <div class="form-group mb-3 p-3 border rounded shadow-sm {% if bloquear_campos or es_agente_restringido %}bg-patched-disabled text-muted{% else %}bg-light{% endif %}"
+         {% if bloquear_campos or es_agente_restringido %}style="pointer-events: none; opacity: 0.85;"{% endif %}>
+        <div class="form-check form-switch"> 
+            {% if verificar_bloqueo or bloquear_campos or es_agente_restringido %}
                 {{ form.confirmar_log(class="form-check-input", id="confirmar_log_cb", disabled=True) }}
             {% else %}
                 {{ form.confirmar_log(class="form-check-input", id="confirmar_log_cb") }}
             {% endif %}
             
-            <label for="confirmar_log_cb" class="form-check-label fw-bold {% if bloquear_campos %}text-muted{% endif %}">
+            <label for="confirmar_log_cb" class="form-check-label fw-bold {% if bloquear_campos or es_agente_restringido %}text-muted{% endif %}">
                 {{ form.confirmar_log.label.text }}
-                {% if bloquear_campos %} <span class="badge bg-secondary ms-1">Protegido</span>{% endif %}
+                {% if confirmar_bloqueo or bloquear_campos or es_agente_restringido %} <span class="badge bg-secondary ms-1"><i class="bi bi-lock-fill"></i> Protegido</span>{% endif %}
             </label>
         </div>
-        {% for error in form.confirmar_log.errors %}
-            <div class="text-danger small mt-1">{{ error }}</div>
-        {% endfor %}
+            {% if es_agente_restringido %}
+                <div class="form-text text-muted small mt-1"><i class="bi bi-info-circle-fill"></i> El control de auditoría de logs está restringido para su perfil.</div>
+            {% endif %}
     </div>
 
     <div class="form-group mb-3 form-observacion">

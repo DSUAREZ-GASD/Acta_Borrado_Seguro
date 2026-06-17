@@ -10,7 +10,7 @@
         background-color: var(--color-sidebar-fondo) !important;
         color: var(--color-sidebar-texto) !important;
         border-bottom: 3px solid var(--color-acento) !important;
-        white-space: nowrap; /* Evita que los títulos se rompan en dos líneas */
+        white-space: nowrap; 
     }
     table.dataTable > tbody > tr > td {
         background-color: var(--color-tarjeta) !important;
@@ -218,7 +218,7 @@ Lista de equipos
                 url: 'https://cdn.datatables.net/plug-ins/2.0.8/i18n/es-ES.json',
             },
             responsive: true,
-            scrollX: true, // Permite scroll horizontal si abren muchas columnas
+            scrollX: true,
             layout: {
                 topStart: {
                     buttons: [
@@ -226,7 +226,6 @@ Lista de equipos
                             extend: 'colvis',
                             text: '<i class="bi bi-layout-three-columns me-1"></i> Columnas',
                             className: 'btn btn-primario btn-sm mb-3 shadow-sm',
-                            // Evitamos que el botón de columnas permita ocultar/mostrar las acciones
                             columns: ':not(.no-exportar)' 
                         }
                     ]
@@ -234,12 +233,10 @@ Lista de equipos
             },
             columnDefs: [
                 {
-                    // 1. Ocultar todas las columnas que tengan la clase 'col-oculta'
                     targets: 'col-oculta',
                     visible: false
                 },
                 {
-                    // 2. Desactivar buscador y ordenamiento en las últimas tres columnas de acciones
                     targets: [-1, -2, -3], 
                     orderable: false,
                     searchable: false
