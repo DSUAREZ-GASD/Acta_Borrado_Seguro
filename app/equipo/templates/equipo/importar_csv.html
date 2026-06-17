@@ -11,8 +11,9 @@
 </div>
 
 <div class="row">
-    <div class="col-md-6">
-        <div class="tarjeta-operacion p-4">
+    <!-- Formulario de Carga -->
+    <div class="col-md-5">
+        <div class="tarjeta-operacion shadow-sm rounded-4 p-4">
             
             {% with messages = get_flashed_messages(with_categories=true) %}
                 {% if messages %}
@@ -30,46 +31,77 @@
                     <label for="archivo_csv" class="form-label fw-bold">Seleccionar archivo (.csv)</label>
                     <input class="form-control" type="file" id="archivo_csv" name="archivo_csv" accept=".csv" required>
                     <div class="form-text mt-2">
-                        El archivo debe contener encabezados en la primera fila. Ejemplo: <code>serial, marca, modelo, tipo_disco</code>.
+                        El archivo debe contener encabezados en la primera fila. 
+                        Ejemplo: <code>serial, nombre, marca, modelo, tipo_disco, comision...</code>
                     </div>
                 </div>
 
-                <button type="submit" class="btn btn-acento shadow-sm">
+                <button type="submit" class="btn btn-acento shadow-sm w-100">
                     <i class="bi bi-cloud-arrow-up-fill me-2"></i> Procesar Archivo
                 </button>
             </form>
         </div>
     </div>
     
-    <div class="col-md-6">
-        <div class="tarjeta-operacion p-4 bg-light border-0">
+    <!-- Información de Formato -->
+    <div class="col-md-7">
+        <div class="tarjeta-operacion shadow-sm rounded-4 p-4 bg-light border-0">
             <h5 class="fw-bold"><i class="bi bi-info-circle text-primary me-2"></i> Formato Requerido</h5>
-            <p class="text-muted small">Asegúrate de que tu archivo CSV utilice comas (,) para separar las columnas y codificación UTF-8.</p>
             
-            <table class="table table-sm table-bordered mt-3 text-muted small">
-                <thead class="table-secondary">
-                    <tr>
-                        <th>serial</th>
-                        <th>marca</th>
-                        <th>modelo</th>
-                        <th>tipo_disco</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <tr>
-                        <td>SN12345</td>
-                        <td>Dell</td>
-                        <td>Optiplex 3080</td>
-                        <td>SSD</td>
-                    </tr>
-                    <tr>
-                        <td>SN98765</td>
-                        <td>HP</td>
-                        <td>ProDesk 400</td>
-                        <td>HDD</td>
-                    </tr>
-                </tbody>
-            </table>
+            <p class="text-muted small mb-2">
+                El sistema soporta codificación <strong>UTF-8</strong> y detecta automáticamente si separas las columnas con comas (<code>,</code>), puntos y comas (<code>;</code>) o tabulaciones.
+            </p>
+            
+            <ul class="text-muted small mb-3 ps-3">
+                <li><strong>Obligatorio:</strong> El campo <code>serial</code> no puede estar vacío (la fila se omitirá).</li>
+                <li><strong>Opcional:</strong> Si omites el <code>nombre</code>, se autogenerará con la marca y modelo.</li>
+                <li><strong>Sí / No:</strong> Para <code>es_maestro</code> y <code>es_verificacion</code> usa valores como "si", "no", "1" o "0".</li>
+            </ul>
+            
+            <div class="table-responsive">
+                <table class="table table-sm table-bordered mt-2 text-muted" style="font-size: 0.8rem;">
+                    <thead class="table-secondary">
+                        <tr>
+                            <th>serial</th>
+                            <th>nombre</th>
+                            <th>marca</th>
+                            <th>modelo</th>
+                            <th>tipo_disco</th>
+                            <th>comision</th>
+                            <th>municipio</th>
+                            <th>departamento</th>
+                            <th>es_maestro</th>
+                            <th>es_verificacion</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td class="fw-bold">SN12345</td>
+                            <td>Equipo 1</td>
+                            <td>Dell</td>
+                            <td>Optiplex</td>
+                            <td>SSD 256GB</td>
+                            <td>COM-01</td>
+                            <td>Bogotá</td>
+                            <td>Cundinamarca</td>
+                            <td class="text-success fw-bold">si</td>
+                            <td class="text-danger">no</td>
+                        </tr>
+                        <tr>
+                            <td class="fw-bold">SN98765</td>
+                            <td class="fst-italic text-black-50">(vacío)</td>
+                            <td>HP</td>
+                            <td>ProDesk</td>
+                            <td>HDD 1TB</td>
+                            <td>COM-02</td>
+                            <td>Medellín</td>
+                            <td>Antioquia</td>
+                            <td class="text-danger">0</td>
+                            <td class="text-success fw-bold">1</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
         </div>
     </div>
 </div>
