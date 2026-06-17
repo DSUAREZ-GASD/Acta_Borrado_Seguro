@@ -3,41 +3,56 @@
 {% block title %}Iniciar Sesión{% endblock %}
 
 {% block content %}
-{% for categoria, mensaje in get_flashed_messages(with_categories=true) %}
-    <script class="flash-mensajes" data-icon="{{ categoria }}">{{ mensaje }}</script>
-{% endfor %}
-
-<div class="d-flex justify-content-center align-items-center" style="min-height: 100vh; background-color: var(--color-texto);">
+<div class="d-flex justify-content-center align-items-center min-vh-100" style="background-color: var(--color-fondo);">
     
-    <div class="tarjeta-operacion shadow-lg p-4 rounded-4" style="width: 100%; max-width: 420px; background-color: var(--color-tarjeta); border-top: 5px solid var(--color-acento);">
+    <div class="card shadow-lg p-4 border-0 rounded-4" style="width: 100%; max-width: 400px; background-color: var(--color-tarjeta); border-top: 5px solid var(--color-acento) !important;">
         
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                <div class="mb-3">
+                    {% for categoria, mensaje in messages %}
+                        <div class="alert alert-{{ 'danger' if categoria == 'error' else ('warning' if categoria == 'warning' else 'success') }} alert-dismissible fade show py-2 mb-2 shadow-sm" role="alert">
+                            <i class="bi bi-exclamation-circle-fill me-2"></i><span class="small fw-semibold">{{ mensaje }}</span>
+                            <button type="button" class="btn-close btn-close-sm mt-1" data-bs-dismiss="alert" aria-label="Close"></button>
+                        </div>
+                    {% endfor %}
+                </div>
+            {% endif %}
+        {% endwith %}
+
         <div class="text-center mb-4 mt-2">
-            <i class="bi bi-shield-lock-fill" style="font-size: 3.5rem; color: var(--color-texto);"></i>
-            <h3 class="fw-bold mt-2" style="color: var(--color-texto);">Borrado Seguro</h3>
-            <p style="color: var(--color-texto); opacity: 0.75;">Ingresa tus credenciales para continuar</p>
+            <i class="bi bi-shield-lock-fill" style="font-size: 3.2rem; color: var(--color-acento);"></i>
+            <h3 class="fw-bold mt-2 mb-1" style="color: var(--color-texto);">Borrado Seguro</h3>
+            <p class="small text-muted">Ingresa tus credenciales para continuar</p>
         </div>
 
-        <form action="" class="login" method="POST" novalidate enctype="multipart/form-data">
+        <form action="" class="login" method="POST" novalidate>
             {{ form.hidden_tag() }}
             
             <div class="mb-3">
-                <label for="{{ form.userName.id }}" class="form-label fw-semibold" style="color: var(--color-texto);">Usuario</label>
-                <div class="input-group">
-                    <span class="input-group-text border-end-0" style="background-color: var(--color-fondo);"><i class="bi bi-person text-muted"></i></span>
-                    {{ form.userName(class="form-control border-start-0", placeholder="usuario", style="background-color: var(--color-tarjeta); color: var(--color-texto);") }}
+                <label for="{{ form.userName.id }}" class="form-label fw-semibold small mb-1" style="color: var(--color-texto);">Usuario</label>
+                <div class="input-group shadow-sm">
+                    <span class="input-group-text bg-light border-end-0"><i class="bi bi-person text-secondary"></i></span>
+                    {{ form.userName(class="form-control border-start-0", placeholder="Ingresa tu usuario", style="background-color: var(--color-tarjeta); color: var(--color-texto);") }}
                 </div>
+                {% for error in form.userName.errors %}
+                    <div class="text-danger small mt-1 fw-medium"><i class="bi bi-arrow-return-right me-1"></i>{{ error }}</div>
+                {% endfor %}
             </div>
 
             <div class="mb-4">
-                <label for="{{ form.password.id }}" class="form-label fw-semibold" style="color: var(--color-texto);">Contraseña</label>
-                <div class="input-group">
-                    <span class="input-group-text border-end-0" style="background-color: var(--color-fondo);"><i class="bi bi-key text-muted"></i></span>
+                <label for="{{ form.password.id }}" class="form-label fw-semibold small mb-1" style="color: var(--color-texto);">Contraseña</label>
+                <div class="input-group shadow-sm">
+                    <span class="input-group-text bg-light border-end-0"><i class="bi bi-key text-secondary"></i></span>
                     {{ form.password(class="form-control border-start-0", placeholder="••••••••", style="background-color: var(--color-tarjeta); color: var(--color-texto);") }}
                 </div>
+                {% for error in form.password.errors %}
+                    <div class="text-danger small mt-1 fw-medium"><i class="bi bi-arrow-return-right me-1"></i>{{ error }}</div>
+                {% endfor %}
             </div>
 
-            <div class="d-grid mb-2">
-                {{ form.submit(class="btn btn-acento btn-lg shadow-sm") }}
+            <div class="d-grid mt-2 mb-2">
+                {{ form.submit(class="btn btn-lg shadow-sm fw-bold", style="background-color: var(--color-acento); color: white; border: none;") }}
             </div>
         </form>
         
