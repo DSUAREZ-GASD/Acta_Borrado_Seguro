@@ -1,3 +1,5 @@
+import csv
+import io
 from flask import render_template, redirect, flash, url_for, request
 from flask_login import login_required, current_user
 from flask_babel import _ # type: ignore
@@ -187,7 +189,6 @@ def editar(equipo_id):
             respaldo_serial = equipo.equipo_serial
             respaldo_maestro = equipo.es_maestro
             respaldo_verificacion = equipo.es_verificacion
-            # ... Guarda de respaldo solo los críticos reales si lo deseas, o los sobreescribimos así:
             
             estado_anterior = equipo.estado.value if hasattr(equipo.estado, 'value') else equipo.estado
             
@@ -198,8 +199,6 @@ def editar(equipo_id):
             if bloquear_campos:
                 equipo.es_maestro = respaldo_maestro
                 equipo.es_verificacion = respaldo_verificacion
-                # Si el programador de Grupo ASD detecta fraude en inputs ocultos, revertimos directo a las propiedades del objeto:
-                # equipo.equipo_serial = respaldo_serial
             else:
                 # Si es administrador y los modificó en el form, aseguramos la persistencia
                 equipo.es_maestro = form.es_maestro.data
@@ -275,17 +274,130 @@ def editar(equipo_id):
 @acceso_requerido(roles=["Administrador"])
 @login_required
 def eliminar(equipo_id):
-   equipo = Equipo.query.get_or_404(equipo_id)
-   try:
-       if equipo:              
-           db.session.delete(equipo)
-           db.session.commit()
-           flash(_("Equipo Eliminado con exito"), "success")
-           limpiar_imagenes_huerfanas()
-       else:
-           flash(_("Equipo no encontrado"), "error")
-   except Exception as e:
-        db.session.rollback()
-        flash(_("Error al eliminar el equipo: {}").format(e), "error")
-   
-   return redirect(url_for('equipo.lista_equipos'))
+    equipo = Equipo.query.get_or_404(equipo_id)
+    try:
+        if equipo:              
+            db.session.delete(equipo)
+            db.session.commit()
+            flash(_("Equipo Eliminado con exito"), "success")
+            limpiar_imagenes_huerfanas()
+        else:
+            flash(_("Equipo no encontrado"), "error")
+    except Exception as e:
+         db.session.rollback()
+         flash(_("Error al eliminar el equipo: {}").format(e), "error")
+    
+    return redirect(url_for('equipo.lista_equipos'))
+
+
+# ==========================================
+# RUTA: IMPORTAR EQUIPOS DESDE CSV
+# ==========================================
+@equipos.route('/importar', methods=['GET', 'POST'])
+@acceso_requerido(roles=["Administrador"])
+@login_required
+def importar_csv():
+    if request.method == 'POST':
+        archivo = request.files.get('archivo_csv')
+        
+        if not archivo or archivo.filename == '':
+            flash(_("No se seleccionó ningún archivo."), "error")
+            return redirect(url_for('equipo.importar_csv'))
+            
+        if not archivo.filename.endswith('.csv'):
+            flash(_("El archivo debe ser en formato CSV."), "error")
+            return redirect(url_for('equipo.importar_csv'))
+
+        try:
+            # 1. Leemos el archivo
+            contenido = archivo.stream.read().decode("UTF-8-sig")
+            stream = io.StringIO(contenido, newline=None)
+            
+            # 2. Adivinamos el delimitador (Tabulador, Punto y coma, o Coma)
+            primera_linea = contenido.split('\n')[0]
+            if '\t' in primera_linea:
+                delimitador = '\t'
+            elif ';' in primera_linea:
+                delimitador = ';'
+            else:
+                delimitador = ','
+            
+            csv_input = csv.DictReader(stream, delimiter=delimitador)
+            
+            # 3. Normalizamos los encabezados (todo a minúsculas y sin espacios)
+            if csv_input.fieldnames:
+                csv_input.fieldnames = [str(campo).strip().lower() for campo in csv_input.fieldnames]
+            
+            registros_exitosos = 0
+            
+            for fila in csv_input:
+                serial_csv = fila.get('serial', '').strip()
+                
+                if not serial_csv:
+                    continue
+                
+                marca_csv = fila.get('marca', '').strip()
+                modelo_csv = fila.get('modelo', '').strip()
+                nombre_csv = fila.get('nombre', '').strip()
+                
+                if not nombre_csv:
+                    if marca_csv or modelo_csv:
+                        nombre_csv = f"{marca_csv} {modelo_csv}".strip()
+                    else:
+                        nombre_csv = f"Equipo {serial_csv}"
+                
+                # --- EXTRACCIÓN DE NUEVOS CAMPOS ---
+                # Campos de texto normales
+                tipo_disco_csv = fila.get('tipo_disco', '').strip()
+                comision_csv = fila.get('comision', '').strip()
+                municipio_csv = fila.get('municipio', '').strip()
+                departamento_csv = fila.get('departamento', '').strip()
+                
+                # Campos Booleanos (Verdadero/Falso)
+                # Si en el Excel ponen "1", "si" o "true", lo convertimos a True para MySQL
+                str_maestro = fila.get('es_maestro', '0').strip().lower()
+                es_maestro_bool = True if str_maestro in ['1', 'true', 'si', 's'] else False
+                
+                str_verificacion = fila.get('es_verificacion', '0').strip().lower()
+                es_verificacion_bool = True if str_verificacion in ['1', 'true', 'si', 's'] else False
+
+                # Instanciamos el modelo con TODOS los campos mapeados
+                nuevo_equipo = Equipo(
+                    nombre=nombre_csv,
+                    equipo_serial=serial_csv,
+                    equipo_marca=marca_csv,
+                    equipo_modelo=modelo_csv,
+                    
+                    # Agregamos los nuevos campos aquí:
+                    # (Asegúrate de que la parte izquierda coincida con tu modelo de base de datos)
+                    dd_modelo=tipo_disco_csv, # O el campo donde guardes el tipo de disco
+                    comision=comision_csv,
+                    municipio=municipio_csv,
+                    departamento=departamento_csv,
+                    es_maestro=es_maestro_bool,
+                    es_verificacion=es_verificacion_bool,
+                    
+                    usuario_id=current_user.id
+                )
+                
+                # Evaluamos el estado inicial
+                nuevo_estado, mensaje_ignorado = evaluar_estado_equipo(nuevo_equipo)
+                nuevo_equipo.estado = nuevo_estado
+                
+                db.session.add(nuevo_equipo)
+                registros_exitosos += 1
+                
+            db.session.commit()
+            flash(_("Se importaron {} equipos correctamente.").format(registros_exitosos), "success")
+            return redirect(url_for('equipo.lista_equipos'))
+            
+        except UnicodeDecodeError:
+            db.session.rollback()
+            flash(_("Error de codificación. Asegúrate de guardar el CSV con formato UTF-8."), "error")
+            return redirect(url_for('equipo.importar_csv'))
+        except Exception as e:
+            db.session.rollback()
+            flash(_("Error al procesar el archivo: {}").format(e), "error")
+            return redirect(url_for('equipo.importar_csv'))
+
+    return render_template('equipo/importar_csv.html')

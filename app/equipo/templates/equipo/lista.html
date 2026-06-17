@@ -1,89 +1,251 @@
 {% extends "layouts/admin.html" %} 
+
 {% block head %} 
 {{ super() }} 
+<link href="https://cdn.datatables.net/v/bs5/jq-3.7.0/dt-2.0.8/b-3.0.2/b-colvis-3.0.2/r-3.0.2/datatables.min.css" rel="stylesheet">
+
+<style>
+    /* Conexión de DataTables con los temas de base.css */
+    table.dataTable > thead > tr > th {
+        background-color: var(--color-sidebar-fondo) !important;
+        color: var(--color-sidebar-texto) !important;
+        border-bottom: 3px solid var(--color-acento) !important;
+        white-space: nowrap; /* Evita que los títulos se rompan en dos líneas */
+    }
+    table.dataTable > tbody > tr > td {
+        background-color: var(--color-tarjeta) !important;
+        color: var(--color-texto) !important;
+        border-bottom: 1px solid rgba(128, 128, 128, 0.1) !important;
+        vertical-align: middle;
+    }
+    table.dataTable > tbody > tr:hover > td {
+        background-color: rgba(128, 128, 128, 0.05) !important;
+    }
+
+    /* Controles de DataTables */
+    div.dt-container .dt-info,
+    div.dt-container .dt-search label,
+    div.dt-container .dt-length label {
+        color: var(--color-texto) !important;
+        font-weight: 500;
+    }
+    div.dt-container .dt-search input, 
+    div.dt-container .dt-length select {
+        background-color: var(--color-fondo) !important;
+        color: var(--color-texto) !important;
+        border: 1px solid var(--color-primario) !important;
+        border-radius: 6px;
+    }
+    div.dt-container .dt-search input:focus, 
+    div.dt-container .dt-length select:focus {
+        outline: none;
+        border-color: var(--color-acento) !important;
+        box-shadow: 0 0 5px rgba(255, 255, 255, 0.2);
+    }
+
+    /* Paginación adaptativa */
+    .pagination .page-link {
+        background-color: var(--color-tarjeta) !important;
+        color: var(--color-texto) !important;
+        border-color: rgba(128, 128, 128, 0.2) !important;
+    }
+    .pagination .page-item.active .page-link {
+        background-color: var(--color-primario) !important;
+        color: #ffffff !important;
+        border-color: var(--color-primario) !important;
+    }
+    .pagination .page-link:hover {
+        background-color: var(--color-acento) !important;
+        color: #1a1a1a !important;
+    }
+
+    /* Menú de visibilidad de columnas */
+    .dt-button-collection .dt-button {
+        background-color: var(--color-tarjeta) !important;
+        color: var(--color-texto) !important;
+    }
+    .dt-button-collection .dt-button:hover {
+        background-color: var(--color-acento) !important;
+        color: #1a1a1a !important;
+    }
+</style>
 {% endblock %} 
+
 {%block title %} 
 Lista de equipos 
 {% endblock %} 
+
 {% block content %} 
 {% for categoria, mensaje in get_flashed_messages(with_categories=true) %}
 <script class="flash-mensajes" data-icon="{{ categoria }}">{{ mensaje }}</script>
 {% endfor %}
+
 <div class="container-fluid">
   <div class="row">
     <div class="col">
-      <h1>Lista de equipos</h1>
-      <div class="btn-toolbar mt-4" role="toolbar" aria-label="Toolbar with button groups">
-        <div class="btn-group me-2 mb-2" role="group" aria-label="First group">
-          <a href="{{ url_for('equipo.crear') }}" class="btn btn-primary">Crear equipo</a>
+      
+      <div class="d-flex justify-content-between align-items-center mb-4 mt-2">
+        <div>
+            <h2 class="fw-bold mb-0" style="color: var(--color-primario);">Lista de equipos</h2>
+            <p style="color: var(--color-texto); opacity: 0.8;">Gestión y control de borrado seguro</p>
         </div>
-        <div class="btn-group me-2 mb-2" role="group" aria-label="First group">
-          <form action="{{ url_for('pdf.generar_todos_pdfs') }}" method="POST">
-            <button type="submit" class="btn btn-success">
-              Generar todas las actas
-            </button>
-          </form>
+        <div class="d-flex gap-2">
+            <a href="{{ url_for('equipo.crear') }}" class="btn btn-primario shadow-sm">
+                <i class="bi bi-plus-circle me-1"></i> Crear equipo
+            </a>
         </div>
       </div>
-      <div class="table-responsive mt-4">
-        <table
-          id="equiposTable"
-          class="display responsive nowrap table table-striped table-bordered"
-          style="width: 100%"
-        >
-          <thead class="table-dark">
-            <tr>
-              <th>Nombre de equipo</th>
-              <th>Departamento</th>
-              <th>Comisión</th>
-              <th>Serial</th>
-              <th>Registrado por</th>
-              <th>Estado</th>
-              <th>Actualizar</th>
-              <th>Imprimir</th>
-              <th>Eliminar</th>
-            </tr>
-          </thead>
-          <tbody>
-            {% for equipo in equipos %}
-            <tr>
-              <td>{{equipo.nombre}}</td>
-              <td>{{equipo.departamento}}</td>
-              <td>{{equipo.comision}}</td>
-              <td>{{equipo.equipo_serial}}</td>
-              <td>{{equipo.usuario.userName}}</td>
-              <td>{{equipo.estado.value}}</td>
-              <td>
-                <a
-                  href="{{ url_for('equipo.editar', equipo_id=equipo.asd_id) }}"
-                  class="btn btn-primary"
-                  >Actualizar</a
-                >
-              </td>
-              <td>
-                {% if equipo.estado.value == 'FINALIZADO' or equipo.estado.value == 'GESTION_ADMINISTRADOR' %}
-                    <a href="{{ url_for('pdf.crear_pdf', tipo='equipo', obj_id=equipo.asd_id) }}" class="btn btn-sm btn-success">
-                        <i class="bi bi-file-earmark-pdf-fill"></i> Generar PDF
-                    </a>
-                {% else %}
-                    <button class="btn btn-sm btn-secondary" disabled data-bs-toggle="tooltip" title="Bloqueado hasta completar las 8 imágenes, Hash y Log">
-                        <i class="bi bi-lock-fill"></i> PDF Bloqueado
-                    </button>
-                {% endif %}
-              </td>
-              <td>
-                <a
-                  href="{{ url_for('equipo.eliminar', equipo_id=equipo.asd_id) }}"
-                  class="btn btn-danger"
-                  >Eliminar</a
-                >
-              </td>
-            </tr>
-            {% endfor %}
-          </tbody>
-        </table>
+
+      <div class="tarjeta-operacion shadow-sm border-0 rounded-4 p-4">
+        <div class="table-responsive">
+          <table
+            id="equiposTable"
+            class="table align-middle nowrap"
+            style="width: 100%"
+          >
+            <thead>
+              <tr>
+                <th>Nombre de equipo</th>
+                <th>Departamento</th>
+                <th>Comisión</th>
+                <th>Serial</th>
+                <th>Registrado por</th>
+                <th>Estado</th>
+                
+                <th class="col-oculta">Marca</th>
+                <th class="col-oculta">Modelo</th>
+                <th class="col-oculta">Dirección</th>
+                <th class="col-oculta">Municipio</th>
+                <th class="col-oculta">Cód. Comisión</th>
+                <th class="col-oculta">Capacidad RAM</th>
+                <th class="col-oculta">Marca DD</th>
+                <th class="col-oculta">Modelo DD</th>
+                <th class="col-oculta">Serial DD</th>
+                <th class="col-oculta">SHA-1</th>
+                <th class="col-oculta">MD5</th>
+                <th class="col-oculta">Proceso</th>
+                <th class="col-oculta">Es Maestro</th>
+                <th class="col-oculta">Es Verificación</th>
+
+                <th class="text-center no-exportar">Actualizar</th>
+                <th class="text-center no-exportar">Imprimir</th>
+                <th class="text-center no-exportar">Eliminar</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for equipo in equipos %}
+              <tr>
+                <td class="fw-bold">{{equipo.nombre or 'N/A'}}</td>
+                <td>{{equipo.departamento or 'N/A'}}</td>
+                <td>{{equipo.comision or 'N/A'}}</td>
+                <td><span class="font-monospace">{{equipo.equipo_serial or 'N/A'}}</span></td>
+                <td>{{equipo.usuario.userName if equipo.usuario else 'N/A'}}</td>
+                <td>
+                    <span class="badge rounded-pill shadow-sm" 
+                          style="background-color: {% if equipo.estado.value == 'FINALIZADO' %}var(--color-acento){% else %}var(--color-primario){% endif %}; 
+                                 color: {% if equipo.estado.value == 'FINALIZADO' %}#1a1a1a{% else %}#ffffff{% endif %};">
+                        {{equipo.estado.value}}
+                    </span>
+                </td>
+
+                <td>{{equipo.equipo_marca or 'N/A'}}</td>
+                <td>{{equipo.equipo_modelo or 'N/A'}}</td>
+                <td>{{equipo.direccion or 'N/A'}}</td>
+                <td>{{equipo.municipio or 'N/A'}}</td>
+                <td>{{equipo.cod_comision or 'N/A'}}</td>
+                <td>{{equipo.capacidad or 'N/A'}}</td>
+                <td>{{equipo.dd_marca or 'N/A'}}</td>
+                <td>{{equipo.dd_modelo or 'N/A'}}</td>
+                <td><span class="font-monospace">{{equipo.dd_serial or 'N/A'}}</span></td>
+                <td><span class="font-monospace">{{equipo.sha_1 or 'N/A'}}</span></td>
+                <td><span class="font-monospace">{{equipo.md5 or 'N/A'}}</span></td>
+                <td>{{equipo.proceso or 'N/A'}}</td>
+                <td>{{ 'Sí' if equipo.es_maestro else 'No' }}</td>
+                <td>{{ 'Sí' if equipo.es_verificacion else 'No' }}</td>
+
+                <td class="text-center">
+                  <a
+                    href="{{ url_for('equipo.editar', equipo_id=equipo.asd_id) }}"
+                    class="btn btn-sm btn-primario"
+                    title="Actualizar Equipo"
+                    ><i class="bi bi-pencil-square"></i></a
+                  >
+                </td>
+                <td class="text-center">
+                  {% if equipo.estado.value == 'FINALIZADO' or equipo.estado.value == 'GESTION_ADMINISTRADOR' %}
+                      <a href="{{ url_for('pdf.crear_pdf', tipo='equipo', obj_id=equipo.asd_id) }}" class="btn btn-sm btn-acento text-dark fw-bold" title="Generar PDF">
+                          <i class="bi bi-file-earmark-pdf-fill"></i>
+                      </a>
+                  {% else %}
+                      <button class="btn btn-sm btn-secondary" disabled data-bs-toggle="tooltip" title="Bloqueado hasta completar las 8 imágenes, Hash y Log">
+                          <i class="bi bi-lock-fill"></i>
+                      </button>
+                  {% endif %}
+                </td>
+                <td class="text-center">
+                  <a
+                    href="{{ url_for('equipo.eliminar', equipo_id=equipo.asd_id) }}"
+                    class="btn btn-sm btn-danger"
+                    title="Eliminar Equipo"
+                    ><i class="bi bi-trash3-fill"></i></a
+                  >
+                </td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
       </div>
+
     </div>
   </div>
 </div>
-{% endblock %} {% block scripts %} {{ super() }} {% endblock %}
+{% endblock %} 
+
+{% block scripts %} 
+{{ super() }} 
+<script src="https://cdn.datatables.net/v/bs5/jq-3.7.0/dt-2.0.8/b-3.0.2/b-colvis-3.0.2/r-3.0.2/datatables.min.js"></script>
+
+<script>
+    $(document).ready(function() {
+        var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'))
+        var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+            return new bootstrap.Tooltip(tooltipTriggerEl)
+        });
+
+        $('#equiposTable').DataTable({
+            language: {
+                url: 'https://cdn.datatables.net/plug-ins/2.0.8/i18n/es-ES.json',
+            },
+            responsive: true,
+            scrollX: true, // Permite scroll horizontal si abren muchas columnas
+            layout: {
+                topStart: {
+                    buttons: [
+                        {
+                            extend: 'colvis',
+                            text: '<i class="bi bi-layout-three-columns me-1"></i> Columnas',
+                            className: 'btn btn-primario btn-sm mb-3 shadow-sm',
+                            // Evitamos que el botón de columnas permita ocultar/mostrar las acciones
+                            columns: ':not(.no-exportar)' 
+                        }
+                    ]
+                }
+            },
+            columnDefs: [
+                {
+                    // 1. Ocultar todas las columnas que tengan la clase 'col-oculta'
+                    targets: 'col-oculta',
+                    visible: false
+                },
+                {
+                    // 2. Desactivar buscador y ordenamiento en las últimas tres columnas de acciones
+                    targets: [-1, -2, -3], 
+                    orderable: false,
+                    searchable: false
+                }
+            ]
+        });
+    });
+</script>
+{% endblock %}

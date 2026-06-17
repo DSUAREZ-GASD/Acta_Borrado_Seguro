@@ -3,14 +3,15 @@ version: '3.8'
 services:
   web:
     build: .
+    command: waitress-serve --port=8000 --call app:crear_app
     ports:
       - "8000:8000"
     volumes:
       - .:/app
     environment:
-      FLASK_APP: app
-      FLASK_ENV: production
-      DATABASE_URL: mysql+mysqlconnector://root@db:3306/secure_deletion_records
+      FLASK_APP: main.py
+      FLASK_DEBUG: 1
+      DATABASE_URL: mysql+mysqlconnector://root:Actas2026@db:3306/secure_deletion_records
     depends_on:
       - db
 
@@ -19,11 +20,11 @@ services:
     restart: always
     environment:
       MYSQL_DATABASE: secure_deletion_records
-      MYSQL_USER: root
-      MYSQL_PASSWORD: ""
-      MYSQL_ROOT_PASSWORD: ""
+      MYSQL_ROOT_PASSWORD: "Actas2026"
     ports:
       - "3306:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
 
 volumes:
   mysql_data:

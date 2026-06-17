@@ -1,6 +1,11 @@
+venv/
 .venv/
 migrations/
 __pycache__/
+*.pyc
+.env
+arbol.txt
+
 *.jpeg
 *.jpg
 *.png
@@ -9,4 +14,3 @@ __pycache__/
 
 # Permitir específicamente logo_rnec.png
 !logo_rnec.png
-
