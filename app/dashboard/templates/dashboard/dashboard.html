@@ -1,0 +1,251 @@
+{% extends "layouts/admin.html" %} {% block head %} {{ super() }}
+<link
+  href="https://cdn.datatables.net/v/bs5/jq-3.7.0/dt-2.0.8/b-3.0.2/b-colvis-3.0.2/r-3.0.2/datatables.min.css"
+  rel="stylesheet"
+/>
+{% endblock %} {% block title %} Panel de Control - ILE {% endblock %} {% block
+content %}
+<div class="container-fluid px-4">
+  <div class="d-flex justify-content-between align-items-center mb-4 mt-3">
+    <div>
+      <h2 class="fw-bold mb-0" style="color: var(--color-primario)">
+        Dashboard Operativo
+      </h2>
+      <p style="color: var(--color-texto); opacity: 0.8">
+        Monitoreo en tiempo real de equipos e infraestructura
+      </p>
+    </div>
+  </div>
+  <div class="row mb-4">
+    <div class="col-md-6 col-xl-3 mb-3">
+      <div
+        class="card shadow-sm border-start border-primary border-4 h-100 py-2 bg-white"
+      >
+        <div class="card-body">
+          <div class="row align-items-center">
+            <div class="col">
+              <div
+                class="text-xs font-weight-bold text-primary text-uppercase mb-1"
+              >
+                Total Equipos en Sistema
+              </div>
+              <div class="h5 mb-0 font-weight-bold text-gray-800">
+                {{ total_equipos }}
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-6 col-xl-3 mb-3">
+      <div
+        class="card shadow-sm border-start border-success border-4 h-100 py-2 bg-white"
+      >
+        <div class="card-body">
+          <div class="row align-items-center">
+            <div class="col">
+              <div
+                class="text-xs font-weight-bold text-success text-uppercase mb-1"
+              >
+                Usuarios Operativos
+              </div>
+              <div class="h5 mb-0 font-weight-bold text-gray-800">
+                {{ total_usuarios }}
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="row">
+    <div class="col-xl-8 col-lg-7 mb-4">
+      <div class="card shadow-sm border-0 h-100">
+        <div class="card-header bg-white py-3">
+          <h6 class="m-0 fw-bold" style="color: var(--color-primario)">
+            Evolución Diaria de Procesamiento
+          </h6>
+        </div>
+        <div class="card-body">
+          <div
+            class="chart-area"
+            style="position: relative; height: 320px; width: 100%"
+          >
+            <canvas id="graficoAreaEquipos"></canvas>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-xl-4 col-lg-5 mb-4">
+      <div class="card shadow-sm border-0 h-100">
+        <div class="card-header bg-white py-3">
+          <h6 class="m-0 fw-bold" style="color: var(--color-primario)">
+            Distribución por Estados de Flujo
+          </h6>
+        </div>
+        <div class="card-body">
+          <div
+            class="chart-pie"
+            style="position: relative; height: 260px; width: 100%"
+          >
+            <canvas id="graficoTortaEquipos"></canvas>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="card shadow mb-4 border-0">
+    <div class="card-header bg-white py-3">
+      <h6 class="m-0 fw-bold" style="color: var(--color-primario)">
+        Avance de Equipos por Estados (Detallado)
+      </h6>
+    </div>
+    <div class="card-body">
+      {% for estado_enum, datos in estados_progreso.items() %}
+      <h4
+        class="small fw-bold d-flex justify-content-between align-items-center mb-1"
+        style="color: var(--color-texto)"
+      >
+        <span
+          >{{ datos.nombre }}
+          <small class="text-muted">({{ datos.conteo }} uds)</small></span
+        >
+        <span class="fw-bold">
+          {% if estado_enum.name == 'FINALIZADO' and datos.porcentaje == 100 %}
+          ¡Completado! {% else %} {{ datos.porcentaje }}% {% endif %}
+        </span>
+      </h4>
+      <div
+        class="progress mb-4"
+        style="
+          height: 12px;
+          background-color: rgba(0, 0, 0, 0.05);
+          border-radius: 6px;
+        "
+      >
+        <div
+          class="progress-bar progress-bar-striped progress-bar-animated {{ datos.color }}"
+          role="progressbar"
+          style="width: {{ datos.porcentaje }}%; {{ datos.style }}"
+          aria-valuenow="{{ datos.porcentaje }}"
+          aria-valuemin="0"
+          aria-valuemax="100"
+        ></div>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+</div>
+{% endblock %} {% block scripts %} 
+{{ super() }}
+<script src="https://cdn.datatables.net/v/bs5/jq-3.7.0/dt-2.0.8/b-3.0.2/b-colvis-3.0.2/r-3.0.2/datatables.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<script>
+  $(document).ready(function () {
+
+    // ==========================================
+    // 0. PARSEO SEGURO DE DATOS JINJA
+    // ==========================================
+    const listaLabelsLinea = {{ linea_labels | tojson }};
+    const listaDataLinea = {{ linea_data | tojson }};
+
+    const listaLabelsTorta = {{ torta_labels | tojson }};
+    const listaDataTorta = {{ torta_data | tojson }};
+
+    // ==========================================
+    // 1. ANIMACIÓN DE BARRAS DE PROGRESO (AVANCE DETALLADO)
+    // ==========================================
+    // Esto toma el ancho inyectado por Jinja y lo anima suavemente desde 0 al cargar
+    $('.progress-bar').each(function() {
+        const porcentajeReal = $(this).attr('aria-valuenow');
+        $(this).css('width', '0%'); // Forzar inicio en cero
+        setTimeout(() => {
+            $(this).css({
+                'width': porcentajeReal + '%',
+                'transition': 'width 1.2s ease-in-out' // Transición fluida de ingeniería
+            });
+        }, 150);
+    });
+
+    // ==========================================
+    // 2. CONTROLADOR DE LA GRÁFICA DE LÍNEA
+    // ==========================================
+    const ctxArea = document.getElementById('graficoAreaEquipos').getContext('2d');
+    new Chart(ctxArea, {
+        type: 'line',
+        data: {
+            labels: listaLabelsLinea,
+            datasets: [{
+                label: "Equipos Registrados",
+                data: listaDataLinea,
+                backgroundColor: 'rgba(13, 110, 253, 0.05)',
+                borderColor: '#0d6efd',
+                borderWidth: 2.5,
+                pointBackgroundColor: '#0d6efd',
+                pointBorderColor: '#ffffff',
+                pointHoverRadius: 5,
+                tension: 0.25,
+                fill: true
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    ticks: {
+                        stepSize: 1,
+                        color: '#6c757d'
+                    },
+                    grid: { color: 'rgba(0, 0, 0, 0.05)' }
+                },
+                x: {
+                    ticks: { color: '#6c757d', maxRotation: 45, minRotation: 45 },
+                    grid: { display: false }
+                }
+            },
+            plugins: {
+                legend: { display: true, position: 'top' },
+                tooltip: { mode: 'index', intersect: false }
+            }
+        }
+    });
+
+    // ==========================================
+    // 3. CONTROLADOR DE LA GRÁFICA DE TORTA
+    // ==========================================
+    const ctxPie = document.getElementById('graficoTortaEquipos').getContext('2d');
+    new Chart(ctxPie, {
+        type: 'doughnut',
+        data: {
+            labels: listaLabelsTorta,
+            datasets: [{
+                data: listaDataTorta,
+                backgroundColor: [
+                    '#6c757d', // Pendiente -> Gris
+                    '#ffc107', // En Proceso -> Amarillo / Ámbar
+                    '#28a745'  // Completado -> Verde éxito
+                ],
+                borderWidth: 2,
+                borderColor: '#ffffff'
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    display: true,
+                    position: 'bottom',
+                    labels: { boxWidth: 12, font: { size: 11 } }
+                }
+            }
+        }
+    });
+
+  });
+</script>
+{% endblock %}

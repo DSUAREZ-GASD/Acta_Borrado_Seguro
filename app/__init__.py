@@ -41,6 +41,7 @@ def crear_app():
     from app.auth import auth
     from app.representante import representantes
     from app.acta_verificacion import acta_verificacion
+    from app.dashboard import dashboard_bp
     
     app.register_blueprint(pdf)
     app.register_blueprint(equipos)
@@ -48,6 +49,7 @@ def crear_app():
     app.register_blueprint(auth)
     app.register_blueprint(representantes)
     app.register_blueprint(acta_verificacion)
+    app.register_blueprint(dashboard_bp)
 
     # ==============================================================================
     # 4.5 CONFIGURACIÓN DEL CARGADOR DE USUARIOS (FLASK-LOGIN)

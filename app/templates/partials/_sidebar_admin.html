@@ -1,0 +1,98 @@
+<nav class="sidebar d-none d-lg-flex flex-column p-3 shadow-sm" 
+     style="width: 260px; min-height: 100vh; background-color: var(--color-sidebar-fondo); z-index: 1040;">
+    
+    <a href="{{ url_for('equipo.lista_equipos') }}" class="d-flex align-items-center mb-4 text-decoration-none" style="color: var(--color-sidebar-texto);">
+        <i class="bi bi-shield-lock-fill fs-3 me-2" style="color: var(--color-acento);"></i>
+        <span class="fs-5 fw-bold">Borrado Seguro</span>
+    </a>
+    
+    <hr class="border-light opacity-25 mt-0">
+
+    <ul class="nav nav-pills flex-column mb-auto">
+        <li class="nav-item mb-1">
+            <a href="{{ url_for('dashboard_bp.dashboard_admin') }}" 
+               class="nav-link d-flex align-items-center {% if 'dashboard_bp' in request.endpoint %}bg-acento text-dark fw-bold shadow-sm{% endif %}"
+               style="color: var(--color-sidebar-texto); transition: background-color 0.2s, transform 0.2s;">
+                <i class="bi bi-pc-display me-3 fs-5"></i> 
+                <span>Dashboard</span>
+            </a>
+        </li>
+        <li class="nav-item mb-1">
+            <a href="{{ url_for('equipo.lista_equipos') }}" 
+               class="nav-link d-flex align-items-center {% if 'equipo' in request.endpoint %}bg-acento text-dark fw-bold shadow-sm{% endif %}"
+               style="color: var(--color-sidebar-texto); transition: background-color 0.2s, transform 0.2s;">
+                <i class="bi bi-pc-display me-3 fs-5"></i> 
+                <span>Equipos</span>
+            </a>
+        </li>
+        <li class="nav-item mb-1">
+            <a href="{{ url_for('acta_verificacion.lista') }}" 
+               class="nav-link d-flex align-items-center {% if 'acta' in request.endpoint %}bg-acento text-dark fw-bold shadow-sm{% endif %}"
+               style="color: var(--color-sidebar-texto); transition: background-color 0.2s, transform 0.2s;">
+                <i class="bi bi-clipboard-check me-3 fs-5"></i> 
+                <span>Actividades</span>
+            </a>
+        </li>
+
+        {% if current_user.rol.value == "Administrador" %}
+        <li class="nav-item mt-3 mb-1">
+            <a href="#configMenu" data-bs-toggle="collapse" aria-expanded="false" 
+               class="nav-link d-flex align-items-center"
+               style="color: var(--color-sidebar-texto); transition: 0.2s;">
+                <i class="bi bi-gear-fill me-3 fs-5"></i> 
+                <span>Configuración</span>
+                <i class="bi bi-chevron-down ms-auto" style="font-size: 0.8rem;"></i>
+            </a>
+            
+            <ul class="collapse list-unstyled ps-4 mt-2 {% if 'usuario' in request.endpoint or 'importar' in request.endpoint %}show{% endif %}" id="configMenu">
+                <li class="mb-1">
+                    <a href="{{ url_for('usuario.lista') }}" 
+                       class="nav-link d-flex align-items-center {% if 'usuario' in request.endpoint %}fw-bold{% endif %}"
+                       style="color: {% if 'usuario' in request.endpoint %}var(--color-acento){% else %}var(--color-sidebar-texto){% endif %}; opacity: 0.9; font-size: 0.9rem;">
+                        <i class="bi bi-people me-2"></i> Usuarios
+                    </a>
+                </li>
+                <li class="mb-1">
+                    <a href="{{ url_for('equipo.importar_csv') }}" 
+                        class="nav-link d-flex align-items-center {% if 'importar' in request.endpoint %}fw-bold text-dark bg-acento shadow-sm{% endif %}"
+                        style="color: {% if 'importar' in request.endpoint %}var(--color-texto){% else %}var(--color-sidebar-texto){% endif %}; opacity: 0.9; font-size: 0.9rem;">
+                        <i class="bi bi-filetype-csv me-2"></i> Carga Masiva (CSV)
+                    </a>
+                </li>
+            </ul>
+        </li>
+        {% endif %}
+    </ul>
+
+    <hr class="border-light opacity-25">
+
+    <div class="dropdown mt-2">
+        <a href="#" class="d-flex align-items-center text-decoration-none dropdown-toggle p-2 rounded user-profile-btn" 
+           id="dropdownAdmin" data-bs-toggle="dropdown" aria-expanded="false" 
+           style="color: var(--color-sidebar-texto); transition: background-color 0.2s;">
+            
+            <i class="bi bi-person-circle fs-3 me-2"></i>
+            
+            <div class="d-flex flex-column me-2">
+                <strong style="font-size: 0.9rem; line-height: 1.2;">{{ current_user.userName | default('Admin') }}</strong>
+                <span class="opacity-75" style="font-size: 0.75rem;">{{ current_user.rol.value }}</span>
+            </div>
+        </a>
+        
+        <ul class="dropdown-menu dropdown-menu-dark text-small shadow border-0" aria-labelledby="dropdownAdmin" style="background-color: var(--color-sidebar-fondo);">
+            <li>
+                <a class="dropdown-item d-flex align-items-center text-danger fw-bold py-2" href="{{ url_for('auth.logout') }}">
+                    <i class="bi bi-box-arrow-left me-2 fs-6"></i> Cerrar sesión
+                </a>
+            </li>
+        </ul>
+    </div>
+</nav>
+
+<style>
+    .user-profile-btn:hover { background-color: rgba(255, 255, 255, 0.1); }
+    .sidebar .nav-link:not(.bg-acento):hover { background-color: rgba(255, 255, 255, 0.05); transform: translateX(4px); }
+    /* Animación del icono desplegable */
+    .sidebar [data-bs-toggle="collapse"][aria-expanded="true"] .bi-chevron-down { transform: rotate(180deg); transition: transform 0.3s; }
+    .sidebar [data-bs-toggle="collapse"][aria-expanded="false"] .bi-chevron-down { transform: rotate(0deg); transition: transform 0.3s; }
+</style>

@@ -27,7 +27,6 @@ class EstadoEnum(Enum):
     PENDIENTE_HASH = "PENDIENTE HASH"                # Esperando validación de firmas digitales
     PENDIENTE_LOG = "PENDIENTE LOG"                  # Esperando el reporte obligatorio de borrado
     PENDIENTE_FASE_2 = "PENDIENTE FASE 2"            # Esperando completitud de fotos (caja equipo/fin copia)
-    EN_PROCESO = "EN PROCESO"
     FINALIZADO = "FINALIZADO"
 
 class Estado_usuario(Enum):
@@ -110,8 +109,6 @@ class Usuario(UserMixin, db.Model):
 def user_loader(id):
     return Usuario.query.get(id)
  
- 
-# Modelo de Equipo
 # Modelo de Equipo
 class Equipo(db.Model):
     __tablename__ = "equipo"
