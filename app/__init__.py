@@ -35,7 +35,7 @@ def crear_app():
     app.cli.add_command(sync_pdf_configs)
 
     # 4. Blueprints (Importación interna para evitar ciclos)
-    from app.pdfs import pdf
+    #from app.pdfs import pdf
     from app.equipo import equipos
     from app.usuario import usuarios as usuarios_bp
     from app.auth import auth
@@ -43,7 +43,7 @@ def crear_app():
     from app.acta_verificacion import acta_verificacion
     from app.dashboard import dashboard_bp
     
-    app.register_blueprint(pdf)
+    #app.register_blueprint(pdf)
     app.register_blueprint(equipos)
     app.register_blueprint(usuarios_bp)
     app.register_blueprint(auth)

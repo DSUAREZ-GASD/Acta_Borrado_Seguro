@@ -1,0 +1,65 @@
+:root {
+    /* Estados fijos */
+    --estado-exito: #198754;
+    --estado-fallo: #b02a37;
+    --altura-control-movil: 46px;
+}
+
+/* --- OPCIÓN 1: INSTITUCIONAL --- */
+[data-tema="1"] {
+    --color-primario: #0F3460;
+    --color-acento: #E5B80B;
+    --color-fondo: #f5f7f9;
+    --color-tarjeta: #ffffff;
+    --color-texto: #2b3035;
+    /* Sidebar */
+    --color-sidebar-fondo: #1A4D2E;
+    --color-sidebar-texto: #ffffff;
+    --color-sidebar-activo: #E5B80B;
+    --color-sidebar-texto-activo: #000000;
+}
+
+/* --- OPCIÓN 2: CIBERSEGURIDAD "SLEEK" --- */
+[data-tema="2"] {
+    --color-primario: #1A1A2E;
+    --color-acento: #00D2D3;
+    --color-fondo: #F8F9FA;
+    --color-tarjeta: #16213e;
+    --color-texto: #e0e0e0;
+    /* Sidebar */
+    --color-sidebar-fondo: #1A1A2E;
+    --color-sidebar-texto: #e0e0e0;
+    --color-sidebar-activo: #00D2D3;
+    --color-sidebar-texto-activo: #000000;
+}
+
+/* --- OPCIÓN 3: MINIMALISTA --- */
+[data-tema="3"] {
+    --color-primario: #4B49AC;
+    --color-acento: #2ECC71;
+    --color-fondo: #F8F9FA;
+    --color-tarjeta: #ffffff;
+    --color-texto: #000000;
+    /* Sidebar */
+    --color-sidebar-fondo: #f8f9fa91;
+    --color-sidebar-texto: #333333;
+    --color-sidebar-activo: #4B49AC;
+    --color-sidebar-texto-activo: #000000;
+}
+
+/* Aplicación general */
+body { background-color: var(--color-fondo); color: var(--color-texto); }
+.bg-primario { background-color: var(--color-primario) !important; }
+
+/* Botones y Acciones */
+.btn-acento, .bg-acento { 
+    background-color: var(--color-acento) !important; 
+    color: #000 !important; 
+    font-weight: 600; 
+}
+.text-acento { color: var(--color-acento) !important; }
+
+/* Sidebar personalizado */
+.sidebar { background-color: var(--color-sidebar-fondo) !important; color: var(--color-sidebar-texto); }
+.sidebar .nav-link { color: var(--color-sidebar-texto); transition: all 0.3s; }
+.sidebar .nav-link:hover { background-color: rgba(0,0,0,0.1); }
